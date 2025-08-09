@@ -6,6 +6,7 @@ import DonorAuth from './components/DonorAuth';
 import DisabledAuth from './components/DisabledAuth';
 import LandingPage from './components/LandingPage';
 import DisabledDashboard from './components/DisabledDashboard';
+import GovernmentSchemesPage from './components/GovernmentSchemesPage';
 import theme from './theme';
 
 const PrivateRoute = ({ children, userType }) => {
@@ -53,6 +54,16 @@ const App = () => {
               element={
                 <PrivateRoute userType="disabled">
                   <DisabledDashboard />
+                </PrivateRoute>
+              }
+            />
+            
+            {/* Government Schemes Route */}
+            <Route
+              path="/government-schemes"
+              element={
+                <PrivateRoute userType="disabled">
+                  <GovernmentSchemesPage />
                 </PrivateRoute>
               }
             />

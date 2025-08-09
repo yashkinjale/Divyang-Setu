@@ -480,7 +480,7 @@ const DisabledDashboard = () => {
     { icon: WishlistIcon, text: 'My Wishlist', section: 'wishlist' },
     { icon: ProgressIcon, text: 'Donation Progress', section: 'progress' },
     { icon: JobIcon, text: 'Job Recommendations', section: 'jobs' },
-    { icon: SchemeIcon, text: 'Government Schemes', section: 'schemes' },
+    { icon: SchemeIcon, text: 'Government Schemes', section: 'schemes', route: '/government-schemes' },
     { icon: CommunityIcon, text: 'Community Forum', section: 'community' },
     { icon: MessageIcon, text: 'Messages', section: 'messages' },
   ];
@@ -501,7 +501,13 @@ const DisabledDashboard = () => {
             icon={item.icon}
             text={item.text}
             active={activeSection === item.section}
-            onClick={() => setActiveSection(item.section)}
+            onClick={() => {
+              if (item.route) {
+                navigate(item.route);
+              } else {
+                setActiveSection(item.section);
+              }
+            }}
           />
         ))}
       </List>

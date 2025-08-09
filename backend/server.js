@@ -10,6 +10,7 @@ const { errorHandler } = require('./utils/errorHandler');
 const donorRoutes = require('./routes/donorRoutes');
 const disabledRoutes = require('./routes/disabledRoutes');
 const wishlistRoutes = require('./routes/wishlist');
+const schemesRoutes = require('./routes/schemesRoutes');
 
 dotenv.config();
 const app = express();
@@ -44,6 +45,7 @@ console.log('Registering routes...');
 app.use('/api/donors', donorRoutes);
 app.use('/api/disabled', disabledRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/schemes', schemesRoutes);
 
 console.log('Routes registered successfully');
 
