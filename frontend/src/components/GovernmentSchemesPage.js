@@ -286,132 +286,130 @@ const GovernmentSchemesPage = () => {
 
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}><CircularProgress /></Box>;
   if (error) return (
-    <Container sx={{ py: 4 }}>
+    <Box sx={{ py: 4 }}>
       <Alert severity="error">{error}</Alert>
       <Button variant="contained" onClick={() => window.location.reload()} sx={{ mt: 2 }}>Retry</Button>
-    </Container>
+    </Box>
   );
 
   const currentSchemes = filteredSchemes.slice((page - 1) * schemesPerPage, page * schemesPerPage);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 2 }}>
-      <Container maxWidth="lg">
-        {showContent && (
-          <>
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold' }}>Government Schemes for Disabled Persons</Typography>
-                <Typography variant="h6" color="text.secondary">Find schemes tailored to your needs. Use the filters below to narrow down your search or explore our recommendations.</Typography>
-              </Box>
-            </motion.div>
+    <Box sx={{ bgcolor: 'background.default' }}>
+      {showContent && (
+        <>
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold' }}>Government Schemes for Disabled Persons</Typography>
+              <Typography variant="h6" color="text.secondary">Find schemes tailored to your needs. Use the filters below to narrow down your search or explore our recommendations.</Typography>
+            </Box>
+          </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-              <Box sx={{ mb: 4 }}>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <TextField
-                    fullWidth
-                    placeholder="Search for schemes..."
-                    value={tempSearchTerm}
-                    onChange={(e) => setTempSearchTerm(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && applySearch()}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>,
-                      endAdornment: tempSearchTerm && <InputAdornment position="end"><IconButton onClick={() => setTempSearchTerm('')}><Typography variant="body2">✕</Typography></IconButton></InputAdornment>
-                    }}
-                  />
-                  <Button variant="contained" onClick={applySearch}>Search</Button>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
+            <Box sx={{ mb: 4 }}>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  placeholder="Search for schemes..."
+                  value={tempSearchTerm}
+                  onChange={(e) => setTempSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && applySearch()}
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>,
+                    endAdornment: tempSearchTerm && <InputAdornment position="end"><IconButton onClick={() => setTempSearchTerm('')}><Typography variant="body2">✕</Typography></IconButton></InputAdornment>
+                  }}
+                />
+                <Button variant="contained" onClick={applySearch}>Search</Button>
+              </Box>
+              {searchTerm && <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{filteredSchemes.length} scheme{filteredSchemes.length !== 1 ? 's' : ''} found for "{searchTerm}"</Typography>}
+            </Box>
+          </motion.div>
+
+          <FilterPanel
+            filters={filters}
+            tempFilters={tempFilters}
+            setTempFilters={setTempFilters}
+            onClearFilters={clearAllFilters}
+            onApplyFilters={applyFilters}
+            hasActiveFilters={hasActiveFilters()}
+            resultCount={filteredSchemes.length}
+          />
+
+          {/* Recommendations first unless filtering */}
+          {recommendedSchemes.length > 0 && !hasActiveFilters() && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }}>
+              <Box sx={{ mb: 6 }}>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>Recommended Schemes</Typography>
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    sm: 'repeat(2, 1fr)',
+                    lg: 'repeat(3, 1fr)'
+                  },
+                  gap: 3,
+                  width: '100%'
+                }}>
+                  {recommendedSchemes.slice(0, 3).map((scheme, i) => (
+                    <motion.div 
+                      key={scheme.id}
+                      initial={{ opacity: 0, y: 20 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                      transition={{ duration: 0.6, delay: 0.6 + i * 0.1 }}
+                      style={{ height: '520px' }}
+                    >
+                      <SchemeCard scheme={scheme} onViewDetails={handleViewDetails} />
+                    </motion.div>
+                  ))}
                 </Box>
-                {searchTerm && <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{filteredSchemes.length} scheme{filteredSchemes.length !== 1 ? 's' : ''} found for "{searchTerm}"</Typography>}
               </Box>
             </motion.div>
+          )}
 
-            <FilterPanel
-              filters={filters}
-              tempFilters={tempFilters}
-              setTempFilters={setTempFilters}
-              onClearFilters={clearAllFilters}
-              onApplyFilters={applyFilters}
-              hasActiveFilters={hasActiveFilters()}
-              resultCount={filteredSchemes.length}
-            />
-
-            {/* Recommendations first unless filtering */}
-            {recommendedSchemes.length > 0 && !hasActiveFilters() && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }}>
-                <Box sx={{ mb: 6 }}>
-                  <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>Recommended Schemes</Typography>
-                  <Box sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                      xs: '1fr',
-                      sm: 'repeat(2, 1fr)',
-                      lg: 'repeat(3, 1fr)'
-                    },
-                    gap: 3,
-                    width: '100%'
-                  }}>
-                    {recommendedSchemes.slice(0, 3).map((scheme, i) => (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.6 }}>
+            <Box>
+              <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>All Available Schemes</Typography>
+              {currentSchemes.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 8 }}>
+                  <Typography variant="h6" color="text.secondary">No schemes found matching your criteria.</Typography>
+                  <Typography variant="body2" color="text.secondary">Try adjusting your search or filters.</Typography>
+                </Box>
+              ) : (
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    sm: 'repeat(2, 1fr)',
+                    lg: 'repeat(3, 1fr)'
+                  },
+                  gap: 3,
+                  width: '100%'
+                }}>
+                  <AnimatePresence>
+                    {currentSchemes.map((scheme, i) => (
                       <motion.div 
                         key={scheme.id}
-                        initial={{ opacity: 0, y: 20 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        transition={{ duration: 0.6, delay: 0.6 + i * 0.1 }}
+                        initial={{ opacity: 0, scale: 0.9 }} 
+                        animate={{ opacity: 1, scale: 1 }} 
+                        exit={{ opacity: 0, scale: 0.9 }} 
+                        transition={{ duration: 0.4, delay: i * 0.1 }}
                         style={{ height: '520px' }}
                       >
                         <SchemeCard scheme={scheme} onViewDetails={handleViewDetails} />
                       </motion.div>
                     ))}
-                  </Box>
+                  </AnimatePresence>
                 </Box>
-              </motion.div>
-            )}
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.6 }}>
-              <Box>
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>All Available Schemes</Typography>
-                {currentSchemes.length === 0 ? (
-                  <Box sx={{ textAlign: 'center', py: 8 }}>
-                    <Typography variant="h6" color="text.secondary">No schemes found matching your criteria.</Typography>
-                    <Typography variant="body2" color="text.secondary">Try adjusting your search or filters.</Typography>
-                  </Box>
-                ) : (
-                  <Box sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                      xs: '1fr',
-                      sm: 'repeat(2, 1fr)',
-                      lg: 'repeat(3, 1fr)'
-                    },
-                    gap: 3,
-                    width: '100%'
-                  }}>
-                    <AnimatePresence>
-                      {currentSchemes.map((scheme, i) => (
-                        <motion.div 
-                          key={scheme.id}
-                          initial={{ opacity: 0, scale: 0.9 }} 
-                          animate={{ opacity: 1, scale: 1 }} 
-                          exit={{ opacity: 0, scale: 0.9 }} 
-                          transition={{ duration: 0.4, delay: i * 0.1 }}
-                          style={{ height: '520px' }}
-                        >
-                          <SchemeCard scheme={scheme} onViewDetails={handleViewDetails} />
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </Box>
-                )}
-                {filteredSchemes.length > schemesPerPage && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                    <Pagination count={Math.ceil(filteredSchemes.length / schemesPerPage)} page={page} onChange={(_, v) => setPage(v)} color="primary" size="large" />
-                  </Box>
-                )}
-              </Box>
-            </motion.div>
-          </>
-        )}
-      </Container>
+              )}
+              {filteredSchemes.length > schemesPerPage && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                  <Pagination count={Math.ceil(filteredSchemes.length / schemesPerPage)} page={page} onChange={(_, v) => setPage(v)} color="primary" size="large" />
+                </Box>
+              )}
+            </Box>
+          </motion.div>
+        </>
+      )}
       <SchemeDetailsModal open={modalOpen} scheme={selectedScheme} onClose={() => setModalOpen(false)} />
     </Box>
   );
