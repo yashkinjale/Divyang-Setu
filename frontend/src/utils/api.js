@@ -80,4 +80,17 @@ export const wishlistApi = {
   })
 };
 
+export const jobApi = {
+  getJobs: (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.query) queryParams.append('query', params.query);
+    if (params.location) queryParams.append('location', params.location);
+    if (params.page) queryParams.append('page', params.page);
+    if (params.num_pages) queryParams.append('num_pages', params.num_pages);
+    
+    const url = `/jobs${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return api.get(url);
+  }
+};
+
 export default api; 

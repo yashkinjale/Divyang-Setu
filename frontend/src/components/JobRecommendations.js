@@ -1,502 +1,419 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import {
   Box,
+  Container,
   Typography,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Card,
   CardContent,
   CardActions,
   Button,
   Chip,
-  Avatar,
   Grid,
-  Container,
-  IconButton,
-  Tooltip,
-  Divider,
-  Paper
+  TextField,
+  InputAdornment,
+  CircularProgress,
+  Alert,
+  Skeleton
 } from '@mui/material';
 import {
   Search as SearchIcon,
   LocationOn as LocationIcon,
   Business as BusinessIcon,
-  Work as WorkIcon,
-  Accessible as AccessibleIcon,
-  Computer as ComputerIcon,
-  Visibility as VisibilityIcon,
+  Schedule as ScheduleIcon,
+  Accessibility as AccessibilityIcon,
+  WheelchairPickup as WheelchairIcon,
   Hearing as HearingIcon,
-  DirectionsWalk as MobilityIcon,
-  Send as ApplyIcon
+  ColorLens as ColorLensIcon,
+  Diversity3 as DiversityIcon,
+  HomeWork as RemoteIcon
 } from '@mui/icons-material';
-
-// Mock data for jobs
-const mockJobs = [
-  {
-    id: 1,
-    title: "Frontend Developer",
-    company: "TechSoft Solutions",
-    location: "Mumbai, India",
-    tags: ["Remote", "Wheelchair Accessible", "Screen Reader Compatible"],
-    salary: "₹8-10 LPA",
-    logo: "https://via.placeholder.com/50",
-    type: "Full-time",
-    accessibility: ["Wheelchair Accessible", "Screen Reader Compatible", "High Contrast UI"]
-  },
-  {
-    id: 2,
-    title: "Data Analyst",
-    company: "Insight Corp",
-    location: "Bengaluru, India",
-    tags: ["On-site", "Visually Accessible Tools", "Assistive Technology"],
-    salary: "₹6-8 LPA",
-    logo: "https://via.placeholder.com/50",
-    type: "Full-time",
-    accessibility: ["Visually Accessible Tools", "Assistive Technology", "Flexible Hours"]
-  },
-  {
-    id: 3,
-    title: "Content Writer",
-    company: "Digital Media Hub",
-    location: "Remote",
-    tags: ["Remote", "Flexible Hours", "Voice Recognition"],
-    salary: "₹4-6 LPA",
-    logo: "https://via.placeholder.com/50",
-    type: "Part-time",
-    accessibility: ["Voice Recognition", "Flexible Hours", "Remote Work"]
-  },
-  {
-    id: 4,
-    title: "Customer Support Specialist",
-    company: "ServiceFirst",
-    location: "Delhi, India",
-    tags: ["On-site", "Hearing Aid Compatible", "Sign Language Support"],
-    salary: "₹5-7 LPA",
-    logo: "https://via.placeholder.com/50",
-    type: "Full-time",
-    accessibility: ["Hearing Aid Compatible", "Sign Language Support", "Accessible Workspace"]
-  },
-  {
-    id: 5,
-    title: "UI/UX Designer",
-    company: "Creative Studios",
-    location: "Pune, India",
-    tags: ["Hybrid", "Accessible Design Tools", "Color Blind Friendly"],
-    salary: "₹7-9 LPA",
-    logo: "https://via.placeholder.com/50",
-    type: "Full-time",
-    accessibility: ["Accessible Design Tools", "Color Blind Friendly", "Flexible Schedule"]
-  },
-  {
-    id: 6,
-    title: "Software Tester",
-    company: "QualityTech",
-    location: "Chennai, India",
-    tags: ["Remote", "Accessibility Testing", "Assistive Software"],
-    salary: "₹5-7 LPA",
-    logo: "https://via.placeholder.com/50",
-    type: "Contract",
-    accessibility: ["Accessibility Testing", "Assistive Software", "Remote Work"]
-  }
-];
-
-// Recommended jobs (first 3 for demonstration)
-const recommendedJobs = mockJobs.slice(0, 3);
+import api from '../utils/api';
 
 const JobRecommendations = () => {
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [locationFilter, setLocationFilter] = useState('');
-  const [accessibilityFilter, setAccessibilityFilter] = useState('');
-  const [jobTypeFilter, setJobTypeFilter] = useState('');
+  const [location, setLocation] = useState('India');
+  // Accessibility filter state
+  const [filters, setFilters] = useState({
+    wheelchair_accessible: false,
+    remote_friendly: false,
+    inclusive_hiring: false,
+    sign_language_support: false,
+    colorblind_friendly_ui: false,
+  });
 
-  const handleApply = (jobId) => {
-    console.log(`Applying for job ${jobId}`);
-    // Add application logic here
+  useEffect(() => {
+    fetchJobs();
+  }, [location]);
+
+  const fetchJobs = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Fetching jobs with params:', { location });
+
+      const response = await api.get('/jobs', {
+        params: {
+          location: location || 'India',
+          ...Object.fromEntries(
+            Object.entries(filters).filter(([, v]) => v)
+          )
+        },
+        // Extend timeout for potentially slower upstream aggregation
+        timeout: 20000
+      });
+
+      console.log(`Successfully fetched ${response.data.jobs?.length || 0} jobs`);
+      console.log('Search strategy used:', response.data.searchStrategy);
+      
+      setJobs(response.data.jobs || []);
+      
+      if (response.data.note) {
+        console.log('API Note:', response.data.note);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+      setError('Failed to fetch jobs. Please try again later.');
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getAccessibilityIcon = (tag) => {
-    if (tag.includes('Wheelchair') || tag.includes('Mobility')) return <MobilityIcon />;
-    if (tag.includes('Screen Reader') || tag.includes('Visual')) return <VisibilityIcon />;
-    if (tag.includes('Hearing') || tag.includes('Sign Language')) return <HearingIcon />;
-    if (tag.includes('Voice') || tag.includes('Speech')) return <AccessibleIcon />;
-    return <ComputerIcon />;
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      fetchJobsWithQuery(searchQuery, location);
+    } else {
+      fetchJobs();
+    }
   };
 
-  const getChipColor = (tag) => {
-    if (tag.includes('Remote')) return 'primary';
-    if (tag.includes('Accessible') || tag.includes('Wheelchair')) return 'success';
-    if (tag.includes('Screen Reader') || tag.includes('Visual')) return 'info';
-    if (tag.includes('Hearing') || tag.includes('Voice')) return 'warning';
-    return 'default';
+  const fetchJobsWithQuery = async (query, loc) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Fetching jobs with specific query:', { query, location: loc });
+
+      const response = await api.get('/jobs', {
+        params: {
+          query: query,
+          location: loc || 'India',
+          ...Object.fromEntries(
+            Object.entries(filters).filter(([, v]) => v)
+          )
+        },
+        timeout: 20000
+      });
+
+      console.log(`Successfully fetched ${response.data.jobs?.length || 0} jobs for query: "${query}"`);
+      
+      setJobs(response.data.jobs || []);
+      
+    } catch (error) {
+      console.error('Error fetching jobs with query:', error);
+      setError('Failed to fetch jobs. Please try again later.');
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const JobCard = ({ job, isRecommended = false }) => (
-    <Card 
-      sx={{ 
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: 2,
-        boxShadow: isRecommended ? 3 : 1,
-        border: isRecommended ? '2px solid #87CEFA' : '1px solid #f5f5f5',
-        transition: 'all 0.3s ease',
-        height: isRecommended ? 'auto' : { xs: 340, sm: 360, md: 380 },
-        width: '100%',
-        minWidth: 0,
-        boxSizing: 'border-box',
-        '&:hover': {
-          boxShadow: 4,
-          transform: 'translateY(-2px)'
-        }
-      }}
-    >
-      <CardContent sx={{ 
-        flexGrow: 1, 
-        p: 2, 
-        display: 'flex', 
-        flexDirection: 'column',
-        minHeight: 200,
-        overflow: 'hidden'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-          <Avatar 
-            src={job.logo} 
-            sx={{ width: 40, height: 40, mr: 2, flexShrink: 0 }}
-          >
-            <BusinessIcon />
-          </Avatar>
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography variant="h6" component="h3" sx={{ 
-              fontSize: '1rem', 
-              fontWeight: 600,
-              lineHeight: 1.2,
-              mb: 0.5,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
-              {job.title}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ 
-              fontSize: '0.875rem',
-              lineHeight: 1.2,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
-              {job.company}
-            </Typography>
-          </Box>
+  const JobSkeleton = () => (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Skeleton variant="text" height={32} width="80%" />
+        <Skeleton variant="text" height={24} width="60%" />
+        <Skeleton variant="text" height={20} width="40%" />
+        <Box sx={{ mt: 2 }}>
+          <Skeleton variant="rectangular" height={60} />
         </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <LocationIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary', flexShrink: 0 }} />
-          <Typography variant="body2" color="text.secondary" sx={{ 
-            fontSize: '0.875rem',
-            lineHeight: 1.2,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}>
-            {job.location}
-          </Typography>
-        </Box>
-
-        <Typography variant="body2" sx={{ 
-          mb: 2, 
-          fontSize: '0.875rem', 
-          fontWeight: 500,
-          lineHeight: 1.2
-        }}>
-          {job.salary}
-        </Typography>
-
-        <Box sx={{ 
-          display: 'flex', 
-          flexWrap: 'wrap', 
-          gap: 0.5, 
-          mb: 2,
-          flexGrow: 1,
-          alignItems: 'flex-end'
-        }}>
-          {job.tags.slice(0, 3).map((tag, index) => (
-            <Chip
-              key={index}
-              label={tag}
-              size="small"
-              color={getChipColor(tag)}
-              icon={getAccessibilityIcon(tag)}
-              sx={{ 
-                fontSize: '0.75rem',
-                height: 24,
-                '& .MuiChip-icon': { fontSize: 14 }
-              }}
-            />
-          ))}
+        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+          <Skeleton variant="rounded" width={80} height={24} />
+          <Skeleton variant="rounded" width={100} height={24} />
         </Box>
       </CardContent>
-
-      <CardActions sx={{ p: 2, pt: 0 }}>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<ApplyIcon />}
-          onClick={() => handleApply(job.id)}
-          sx={{
-            bgcolor: '#87CEFA',
-            color: 'white',
-            '&:hover': {
-              bgcolor: '#5F9EA0'
-            },
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            width: '100%'
-          }}
-        >
-          Apply Now
-        </Button>
-      </CardActions>
     </Card>
   );
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      {/* Header Section */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ 
-          fontWeight: 600, 
-          mb: 1,
-          fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
-        }}>
-          Job Recommendations
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Header */}
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Typography variant="h3" component="h1" gutterBottom>
+          Inclusive Job Opportunities
         </Typography>
-        <Typography variant="subtitle1" color="text.secondary" sx={{ 
-          mb: 3,
-          fontSize: '1rem'
-        }}>
-          Jobs tailored to your skills and accessibility needs
+        <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
+          Discover disability-friendly employers and accessible workplaces
         </Typography>
 
-        {/* Search and Filters */}
-        <Paper sx={{ p: 3, mb: 4, bgcolor: '#f5f5f5' }}>
+        {/* Search Filters */}
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap', mb: 2 }}>
+          <TextField
+            placeholder="Search jobs (optional)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ minWidth: 300 }}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <TextField
+            placeholder="Location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LocationIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ minWidth: 200 }}
+          />
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            startIcon={<SearchIcon />}
+            disabled={loading}
+            size="large"
+          >
+            Search
+          </Button>
+        </Box>
+
+        {/* Accessibility Toggles */}
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mb: 3 }}>
+          <Chip
+            icon={<WheelchairIcon />}
+            label="Wheelchair Accessible"
+            color={filters.wheelchair_accessible ? 'primary' : 'default'}
+            variant={filters.wheelchair_accessible ? 'filled' : 'outlined'}
+            onClick={() => setFilters(f => ({ ...f, wheelchair_accessible: !f.wheelchair_accessible }))}
+          />
+          <Chip
+            icon={<RemoteIcon />}
+            label="Remote Friendly"
+            color={filters.remote_friendly ? 'primary' : 'default'}
+            variant={filters.remote_friendly ? 'filled' : 'outlined'}
+            onClick={() => setFilters(f => ({ ...f, remote_friendly: !f.remote_friendly }))}
+          />
+          <Chip
+            icon={<DiversityIcon />}
+            label="Inclusive Hiring"
+            color={filters.inclusive_hiring ? 'primary' : 'default'}
+            variant={filters.inclusive_hiring ? 'filled' : 'outlined'}
+            onClick={() => setFilters(f => ({ ...f, inclusive_hiring: !f.inclusive_hiring }))}
+          />
+          <Chip
+            icon={<HearingIcon />}
+            label="Sign Language Support"
+            color={filters.sign_language_support ? 'primary' : 'default'}
+            variant={filters.sign_language_support ? 'filled' : 'outlined'}
+            onClick={() => setFilters(f => ({ ...f, sign_language_support: !f.sign_language_support }))}
+          />
+          <Chip
+            icon={<ColorLensIcon />}
+            label="Colorblind-friendly UI"
+            color={filters.colorblind_friendly_ui ? 'primary' : 'default'}
+            variant={filters.colorblind_friendly_ui ? 'filled' : 'outlined'}
+            onClick={() => setFilters(f => ({ ...f, colorblind_friendly_ui: !f.colorblind_friendly_ui }))}
+          />
+        </Box>
+      </Box>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <Grid container spacing={3}>
+          {[1, 2, 3, 4, 5, 6].map((item) => (
+            <Grid key={item} size={{ xs: 12, sm: 6, lg: 4 }}>
+              <JobSkeleton />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {/* No Jobs Found */}
+      {!loading && jobs.length === 0 && !error && (
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <AccessibilityIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h5" gutterBottom>
+            No jobs found
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Try adjusting your search criteria or check back later for new opportunities.
+          </Typography>
+          <Button variant="contained" onClick={fetchJobs}>
+            Reload Jobs
+          </Button>
+        </Box>
+      )}
+
+      {/* Jobs Grid */}
+      {!loading && jobs.length > 0 && (
+        <>
+          <Typography variant="h6" sx={{ mb: 3 }}>
+            Found {jobs.length} inclusive job opportunities
+          </Typography>
+          
           <Grid container spacing={3}>
-            {/* Search Field */}
-            <Grid item xs={12} lg={4}>
-              <FormControl fullWidth>
-                <TextField
-                  fullWidth
-                  placeholder="Search job title, company, or keyword..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  InputProps={{
-                    startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      bgcolor: 'white',
-                      borderRadius: 2,
-                      height: 56
-                    }
-                  }}
-                />
-              </FormControl>
-            </Grid>
-            
-            {/* Location/Remote Filter */}
-            <Grid item xs={12} sm={6} lg={2.5}>
-              <FormControl fullWidth>
-                <InputLabel>Location/Remote</InputLabel>
-                <Select
-                  value={locationFilter}
-                  label="Location/Remote"
-                  onChange={(e) => setLocationFilter(e.target.value)}
+            {jobs.map((job) => (
+              <Grid key={job.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+                <Card 
                   sx={{ 
-                    bgcolor: 'white', 
-                    borderRadius: 2,
-                    height: 56,
-                    minWidth: 180,
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'transparent'
-                    },
-                    '& .MuiSelect-select': {
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    transition: 'transform 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 3
                     }
                   }}
                 >
-                  <MenuItem value="">All</MenuItem>
-                  <MenuItem value="remote">Remote</MenuItem>
-                  <MenuItem value="onsite">On-site</MenuItem>
-                  <MenuItem value="hybrid">Hybrid</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            {/* Accessibility Filter */}
-            <Grid item xs={12} sm={6} lg={2.5}>
-              <FormControl fullWidth>
-                <InputLabel>Accessibility</InputLabel>
-                <Select
-                  value={accessibilityFilter}
-                  label="Accessibility"
-                  onChange={(e) => setAccessibilityFilter(e.target.value)}
-                  sx={{ 
-                    bgcolor: 'white', 
-                    borderRadius: 2,
-                    height: 56,
-                    minWidth: 200,
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'transparent'
-                    },
-                    '& .MuiSelect-select': {
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }
-                  }}
-                >
-                  <MenuItem value="">All</MenuItem>
-                  <MenuItem value="wheelchair">Wheelchair Accessible</MenuItem>
-                  <MenuItem value="visual">Visual Accessibility</MenuItem>
-                  <MenuItem value="hearing">Hearing Accessibility</MenuItem>
-                  <MenuItem value="cognitive">Cognitive Support</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            {/* Job Type Filter */}
-            <Grid item xs={12} sm={6} lg={2.5}>
-              <FormControl fullWidth>
-                <InputLabel>Job Type</InputLabel>
-                <Select
-                  value={jobTypeFilter}
-                  label="Job Type"
-                  onChange={(e) => setJobTypeFilter(e.target.value)}
-                  sx={{ 
-                    bgcolor: 'white', 
-                    borderRadius: 2,
-                    height: 56,
-                    minWidth: 160,
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'transparent'
-                    },
-                    '& .MuiSelect-select': {
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }
-                  }}
-                >
-                  <MenuItem value="">All</MenuItem>
-                  <MenuItem value="full-time">Full-time</MenuItem>
-                  <MenuItem value="part-time">Part-time</MenuItem>
-                  <MenuItem value="contract">Contract</MenuItem>
-                  <MenuItem value="internship">Internship</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            {/* Clear Filters Button */}
-            <Grid item xs={12} sm={6} lg={0.5}>
-              <Button
-                variant="contained"
-                onClick={() => {
-                  setSearchQuery('');
-                  setLocationFilter('');
-                  setAccessibilityFilter('');
-                  setJobTypeFilter('');
-                }}
-                sx={{
-                  height: 56,
-                  borderRadius: 2,
-                  bgcolor: '#87CEFA',
-                  color: 'white',
-                  minWidth: 120,
-                  '&:hover': {
-                    bgcolor: '#5F9EA0'
-                  }
-                }}
-                fullWidth
-              >
-                Clear
-              </Button>
-            </Grid>
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    {/* Company Logo & Title */}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                      {job.logo && (
+                        <Box
+                          component="img"
+                          src={job.logo}
+                          alt={`${job.company} logo`}
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 1,
+                            mr: 2,
+                            objectFit: 'contain'
+                          }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
+                          {job.title}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <BusinessIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                          <Typography variant="body2" color="text.secondary">
+                            {job.company}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    {/* Location & Salary */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <LocationIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                      <Typography variant="body2" color="text.secondary">
+                        {job.location}
+                      </Typography>
+                      {job.isRemote && (
+                        <Chip label="Remote" size="small" color="primary" sx={{ ml: 1 }} />
+                      )}
+                    </Box>
+
+                    {job.salary && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <ScheduleIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                        <Typography variant="body2" color="text.secondary">
+                          {job.salary}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {/* Job Description */}
+                    <Typography variant="body2" sx={{ mb: 2 }} color="text.secondary">
+                      {job.description && job.description.length > 150
+                        ? `${job.description.substring(0, 150)}...`
+                        : job.description}
+                    </Typography>
+
+                    {/* Tags */}
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+                      {job.tags?.slice(0, 3).map((tag, index) => (
+                        <Chip
+                          key={index}
+                          label={tag}
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                        />
+                      ))}
+                    </Box>
+
+                    {/* Accessibility Features */}
+                    {job.accessibility && job.accessibility.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="caption" color="primary" sx={{ fontWeight: 'bold', mb: 1, display: 'block' }}>
+                          <AccessibilityIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                          Accessibility Features:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {job.accessibility.slice(0, 2).map((feature, index) => (
+                            <Chip
+                              key={index}
+                              label={feature}
+                              size="small"
+                              color="success"
+                              variant="outlined"
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+
+                    {/* Accessibility Flags Row */}
+                    {job.accessibilityFlags && (
+                      <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {job.accessibilityFlags.wheelchairAccessible && <Chip size="small" icon={<WheelchairIcon sx={{ fontSize: 16 }} />} label="Wheelchair" />}
+                        {job.accessibilityFlags.remoteFriendly && <Chip size="small" icon={<RemoteIcon sx={{ fontSize: 16 }} />} label="Remote" />}
+                        {job.accessibilityFlags.inclusiveHiring && <Chip size="small" icon={<DiversityIcon sx={{ fontSize: 16 }} />} label="Inclusive" />}
+                        {job.accessibilityFlags.signLanguageSupport && <Chip size="small" icon={<HearingIcon sx={{ fontSize: 16 }} />} label="Sign Lang" />}
+                        {job.accessibilityFlags.colorblindFriendlyUI && <Chip size="small" icon={<ColorLensIcon sx={{ fontSize: 16 }} />} label="Colorblind" />}
+                      </Box>
+                    )}
+                  </CardContent>
+
+                  <CardActions sx={{ p: 2, pt: 0 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      onClick={() => {
+                        if (job.applyUrl) {
+                          window.open(job.applyUrl, '_blank');
+                        } else {
+                          console.log('No direct apply URL available for:', job.title);
+                        }
+                      }}
+                    >
+                      {job.applyUrl ? 'Apply Now' : 'View Details'}
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
-        </Paper>
-      </Box>
-
-      {/* Recommended Jobs Section */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" component="h2" sx={{ 
-          mb: 3, 
-          fontWeight: 600,
-          fontSize: { xs: '1.25rem', sm: '1.5rem' }
-        }}>
-          Recommended for You
-        </Typography>
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 3, 
-          overflowX: 'auto',
-          pb: 2,
-          px: 0.5,
-          '&::-webkit-scrollbar': {
-            height: 8,
-          },
-          '&::-webkit-scrollbar-track': {
-            bgcolor: '#f5f5f5',
-            borderRadius: 4,
-          },
-          '&::-webkit-scrollbar-thumb': {
-            bgcolor: '#87CEFA',
-            borderRadius: 4,
-          }
-        }}>
-          {recommendedJobs.map((job) => (
-            <Box key={job.id} sx={{ 
-              minWidth: 320, 
-              maxWidth: 320,
-              flexShrink: 0,
-              height: 'fit-content'
-            }}>
-              <JobCard job={job} isRecommended={true} />
-            </Box>
-          ))}
-        </Box>
-      </Box>
-
-      {/* All Jobs Section */}
-      <Box>
-        <Typography variant="h5" component="h2" sx={{ 
-          mb: 3, 
-          fontWeight: 600,
-          fontSize: { xs: '1.25rem', sm: '1.5rem' }
-        }}>
-          All Available Jobs
-        </Typography>
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 3,
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)',
-              lg: 'repeat(3, 1fr)',
-              xl: 'repeat(3, 1fr)'
-            }
-          }}
-        >
-          {mockJobs.map((job) => (
-            <Box key={job.id} sx={{ minWidth: 0, display: 'flex' }}>
-              <JobCard job={job} />
-            </Box>
-          ))}
-        </Box>
-      </Box>
+        </>
+      )}
     </Container>
   );
 };

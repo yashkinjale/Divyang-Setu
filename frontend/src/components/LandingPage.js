@@ -58,11 +58,22 @@ const Navbar = () => {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 3 }}>
-          <Link
-            component="button"
-            variant="body1"
+          <Button
+            variant="text"
             color="inherit"
-            underline="none"
+            sx={{ 
+              '&:hover': { 
+                color: theme.palette.primary.main,
+                transition: 'color 0.2s'
+              }
+            }}
+            onClick={() => navigate('/job-postings')}
+          >
+            Job Postings
+          </Button>
+          <Button
+            variant="text"
+            color="inherit"
             sx={{ 
               '&:hover': { 
                 color: theme.palette.primary.main,
@@ -71,12 +82,10 @@ const Navbar = () => {
             }}
           >
             About Us
-          </Link>
-          <Link
-            component="button"
-            variant="body1"
+          </Button>
+          <Button
+            variant="text"
             color="inherit"
-            underline="none"
             sx={{ 
               '&:hover': { 
                 color: theme.palette.primary.main,
@@ -85,7 +94,7 @@ const Navbar = () => {
             }}
           >
             Contact Us
-          </Link>
+          </Button>
         </Box>
       </Toolbar>
     </AppBar>
@@ -137,7 +146,22 @@ const TestimonialCard = ({ name, role, content, avatar }) => {
     <Card sx={{ height: '100%', p: 3 }}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Avatar src={avatar} sx={{ width: 56, height: 56, mr: 2 }} />
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              mr: 2,
+              bgcolor: '#87CEFA',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
+              {name.charAt(0)}
+            </Typography>
+          </Box>
           <Box>
             <Typography variant="h6">{name}</Typography>
             <Typography variant="body2" color="text.secondary">{role}</Typography>

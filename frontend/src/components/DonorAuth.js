@@ -8,6 +8,7 @@ import {
   Paper,
   Link,
   useTheme,
+  CircularProgress,
 } from '@mui/material';
 import { donorApi } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -23,6 +24,7 @@ const DonorAuth = ({ isLogin }) => {
     address: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -33,15 +35,71 @@ const DonorAuth = ({ isLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+
     try {
+      console.log('Submitting form data:', formData);
+      
       const response = isLogin
-        ? await donorApi.login(formData)
+        ? await donorApi.login({ email: formData.email, password: formData.password })
         : await donorApi.register(formData);
       
-      login(response.data.donor, response.data.token);
-      navigate('/donor/dashboard');
+      console.log('API Response:', response);
+      console.log('Response data:', response.data);
+
+      // Check different possible response structures
+      let donor, token;
+      
+      if (response.data) {
+        // Try different response structures
+        if (response.data.donor && response.data.token) {
+          donor = response.data.donor;
+          token = response.data.token;
+        } else if (response.data.user && response.data.token) {
+          donor = response.data.user;
+          token = response.data.token;
+        } else if (response.data.data) {
+          // Nested data structure
+          donor = response.data.data.donor || response.data.data.user;
+          token = response.data.data.token || response.data.token;
+        } else {
+          // Direct structure
+          donor = response.data;
+          token = response.data.token || localStorage.getItem('token');
+        }
+      }
+
+      console.log('Extracted donor:', donor);
+      console.log('Extracted token:', token);
+
+      if (!donor) {
+        throw new Error('No donor data received from server');
+      }
+
+      // Call login from AuthContext
+      await login(donor, token);
+      
+      console.log('Login successful, navigating to dashboard');
+      navigate('/donor/dashboard', { replace: true });
+      
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred');
+      console.error('Login/Register error:', err);
+      console.error('Error response:', err.response);
+      
+      let errorMessage = 'An error occurred';
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,7 +136,7 @@ const DonorAuth = ({ isLogin }) => {
           </Typography>
 
           {error && (
-            <Typography color="error" align="center" sx={{ mb: 2 }}>
+            <Typography color="error" align="center" sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: 1 }}>
               {error}
             </Typography>
           )}
@@ -94,6 +152,7 @@ const DonorAuth = ({ isLogin }) => {
                 value={formData.name}
                 onChange={handleChange}
                 autoFocus
+                disabled={loading}
               />
             )}
             <TextField
@@ -106,6 +165,7 @@ const DonorAuth = ({ isLogin }) => {
               value={formData.email}
               onChange={handleChange}
               autoFocus={isLogin}
+              disabled={loading}
             />
             <TextField
               margin="normal"
@@ -116,6 +176,7 @@ const DonorAuth = ({ isLogin }) => {
               type="password"
               value={formData.password}
               onChange={handleChange}
+              disabled={loading}
             />
             {!isLogin && (
               <>
@@ -127,6 +188,7 @@ const DonorAuth = ({ isLogin }) => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
+                  disabled={loading}
                 />
                 <TextField
                   margin="normal"
@@ -138,6 +200,7 @@ const DonorAuth = ({ isLogin }) => {
                   onChange={handleChange}
                   multiline
                   rows={2}
+                  disabled={loading}
                 />
               </>
             )}
@@ -148,8 +211,10 @@ const DonorAuth = ({ isLogin }) => {
               color="secondary"
               size="large"
               sx={{ mt: 3, mb: 2 }}
+              disabled={loading}
+              startIcon={loading && <CircularProgress size={20} color="inherit" />}
             >
-              {isLogin ? 'Log In' : 'Create Account'}
+              {loading ? 'Processing...' : (isLogin ? 'Log In' : 'Create Account')}
             </Button>
             <Box sx={{ textAlign: 'center' }}>
               <Link
@@ -170,4 +235,4 @@ const DonorAuth = ({ isLogin }) => {
   );
 };
 
-export default DonorAuth; 
+export default DonorAuth;

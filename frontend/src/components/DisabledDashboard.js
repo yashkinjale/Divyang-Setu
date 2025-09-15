@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   List,
-  ListItem,
+  ListItemButton,
   ListItemText,
   ListItemIcon,
   Divider,
@@ -34,6 +34,7 @@ import {
   Favorite as WishlistIcon,
   TrendingUp as ProgressIcon,
   Business as JobIcon,
+  Business as BusinessIcon,
   Policy as SchemeIcon,
   People as CommunityIcon,
   Message as MessageIcon,
@@ -46,8 +47,7 @@ import { useAuth } from '../context/AuthContext';
 const SidebarItem = ({ icon: Icon, text, onClick, active }) => {
   const theme = useTheme();
   return (
-    <ListItem
-      button
+    <ListItemButton
       onClick={onClick}
       sx={{
         borderRadius: 1,
@@ -64,7 +64,7 @@ const SidebarItem = ({ icon: Icon, text, onClick, active }) => {
         <Icon />
       </ListItemIcon>
       <ListItemText primary={text} />
-    </ListItem>
+    </ListItemButton>
   );
 };
 
@@ -117,6 +117,8 @@ const DisabledDashboard = () => {
     if (path.endsWith('/dashboard') || path.endsWith('/dashboard/')) return 'dashboard';
     if (path.includes('/schemes')) return 'schemes';
     if (path.includes('/wishlist')) return 'wishlist';
+    if (path.includes('/jobs')) return 'jobs';
+    if (path.includes('/job-postings')) return 'job-postings';
     if (path.includes('/community')) return 'community';
     if (path.includes('/profile')) return 'profile';
     if (path.includes('/settings')) return 'settings';
@@ -149,6 +151,7 @@ const DisabledDashboard = () => {
     { icon: WishlistIcon, text: 'My Wishlist', section: 'wishlist', route: '/disabled/dashboard/wishlist' },
     { icon: ProgressIcon, text: 'Donation Progress', section: 'progress', route: '/disabled/dashboard/progress' },
     { icon: JobIcon, text: 'Job Recommendations', section: 'jobs', route: '/disabled/dashboard/jobs' },
+    { icon: BusinessIcon, text: 'Job Postings', section: 'job-postings', route: '/job-postings' },
     { icon: SchemeIcon, text: 'Government Schemes', section: 'schemes', route: '/disabled/dashboard/schemes' },
     { icon: CommunityIcon, text: 'Community Forum', section: 'community', route: '/disabled/dashboard/community' },
     { icon: MessageIcon, text: 'Messages', section: 'messages', route: '/disabled/dashboard/messages' },

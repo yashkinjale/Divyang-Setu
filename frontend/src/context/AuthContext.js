@@ -54,14 +54,22 @@ export const AuthProvider = ({ children }) => {
     if (token && userData) {
       try {
         const parsedUser = JSON.parse(userData);
+        
+        // Determine user type and validation endpoint
+        const userType = parsedUser.type || 'donor'; // Default to donor
+        const validationEndpoint = userType === 'donor' 
+          ? `${API_BASE_URL}/api/donor/profile`
+          : `${API_BASE_URL}/api/disabled/profile`;
+        
         // Validate token by making a test request
-        axios.get(`${API_BASE_URL}/api/disabled/profile`, {
+        axios.get(validationEndpoint, {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(() => {
             setUser(parsedUser);
           })
-          .catch(() => {
+          .catch((error) => {
+            console.error('Token validation failed:', error);
             // If token validation fails, clear storage
             localStorage.removeItem('token');
             localStorage.removeItem('user');
@@ -81,17 +89,38 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData, token) => {
+    console.log('AuthContext login called with:', { userData, token });
+    
+    // Determine user type based on the data structure or context
+    let userType = 'donor'; // Default to donor
+    
+    // Try to determine user type from various sources
+    if (userData.type) {
+      userType = userData.type;
+    } else if (userData.disability || userData.disabilityType) {
+      userType = 'disabled';
+    } else if (userData.address && !userData.disability) {
+      userType = 'donor';
+    }
+    
     // Ensure userData has a type property
     const userWithType = {
       ...userData,
-      type: userData.type || (userData.email.includes('donor') ? 'donor' : 'disabled')
+      type: userType,
+      id: userData.id || userData._id // Handle both id formats
     };
+    
+    console.log('Setting user with type:', userWithType);
+    
     setUser(userWithType);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userWithType));
+    
+    console.log('Login successful, user set in AuthContext');
   };
 
   const logout = () => {
+    console.log('Logging out user');
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -103,7 +132,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     loading,
     isAuthenticated: !!user,
-    userType: user?.type
+    userType: user?.type || null
   };
 
   return (
@@ -119,4 +148,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};

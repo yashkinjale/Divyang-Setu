@@ -14,6 +14,8 @@ import ProfilePage from './components/ProfilePage';
 import SchemeSlider from './components/SchemeSlider';
 import FundStatusCard from './components/FundStatusCard';
 import JobRecommendations from './components/JobRecommendations';
+import JobPostings from './components/JobPostings';
+import DonorDashboard from './components/DonorDashboard';
 import theme from './theme';
 
 const PrivateRoute = ({ children, userType }) => {
@@ -119,6 +121,9 @@ const App = () => {
           <Routes>
             {/* Landing Page */}
             <Route path="/" element={<LandingPage />} />
+            
+            {/* Job Postings - Public Route */}
+            <Route path="/job-postings" element={<JobPostings />} />
 
             {/* Donor Routes */}
             <Route path="/donor/login" element={<DonorAuth isLogin={true} />} />
@@ -127,7 +132,23 @@ const App = () => {
               path="/donor/dashboard"
               element={
                 <PrivateRoute userType="donor">
-                  <div>Donor Dashboard</div>
+                  <DonorDashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/donor/dashboard/money-donation"
+              element={
+                <PrivateRoute userType="donor">
+                  <DonorDashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/donor/dashboard/equipment-donation"
+              element={
+                <PrivateRoute userType="donor">
+                  <DonorDashboard />
                 </PrivateRoute>
               }
             />
