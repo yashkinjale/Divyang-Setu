@@ -9,8 +9,8 @@ import {
   Link,
   useTheme,
 } from '@mui/material';
-import { disabledApi } from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import { disabledApi } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
 

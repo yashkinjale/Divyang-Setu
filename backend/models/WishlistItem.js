@@ -1,59 +1,73 @@
 const mongoose = require('mongoose');
 
-const wishlistItemSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  itemName: {
+const supportingDocumentSchema = new mongoose.Schema({
+  fileName: {
     type: String,
     required: true
+  },
+  fileUrl: {
+    type: String,
+    required: true
+  },
+  fileType: {
+    type: String,
+    required: true
+  },
+  uploadDate: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const wishlistItemSchema = new mongoose.Schema({
+  itemName: {
+    type: String,
+    required: true,
+    trim: true
   },
   description: {
     type: String,
-    required: true
+    required: true,
+    trim: true
+  },
+  category: {
+    type: String,
+    required: true,
+    enum: ['Medical', 'Education', 'Mobility', 'Technology', 'Other']
   },
   amountRequired: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
+  },
+  amountRaised: {
+    type: Number,
+    default: 0,
+    min: 0
   },
   quantity: {
     type: Number,
-    default: 1
+    default: 1,
+    min: 1
+  },
+  urgencyLevel: {
+    type: String,
+    enum: ['Low', 'Medium', 'High'],
+    default: 'Medium'
   },
   deadline: {
     type: Date
   },
-  urgencyLevel: {
-    type: String,
-    enum: ['Low', 'Medium', 'High', 'Urgent'],
-    default: 'Medium'
-  },
-  category: {
-    type: String,
-    enum: ['Medical', 'Education', 'Mobility', 'Technology', 'Other'],
-    required: true
-  },
-  supportingDocuments: [{
-    fileName: String,
-    fileUrl: String,
-    fileType: String,
-    uploadedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
+  supportingDocuments: [supportingDocumentSchema],
   status: {
     type: String,
-    enum: ['Pending', 'In Progress', 'Fulfilled', 'Cancelled'],
-    default: 'Pending'
+    enum: ['active', 'completed', 'cancelled'],
+    default: 'active'
   },
-  progress: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 100
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Disabled',
+    required: true
   },
   createdAt: {
     type: Date,
@@ -63,12 +77,19 @@ const wishlistItemSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true
 });
 
-// Update the updatedAt timestamp before saving
-wishlistItemSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
+// Virtual for progress percentage
+wishlistItemSchema.virtual('progress').get(function() {
+  if (this.amountRequired === 0) return 0;
+  return Math.min(Math.round((this.amountRaised / this.amountRequired) * 100), 100);
 });
 
-module.exports = mongoose.model('WishlistItem', wishlistItemSchema); 
+// Virtual for completion status
+wishlistItemSchema.virtual('isCompleted').get(function() {
+  return this.amountRaised >= this.amountRequired || this.status === 'completed';
+});
+
+module.exports = mongoose.model('WishlistItem', wishlistItemSchema);

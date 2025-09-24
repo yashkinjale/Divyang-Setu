@@ -34,7 +34,7 @@ api.interceptors.request.use(
   }
 );
 
-// Add response interceptor for debugging
+// Add response interceptor for debugging and error handling
 api.interceptors.response.use(
   (response) => {
     console.log('API Response:', {
@@ -51,25 +51,48 @@ api.interceptors.response.use(
       data: error.response?.data,
       message: error.message
     });
+
+    // Handle 401 errors (unauthorized) - redirect to login
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/disabled/login';
+    }
+
     return Promise.reject(error);
   }
 );
 
-// API endpoints
+// API endpoints - Updated to match your backend routes
 export const donorApi = {
-  register: (data) => api.post('/donors/register', data),
-  login: (data) => api.post('/donors/login', data),
-  getProfile: () => api.get('/donors/profile'),
+  register: (data) => api.post('/auth/donors/register', data), // Update this based on your donor routes
+  login: (data) => api.post('/auth/donors/login', data),       // Update this based on your donor routes
+  getProfile: () => api.get('/profile/donors'),               // Update this based on your donor routes
 };
 
 export const disabledApi = {
-  register: (data) => api.post('/disabled/register', data),
-  login: (data) => api.post('/disabled/login', data),
-  getProfile: () => api.get('/disabled/profile'),
+  register: (data) => api.post('/disabled/register', data),          // POST /api/disabled/register
+  login: (data) => api.post('/disabled/login', data),                // POST /api/disabled/login
+  getProfile: () => api.get('/disabled/profile'),                    // GET /api/disabled/profile
+  updateProfile: (data) => api.put('/disabled/profile', data),       // PUT /api/disabled/profile
+  uploadProfileImage: (formData) => api.post('/disabled/profile/image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  deleteProfileImage: () => api.delete('/disabled/profile/image'),
+  uploadDocument: (formData) => api.post('/disabled/profile/documents', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  getDocuments: () => api.get('/disabled/profile/documents'),
+  deleteDocument: (documentId) => api.delete(`/disabled/profile/documents/${documentId}`),
+  getActivity: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return api.get(`/disabled/profile/activity${query ? `?${query}` : ''}`);
+  },
 };
 
 export const wishlistApi = {
   getAll: () => api.get('/wishlist'),
+  getByUser: () => api.get('/wishlist/user'), // If you have user-specific wishlist endpoint
   create: (data) => api.post('/wishlist', data),
   update: (id, data) => api.patch(`/wishlist/${id}`, data),
   delete: (id) => api.delete(`/wishlist/${id}`),
@@ -93,4 +116,42 @@ export const jobApi = {
   }
 };
 
-export default api; 
+// Additional helper functions
+export const authHelpers = {
+  // Check if user is authenticated
+  isAuthenticated: () => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    return !!(token && user);
+  },
+
+  // Get current user
+  getCurrentUser: () => {
+    try {
+      const user = localStorage.getItem('user');
+      return user ? JSON.parse(user) : null;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return null;
+    }
+  },
+
+  // Get token
+  getToken: () => {
+    return localStorage.getItem('token');
+  },
+
+  // Clear auth data
+  clearAuth: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  },
+
+  // Store auth data
+  storeAuth: (userData, token) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+  }
+};
+
+export default api

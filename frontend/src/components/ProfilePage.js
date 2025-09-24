@@ -1,278 +1,670 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Container,
-  Paper,
   Typography,
-  Avatar,
-  Grid,
-  Button,
   TextField,
-  Divider,
-  Chip,
-  IconButton,
+  Button,
+  Grid,
   Card,
   CardContent,
-  useTheme,
+  Paper,
+  Chip,
+  Avatar,
+  Divider,
   Tab,
   Tabs,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Badge,
-  LinearProgress
+  Alert,
+  CircularProgress,
+  LinearProgress,
+  IconButton,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Save as SaveIcon,
-  Cancel as CancelIcon,
-  LocationOn as LocationIcon,
+  Close as CloseIcon,
+  LocationOn as LocationOnIcon,
   Phone as PhoneIcon,
   Email as EmailIcon,
   Work as WorkIcon,
   School as SchoolIcon,
-  AccessibilityNew as DisabilityIcon,
-  Verified as VerifiedIcon,
-  Pending as PendingIcon,
-  Error as ErrorIcon,
-  Description as DocumentIcon,
-  Favorite as WishlistIcon,
-  History as HistoryIcon
+  Visibility as VisibilityIcon,
+  CheckCircle as CheckCircleIcon,
+  Schedule as ScheduleIcon,
+  Warning as WarningIcon,
+  Description as DescriptionIcon,
+  Favorite as FavoriteIcon,
+  Timeline as TimelineIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
-import WishlistSection from './WishlistSection';
+import { motion, AnimatePresence } from 'framer-motion';
+import { disabledApi } from '../utils/api';
 
 const ProfilePage = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
   const [profileData, setProfileData] = useState({
-    name: 'Rahul Sharma',
-    email: 'rahul.sharma@example.com',
-    phone: '+91 98765 43210',
-    location: 'Mumbai, Maharashtra',
-    disabilityType: 'Visual Impairment',
-    education: 'B.Tech in Computer Science',
-    occupation: 'Software Developer',
-    documents: [
-      { name: 'Disability Certificate', status: 'verified', date: '15 Mar 2024' },
-      { name: 'Income Certificate', status: 'pending', date: '20 Mar 2024' },
-      { name: 'Identity Proof', status: 'verified', date: '10 Mar 2024' }
-    ],
-    wishlist: [
-      { item: 'Screen Reader Software', progress: 75 },
-      { item: 'Braille Display', progress: 30 }
-    ],
-    recentActivity: [
-      { action: 'Applied for Scholarship', date: '25 Mar 2024' },
-      { action: 'Updated Profile', date: '20 Mar 2024' },
-      { action: 'Added Wishlist Item', date: '15 Mar 2024' }
-    ]
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    address: "",
+    disabilityType: "",
+    needs: "",
+    education: "",
+    occupation: "",
+    documents: [],
+    wishlist: [],
+    recentActivity: [],
+    isVerified: false,
+    verificationStatus: "pending",
+    profileCompletionPercentage: 0,
   });
+
+  const [editedData, setEditedData] = useState({});
+
+  // Get auth token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem("token");
+  };
+
+  // Fetch profile data from backend
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await disabledApi.getProfile();
+      const data = response.data;
+      setProfileData(data);
+      setEditedData(data);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      if (err.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+      } else {
+        setError("Failed to load profile data. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateProfile = async () => {
+    try {
+      setSaving(true);
+      const payload = {
+        name: editedData.name,
+        email: editedData.email,
+        phone: editedData.phone,
+        location: editedData.location,
+        address: editedData.address,
+        disabilityType: editedData.disabilityType,
+        needs: editedData.needs,
+        education: editedData.education,
+        occupation: editedData.occupation,
+      };
+
+      const response = await disabledApi.updateProfile(payload);
+      const result = response.data;
+
+      setSuccessMessage(result.message || "Profile updated successfully!");
+      setProfileData(editedData);
+      setIsEditing(false);
+
+      setTimeout(() => {
+        fetchProfile();
+      }, 1000);
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      if (err.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+      } else {
+        setError(
+          err.response?.data?.message ||
+            "Failed to update profile. Please try again."
+        );
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   const handleEdit = () => {
     setIsEditing(true);
+    setEditedData({ ...profileData });
   };
 
   const handleSave = () => {
-    setIsEditing(false);
-    // Here you would typically save the changes to the backend
+    updateProfile();
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Reset form data if needed
+    setEditedData({ ...profileData });
+  };
+
+  const handleInputChange = (field, value) => {
+    setEditedData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'verified':
-        return <VerifiedIcon color="success" />;
-      case 'pending':
-        return <PendingIcon color="warning" />;
-      case 'error':
-        return <ErrorIcon color="error" />;
+      case "verified":
+        return <CheckCircleIcon sx={{ color: 'success.main' }} />;
+      case "pending":
+        return <ScheduleIcon sx={{ color: 'warning.main' }} />;
+      case "error":
+      case "rejected":
+        return <WarningIcon sx={{ color: 'error.main' }} />;
       default:
-        return null;
+        return <ScheduleIcon sx={{ color: 'grey.400' }} />;
     }
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "verified":
+        return "success";
+      case "pending":
+        return "warning";
+      case "error":
+      case "rejected":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        bgcolor: 'background.default'
+      }}>
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
+
+  const TabPanel = ({ children, value, index }) => (
+    <div hidden={value !== index}>
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Grid container spacing={3}>
-        {/* Profile Header */}
-        <Grid item xs={12}>
-          <Paper 
-            elevation={0}
-            sx={{ 
-              p: 3, 
-              borderRadius: 2,
-              background: `linear-gradient(45deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
-              color: 'white'
-            }}
-          >
-            <Grid container spacing={3} alignItems="center">
-              <Grid item>
-                <Badge
-                  overlap="circular"
-                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                  badgeContent={
-                    <IconButton 
-                      size="small" 
-                      sx={{ 
-                        bgcolor: 'white',
-                        '&:hover': { bgcolor: 'grey.100' }
-                      }}
-                    >
-                      <EditIcon fontSize="small" color="primary" />
-                    </IconButton>
-                  }
-                >
-                  <Avatar
-                    sx={{ 
-                      width: 100, 
-                      height: 100,
-                      border: '4px solid white'
+    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
+      <Container maxWidth="xl">
+        {/* Success/Error Messages */}
+        <AnimatePresence>
+          {(error || successMessage) && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Alert 
+                severity={error ? "error" : "success"}
+                action={
+                  <IconButton
+                    color="inherit"
+                    size="small"
+                    onClick={() => {
+                      setError(null);
+                      setSuccessMessage("");
                     }}
                   >
-                    {profileData.name.charAt(0)}
-                  </Avatar>
-                </Badge>
-              </Grid>
-              <Grid item xs>
-                <Typography variant="h4" gutterBottom>
-                  {profileData.name}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  <Chip 
-                    icon={<DisabilityIcon />} 
-                    label={profileData.disabilityType}
-                    sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}
-                  />
-                  <Chip 
-                    icon={<WorkIcon />} 
-                    label={profileData.occupation}
-                    sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}
-                  />
-                  <Chip 
-                    icon={<SchoolIcon />} 
-                    label={profileData.education}
-                    sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}
-                  />
+                    <CloseIcon />
+                  </IconButton>
+                }
+                sx={{ mb: 3 }}
+              >
+                {error || successMessage}
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Profile Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <Paper elevation={2} sx={{ p: 4, mb: 4, borderRadius: 2 }}>
+            <Grid container spacing={3} alignItems="center">
+              <Grid item xs={12} md={8}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+                  <Box sx={{ position: 'relative' }}>
+                    <Avatar
+                      sx={{ 
+                        width: 100, 
+                        height: 100, 
+                        bgcolor: 'primary.light',
+                        fontSize: '2.5rem'
+                      }}
+                      src={profileData.profileImage}
+                    >
+                      {profileData.profileImage ? null : <PersonIcon sx={{ fontSize: '3rem' }} />}
+                    </Avatar>
+                    {profileData.isVerified && (
+                      <CheckCircleIcon
+                        sx={{
+                          position: 'absolute',
+                          bottom: -4,
+                          right: -4,
+                          color: 'success.main',
+                          bgcolor: 'white',
+                          borderRadius: '50%',
+                          fontSize: '2rem'
+                        }}
+                      />
+                    )}
+                  </Box>
+
+                  <Box sx={{ flex: 1 }}>
+                    {isEditing ? (
+                      <TextField
+                        value={editedData.name}
+                        onChange={(e) => handleInputChange("name", e.target.value)}
+                        variant="outlined"
+                        size="medium"
+                        fullWidth
+                        sx={{ mb: 2, maxWidth: 400 }}
+                        InputProps={{
+                          sx: { fontSize: '1.5rem', fontWeight: 'bold' }
+                        }}
+                      />
+                    ) : (
+                      <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
+                        {profileData.name}
+                      </Typography>
+                    )}
+
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                      <Chip
+                        icon={<VisibilityIcon />}
+                        label={profileData.disabilityType || "Not specified"}
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                      />
+                      <Chip
+                        icon={<WorkIcon />}
+                        label={profileData.occupation || "Not specified"}
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                      />
+                      <Chip
+                        icon={<SchoolIcon />}
+                        label={profileData.education || "Not specified"}
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                      />
+                    </Box>
+
+                    {profileData.profileCompletionPercentage < 100 && (
+                      <Box sx={{ maxWidth: 400 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          Profile Completion: {profileData.profileCompletionPercentage}%
+                        </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={profileData.profileCompletionPercentage}
+                          sx={{ height: 8, borderRadius: 1 }}
+                        />
+                      </Box>
+                    )}
+                  </Box>
                 </Box>
               </Grid>
-              <Grid item>
-                <Button
-                  variant="contained"
-                  startIcon={isEditing ? <SaveIcon /> : <EditIcon />}
-                  onClick={isEditing ? handleSave : handleEdit}
-                  sx={{ 
-                    bgcolor: 'white',
-                    color: 'primary.main',
-                    '&:hover': {
-                      bgcolor: 'grey.100'
-                    }
-                  }}
-                >
-                  {isEditing ? 'Save Changes' : 'Edit Profile'}
-                </Button>
+
+              <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                  <Button
+                    variant="contained"
+                    startIcon={saving ? <CircularProgress size={16} color="inherit" /> : (isEditing ? <SaveIcon /> : <EditIcon />)}
+                    onClick={isEditing ? handleSave : handleEdit}
+                    disabled={saving}
+                    size="large"
+                  >
+                    {saving ? "Saving..." : (isEditing ? "Save Changes" : "Edit Profile")}
+                  </Button>
+                  {isEditing && (
+                    <Button
+                      variant="outlined"
+                      startIcon={<CloseIcon />}
+                      onClick={handleCancel}
+                      size="large"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </Box>
               </Grid>
             </Grid>
           </Paper>
-        </Grid>
+        </motion.div>
 
-        {/* Profile Content */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3, borderRadius: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Contact Information
-            </Typography>
-            <List>
-              <ListItem>
-                <ListItemIcon>
-                  <EmailIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Email"
-                  secondary={profileData.email}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <PhoneIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Phone"
-                  secondary={profileData.phone}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <LocationIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Location"
-                  secondary={profileData.location}
-                />
-              </ListItem>
-            </List>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3, borderRadius: 2 }}>
-            <Tabs 
-              value={activeTab} 
-              onChange={(e, newValue) => setActiveTab(newValue)}
-              sx={{ mb: 3 }}
+        <Grid container spacing={3}>
+          {/* Contact Information */}
+          <Grid item xs={12} lg={4}>
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <Tab icon={<DocumentIcon />} label="Documents" />
-              <Tab icon={<WishlistIcon />} label="Wishlist" />
-              <Tab icon={<HistoryIcon />} label="Activity" />
-            </Tabs>
+              <Paper elevation={1} sx={{ p: 3, height: 'fit-content' }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
+                  Contact Information
+                </Typography>
 
-            {activeTab === 0 && (
-              <List>
-                {profileData.documents.map((doc, index) => (
-                  <ListItem key={index}>
-                    <ListItemIcon>
-                      {getStatusIcon(doc.status)}
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary={doc.name}
-                      secondary={`Last updated: ${doc.date}`}
-                    />
-                    <Chip 
-                      label={doc.status}
-                      color={doc.status === 'verified' ? 'success' : 'warning'}
-                      size="small"
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            )}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {[
+                    { icon: <EmailIcon color="primary" />, label: "Email", field: "email", type: "email" },
+                    { icon: <PhoneIcon color="primary" />, label: "Phone", field: "phone", type: "tel" },
+                    { icon: <LocationOnIcon color="primary" />, label: "Location", field: "location", type: "text" }
+                  ].map(({ icon, label, field, type }) => (
+                    <Box key={field} sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                      <Box sx={{ 
+                        p: 1, 
+                        bgcolor: 'primary.50', 
+                        borderRadius: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        minWidth: 40,
+                        height: 40
+                      }}>
+                        {icon}
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                          {label}
+                        </Typography>
+                        {isEditing ? (
+                          <TextField
+                            type={type}
+                            value={editedData[field]}
+                            onChange={(e) => handleInputChange(field, e.target.value)}
+                            fullWidth
+                            size="small"
+                            variant="outlined"
+                          />
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            {profileData[field] || "Not provided"}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
 
-            {activeTab === 1 && (
-              <WishlistSection />
-            )}
+                {isEditing && (
+                  <>
+                    <Divider sx={{ my: 3 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+                      Additional Information
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {[
+                        { label: "Disability Type", field: "disabilityType", multiline: false },
+                        { label: "Education", field: "education", multiline: false },
+                        { label: "Occupation", field: "occupation", multiline: false },
+                        { label: "Address", field: "address", multiline: true, rows: 2 },
+                        { label: "Needs/Requirements", field: "needs", multiline: true, rows: 3 }
+                      ].map(({ label, field, multiline, rows }) => (
+                        <TextField
+                          key={field}
+                          label={label}
+                          value={editedData[field]}
+                          onChange={(e) => handleInputChange(field, e.target.value)}
+                          fullWidth
+                          multiline={multiline}
+                          rows={rows}
+                          variant="outlined"
+                          size="small"
+                        />
+                      ))}
+                    </Box>
+                  </>
+                )}
+              </Paper>
+            </motion.div>
+          </Grid>
 
-            {activeTab === 2 && (
-              <List>
-                {profileData.recentActivity.map((activity, index) => (
-                  <ListItem key={index}>
-                    <ListItemText 
-                      primary={activity.action}
-                      secondary={activity.date}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            )}
-          </Paper>
+          {/* Main Content */}
+          <Grid item xs={12} lg={8}>
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <Paper elevation={1} sx={{ minHeight: 600 }}>
+                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                  <Tabs
+                    value={activeTab}
+                    onChange={handleTabChange}
+                    aria-label="profile tabs"
+                    variant={isMobile ? "scrollable" : "fullWidth"}
+                    scrollButtons="auto"
+                  >
+                    <Tab icon={<DescriptionIcon />} label="Documents" />
+                    <Tab icon={<FavoriteIcon />} label="Wishlist" />
+                    <Tab icon={<TimelineIcon />} label="Activity" />
+                  </Tabs>
+                </Box>
+
+                {/* Documents Tab */}
+                <TabPanel value={activeTab} index={0}>
+                  {profileData.documents.length === 0 ? (
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      py: 8,
+                      color: 'text.secondary'
+                    }}>
+                      <DescriptionIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
+                      <Typography variant="h6" gutterBottom>
+                        No documents uploaded yet
+                      </Typography>
+                      <Typography variant="body2">
+                        Upload your documents to get verified
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {profileData.documents.map((doc, index) => (
+                        <Card key={doc._id || index} variant="outlined" sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                          <CardContent>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Box sx={{ 
+                                  p: 1, 
+                                  bgcolor: 'primary.50', 
+                                  borderRadius: 1,
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}>
+                                  {getStatusIcon(doc.status)}
+                                </Box>
+                                <Box>
+                                  <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                                    {doc.name}
+                                  </Typography>
+                                  <Typography variant="body2" color="text.secondary">
+                                    Last updated: {doc.date}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                              <Chip
+                                label={doc.status}
+                                color={getStatusColor(doc.status)}
+                                size="small"
+                              />
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </Box>
+                  )}
+                </TabPanel>
+
+                {/* Wishlist Tab */}
+                <TabPanel value={activeTab} index={1}>
+                  {profileData.wishlist.length === 0 ? (
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      py: 8,
+                      color: 'text.secondary'
+                    }}>
+                      <FavoriteIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
+                      <Typography variant="h6" gutterBottom>
+                        No wishlist items yet
+                      </Typography>
+                      <Typography variant="body2">
+                        Add items you need to your wishlist
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      {profileData.wishlist.map((item, index) => (
+                        <Card key={item._id || index} variant="outlined">
+                          <CardContent>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                  {item.item}
+                                </Typography>
+                                {item.description && (
+                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    {item.description}
+                                  </Typography>
+                                )}
+                              </Box>
+                              <Chip
+                                label={`${item.priority || 'medium'} priority`}
+                                color={
+                                  item.priority === "high" ? "error" :
+                                  item.priority === "medium" ? "warning" : "success"
+                                }
+                                size="small"
+                              />
+                            </Box>
+
+                            {item.estimatedCost && (
+                              <Box sx={{ mb: 2 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                  <Typography variant="body2">Progress</Typography>
+                                  <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                    ₹{item.currentAmount || 0} / ₹{item.targetAmount}
+                                  </Typography>
+                                </Box>
+                                <LinearProgress
+                                  variant="determinate"
+                                  value={item.progress}
+                                  sx={{ height: 8, borderRadius: 1, mb: 1 }}
+                                />
+                                <Typography variant="caption" color="text.secondary">
+                                  {item.progress}% completed
+                                </Typography>
+                              </Box>
+                            )}
+
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              <Chip label={item.category} size="small" variant="outlined" />
+                              <Chip
+                                label={item.isCompleted ? "Completed" : "In Progress"}
+                                color={item.isCompleted ? "success" : "primary"}
+                                size="small"
+                              />
+                              {item.quantity && (
+                                <Chip label={`Qty: ${item.quantity}`} size="small" variant="outlined" />
+                              )}
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </Box>
+                  )}
+                </TabPanel>
+
+                {/* Activity Tab */}
+                <TabPanel value={activeTab} index={2}>
+                  {profileData.recentActivity.length === 0 ? (
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      py: 8,
+                      color: 'text.secondary'
+                    }}>
+                      <TimelineIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
+                      <Typography variant="h6" gutterBottom>
+                        No recent activity
+                      </Typography>
+                      <Typography variant="body2">
+                        Your activity will appear here
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {profileData.recentActivity.map((activity, index) => (
+                        <Card key={index} variant="outlined" sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                          <CardContent>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                              <Avatar sx={{ bgcolor: 'primary.light', width: 40, height: 40 }}>
+                                <TimelineIcon />
+                              </Avatar>
+                              <Box sx={{ flex: 1 }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mb: 1 }}>
+                                  {activity.action}
+                                </Typography>
+                                {activity.description && (
+                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    {activity.description}
+                                  </Typography>
+                                )}
+                                <Typography variant="caption" color="text.secondary">
+                                  {activity.date}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </Box>
+                  )}
+                </TabPanel>
+              </Paper>
+            </motion.div>
+          </Grid>
         </Grid>
-      </Grid>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 
-export default ProfilePage; 
+export default ProfilePage;

@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { Container, Box, Grid, Typography } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import DonorAuth from './components/DonorAuth';
-import DisabledAuth from './components/DisabledAuth';
+import DonorAuth from './components/auth/DonorAuth';
+import DisabledAuth from './components/auth/DisabledAuth';
 import LandingPage from './components/LandingPage';
 import DisabledDashboard from './components/DisabledDashboard';
 import GovernmentSchemesPage from './components/GovernmentSchemesPage';

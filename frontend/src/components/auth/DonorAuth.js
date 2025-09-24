@@ -10,8 +10,8 @@ import {
   useTheme,
   CircularProgress,
 } from '@mui/material';
-import { donorApi } from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import { donorApi } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 
