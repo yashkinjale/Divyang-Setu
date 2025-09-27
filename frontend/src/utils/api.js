@@ -65,25 +65,35 @@ api.interceptors.response.use(
 
 // API endpoints - Updated to match your backend routes
 export const donorApi = {
-  register: (data) => api.post('/auth/donors/register', data), // Update this based on your donor routes
-  login: (data) => api.post('/auth/donors/login', data),       // Update this based on your donor routes
-  getProfile: () => api.get('/profile/donors'),               // Update this based on your donor routes
+  register: (data) => api.post('/donors/register', data), // ✅ matches backend
+  login: (data) => api.post('/donors/login', data),       // ✅ matches backend
+  getProfile: () => api.get('/donors/profile'),           // ✅ adjust if you add profile route
 };
 
+// Updated disabled API to match your existing profileRoutes.js structure
 export const disabledApi = {
+  // Auth endpoints (mounted at /api/disabled/)
   register: (data) => api.post('/disabled/register', data),          // POST /api/disabled/register
   login: (data) => api.post('/disabled/login', data),                // POST /api/disabled/login
-  getProfile: () => api.get('/disabled/profile'),                    // GET /api/disabled/profile
-  updateProfile: (data) => api.put('/disabled/profile', data),       // PUT /api/disabled/profile
+  
+  // Profile endpoints (mounted at /api/disabled/profile/)
+  getProfile: () => api.get('/disabled/profile'),                    // GET /api/disabled/profile/ (matches your profileRoutes.js)
+  updateProfile: (data) => api.put('/disabled/profile', data),       // PUT /api/disabled/profile/ (matches your profileRoutes.js)
+  
+  // Profile image endpoints
   uploadProfileImage: (formData) => api.post('/disabled/profile/image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   deleteProfileImage: () => api.delete('/disabled/profile/image'),
+  
+  // Document endpoints
   uploadDocument: (formData) => api.post('/disabled/profile/documents', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   getDocuments: () => api.get('/disabled/profile/documents'),
   deleteDocument: (documentId) => api.delete(`/disabled/profile/documents/${documentId}`),
+  
+  // Activity endpoint
   getActivity: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return api.get(`/disabled/profile/activity${query ? `?${query}` : ''}`);

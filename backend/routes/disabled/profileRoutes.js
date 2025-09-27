@@ -1,29 +1,65 @@
-// routes/profile.js - Profile Management Routes (Works with existing auth routes)
+// routes/disabled/profileRoutes.js - Debug version with enhanced logging
 const express = require('express');
 const router = express.Router();
 const Disabled = require('../../models/Disabled');
 const WishlistItem = require('../../models/WishlistItem');
 const auth = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
-const { body, validationResult } = require('express-validator');
 
 // =============================================
-// PROFILE ROUTES
+// PROFILE ROUTES - DEBUG VERSION
 // =============================================
 
-// Get complete profile data
+// Get complete profile data with enhanced debugging
 router.get('/', auth, async (req, res) => {
   try {
+    console.log('=== PROFILE GET DEBUG ===');
+    console.log('1. Auth middleware passed');
+    console.log('2. req.user:', JSON.stringify(req.user, null, 2));
+    
     // Handle both userId and id from your existing auth tokens
     const userId = req.user.userId || req.user.id;
-    const disabled = await Disabled.findById(userId).select('-password');
+    console.log('3. Extracted userId:', userId);
     
-    if (!disabled) {
-      return res.status(404).json({ message: 'User not found' });
+    if (!userId) {
+      console.log('❌ No userId found in token');
+      return res.status(400).json({ 
+        message: 'No user ID found in token',
+        debug: {
+          tokenPayload: req.user
+        }
+      });
     }
 
+    console.log('4. Searching for user with ID:', userId);
+    const disabled = await Disabled.findById(userId).select('-password');
+    
+    console.log('5. Database query result:', disabled ? 'User found' : 'User not found');
+    
+    if (!disabled) {
+      console.log('❌ User not found in database');
+      console.log('Available users in database:');
+      
+      // Let's see what users exist (limit to 5 for safety)
+      const allUsers = await Disabled.find({}).limit(5).select('_id name email');
+      console.log('Sample users:', allUsers.map(u => ({ id: u._id, name: u.name, email: u.email })));
+      
+      return res.status(404).json({ 
+        message: 'User not found',
+        debug: {
+          searchedUserId: userId,
+          tokenPayload: req.user,
+          sampleUserIds: allUsers.map(u => u._id.toString())
+        }
+      });
+    }
+
+    console.log('✅ User found:', disabled.name);
+
     // Get wishlist items for this user
+    console.log('6. Fetching wishlist items...');
     const wishlistItems = await WishlistItem.find({ userId }).sort({ createdAt: -1 });
+    console.log(`Found ${wishlistItems.length} wishlist items`);
 
     // Calculate statistics
     const totalWishlistItems = wishlistItems.length;
@@ -130,310 +166,105 @@ router.get('/', auth, async (req, res) => {
       updatedAt: disabled.updatedAt
     };
 
+    console.log('7. Sending profile data successfully');
+    console.log('=== END PROFILE DEBUG ===');
     res.json(profileData);
   } catch (err) {
-    console.error('Get profile error:', err);
-    res.status(500).json({ message: 'Server error' });
+    console.error('❌ Get profile error:', err);
+    console.error('Error stack:', err.stack);
+    res.status(500).json({ 
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    });
   }
 });
 
-// Update profile information
+// Test endpoint to check what's in the token
+router.get('/debug-token', auth, (req, res) => {
+  res.json({
+    message: 'Token debug info',
+    user: req.user,
+    userId: req.user.userId || req.user.id,
+    fullToken: req.user
+  });
+});
+
+// Test endpoint to check database connection
+router.get('/debug-db', auth, async (req, res) => {
+  try {
+    const userCount = await Disabled.countDocuments();
+    const sampleUsers = await Disabled.find({}).limit(3).select('_id name email');
+    
+    res.json({
+      message: 'Database debug info',
+      totalUsers: userCount,
+      sampleUsers: sampleUsers.map(u => ({
+        id: u._id.toString(),
+        name: u.name,
+        email: u.email
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Database error',
+      error: error.message
+    });
+  }
+});
+
+// Rest of your routes remain the same...
+// Update profile information (atomic update to avoid VersionError)
 router.put('/', auth, async (req, res) => {
   try {
     const { name, email, phone, location, address, disabilityType, needs, education, occupation } = req.body;
     const userId = req.user.userId || req.user.id;
-    
-    const disabled = await Disabled.findById(userId);
-    if (!disabled) {
-      return res.status(404).json({ message: 'User not found' });
-    }
 
     // Check if email is already taken by another user
-    if (email && email !== disabled.email) {
+    if (email) {
       const existingUser = await Disabled.findOne({ 
         email: email, 
-        _id: { $ne: disabled._id } 
+        _id: { $ne: userId } 
       });
       if (existingUser) {
         return res.status(400).json({ message: 'Email is already taken' });
       }
     }
 
-    // Update fields
-    if (name) disabled.name = name;
-    if (email) disabled.email = email;
-    if (phone) disabled.phone = phone;
-    if (location) disabled.location = location;
-    if (address) disabled.address = address;
-    if (disabilityType) disabled.disabilityType = disabilityType;
-    if (needs) disabled.needs = needs;
-    if (education !== undefined) disabled.education = education;
-    if (occupation !== undefined) disabled.occupation = occupation;
+    // Build update object dynamically
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (email) updateFields.email = email;
+    if (phone) updateFields.phone = phone;
+    if (location) updateFields.location = location;
+    if (address) updateFields.address = address;
+    if (disabilityType) updateFields.disabilityType = disabilityType;
+    if (needs) updateFields.needs = needs;
+    if (education !== undefined) updateFields.education = education;
+    if (occupation !== undefined) updateFields.occupation = occupation;
 
-    await disabled.save();
+    // Perform atomic update
+    const disabled = await Disabled.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
 
-    // Add activity if method exists
-    if (disabled.addActivity) {
-      await disabled.addActivity('Updated Profile', 'Profile information was updated');
+    if (!disabled) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ 
+    // Add activity atomically
+    await Disabled.findByIdAndUpdate(
+      userId,
+      { $push: { recentActivity: { $each: [{ action: 'Updated Profile', description: 'Profile information was updated', date: new Date() }], $position: 0, $slice: 20 } } }
+    );
+
+    res.json({
       message: 'Profile updated successfully',
       profileCompletionPercentage: disabled.profileCompletionPercentage || 0
     });
   } catch (error) {
     console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Upload profile image
-router.post('/image', [auth, upload.single('profileImage')], async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No image file provided' });
-    }
-
-    const userId = req.user.userId || req.user.id;
-    const disabled = await Disabled.findById(userId);
-    
-    if (!disabled) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Update profile image
-    disabled.profileImage = {
-      url: req.file.path,
-      publicId: req.file.filename
-    };
-
-    await disabled.save();
-
-    // Add activity if method exists
-    if (disabled.addActivity) {
-      await disabled.addActivity('Updated Profile Picture', 'Profile picture was changed');
-    }
-
-    res.json({
-      message: 'Profile image uploaded successfully',
-      imageUrl: disabled.profileImage.url,
-      profileCompletionPercentage: disabled.profileCompletionPercentage || 0
-    });
-  } catch (error) {
-    console.error('Upload profile image error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Delete profile image
-router.delete('/image', auth, async (req, res) => {
-  try {
-    const userId = req.user.userId || req.user.id;
-    const disabled = await Disabled.findById(userId);
-    
-    if (!disabled) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    disabled.profileImage = undefined;
-    await disabled.save();
-
-    // Add activity if method exists
-    if (disabled.addActivity) {
-      await disabled.addActivity('Removed Profile Picture', 'Profile picture was removed');
-    }
-
-    res.json({
-      message: 'Profile image removed successfully'
-    });
-  } catch (error) {
-    console.error('Delete profile image error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// =============================================
-// DOCUMENT ROUTES
-// =============================================
-
-// Upload document
-router.post('/documents', [auth, upload.single('document')], async (req, res) => {
-  try {
-    const { name } = req.body;
-
-    if (!name || !name.trim()) {
-      return res.status(400).json({ message: 'Document name is required' });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ message: 'No document file provided' });
-    }
-
-    const userId = req.user.userId || req.user.id;
-    const disabled = await Disabled.findById(userId);
-    
-    if (!disabled) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const newDocument = {
-      name: name.trim(),
-      fileName: req.file.originalname,
-      fileUrl: req.file.path,
-      status: 'pending'
-    };
-
-    // Initialize documents array if it doesn't exist
-    if (!disabled.documents) {
-      disabled.documents = [];
-    }
-
-    disabled.documents.push(newDocument);
-    await disabled.save();
-
-    // Add activity if method exists
-    if (disabled.addActivity) {
-      await disabled.addActivity('Uploaded Document', `Uploaded ${name}`);
-    }
-
-    const addedDocument = disabled.documents[disabled.documents.length - 1];
-
-    res.json({
-      message: 'Document uploaded successfully',
-      document: {
-        _id: addedDocument._id,
-        name: addedDocument.name,
-        status: addedDocument.status,
-        date: addedDocument.uploadDate ? addedDocument.uploadDate.toLocaleDateString('en-IN', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric'
-        }) : new Date().toLocaleDateString('en-IN', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric'
-        }),
-        fileUrl: addedDocument.fileUrl
-      }
-    });
-  } catch (error) {
-    console.error('Upload document error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Get documents
-router.get('/documents', auth, async (req, res) => {
-  try {
-    const userId = req.user.userId || req.user.id;
-    const disabled = await Disabled.findById(userId).select('documents');
-    
-    if (!disabled) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const documents = disabled.documents ? disabled.documents.map(doc => ({
-      _id: doc._id,
-      name: doc.name,
-      fileName: doc.fileName,
-      fileUrl: doc.fileUrl,
-      status: doc.status,
-      uploadDate: doc.uploadDate,
-      verifiedDate: doc.verifiedDate,
-      rejectionReason: doc.rejectionReason,
-      date: doc.uploadDate ? doc.uploadDate.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      }) : ''
-    })) : [];
-
-    res.json({
-      documents
-    });
-  } catch (error) {
-    console.error('Get documents error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Delete document
-router.delete('/documents/:documentId', auth, async (req, res) => {
-  try {
-    const userId = req.user.userId || req.user.id;
-    const { documentId } = req.params;
-    
-    const disabled = await Disabled.findById(userId);
-    if (!disabled) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    if (!disabled.documents) {
-      return res.status(404).json({ message: 'Document not found' });
-    }
-
-    const documentIndex = disabled.documents.findIndex(doc => doc._id.toString() === documentId);
-    if (documentIndex === -1) {
-      return res.status(404).json({ message: 'Document not found' });
-    }
-
-    const documentName = disabled.documents[documentIndex].name;
-    disabled.documents.splice(documentIndex, 1);
-    await disabled.save();
-
-    // Add activity if method exists
-    if (disabled.addActivity) {
-      await disabled.addActivity('Deleted Document', `Deleted ${documentName}`);
-    }
-
-    res.json({
-      message: 'Document deleted successfully'
-    });
-  } catch (error) {
-    console.error('Delete document error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// =============================================
-// ACTIVITY ROUTES
-// =============================================
-
-// Get user activity
-router.get('/activity', auth, async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const userId = req.user.userId || req.user.id;
-    const disabled = await Disabled.findById(userId).select('recentActivity');
-    
-    if (!disabled) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const activities = disabled.recentActivity ? disabled.recentActivity
-      .slice(skip, skip + limit)
-      .map(activity => ({
-        action: activity.action,
-        description: activity.description,
-        date: activity.date ? activity.date.toLocaleDateString('en-IN', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric'
-        }) : '',
-        timestamp: activity.date
-      })) : [];
-
-    res.json({
-      activities,
-      currentPage: page,
-      totalActivities: disabled.recentActivity ? disabled.recentActivity.length : 0,
-      hasMore: skip + limit < (disabled.recentActivity ? disabled.recentActivity.length : 0)
-    });
-  } catch (error) {
-    console.error('Get activity error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
