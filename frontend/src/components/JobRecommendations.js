@@ -35,6 +35,7 @@ const JobRecommendations = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('India');
+  
   // Accessibility filter state
   const [filters, setFilters] = useState({
     wheelchair_accessible: false,
@@ -44,83 +45,123 @@ const JobRecommendations = () => {
     colorblind_friendly_ui: false,
   });
 
+  // Load jobs on component mount and when filters change
   useEffect(() => {
     fetchJobs();
-  }, [location]);
+  }, [filters]); // Re-fetch when filters change
 
   const fetchJobs = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching jobs with params:', { location });
-
-      const response = await api.get('/jobs', {
-        params: {
-          location: location || 'India',
-          ...Object.fromEntries(
-            Object.entries(filters).filter(([, v]) => v)
-          )
-        },
-        // Extend timeout for potentially slower upstream aggregation
-        timeout: 20000
+      console.log('[FRONTEND] Fetching jobs with params:', { 
+        location, 
+        filters: Object.entries(filters).filter(([k, v]) => v)
       });
 
-      console.log(`Successfully fetched ${response.data.jobs?.length || 0} jobs`);
-      console.log('Search strategy used:', response.data.searchStrategy);
+      // Build query parameters
+      const params = {
+        location: location || 'India',
+        // Only include filters that are true
+        ...Object.fromEntries(
+          Object.entries(filters).filter(([key, value]) => value === true)
+        )
+      };
+
+      console.log('[FRONTEND] API params:', params);
+
+      const response = await api.get('/jobs', {
+        params,
+        timeout: 25000 // Longer timeout for potentially slow backend
+      });
+
+      console.log('[FRONTEND] API response:', {
+        success: response.data.success,
+        count: response.data.count,
+        jobsLength: response.data.jobs?.length,
+        searchStrategy: response.data.searchStrategy,
+        note: response.data.note
+      });
       
-      setJobs(response.data.jobs || []);
+      if (response.data.success && response.data.jobs) {
+        setJobs(response.data.jobs);
+        console.log(`[FRONTEND] Successfully loaded ${response.data.jobs.length} jobs`);
+      } else {
+        throw new Error('Invalid response structure');
+      }
       
       if (response.data.note) {
-        console.log('API Note:', response.data.note);
+        console.log('[FRONTEND] API Note:', response.data.note);
       }
       
     } catch (error) {
-      console.error('Error fetching jobs:', error);
-      setError('Failed to fetch jobs. Please try again later.');
+      console.error('[FRONTEND] Error fetching jobs:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      setError(`Failed to fetch jobs: ${error.message}`);
       setJobs([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      fetchJobsWithQuery(searchQuery, location);
-    } else {
-      fetchJobs();
-    }
-  };
-
-  const fetchJobsWithQuery = async (query, loc) => {
+  const handleSearch = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching jobs with specific query:', { query, location: loc });
+      console.log('[FRONTEND] Searching with query:', searchQuery);
+
+      const params = {
+        location: location || 'India',
+        ...Object.fromEntries(
+          Object.entries(filters).filter(([key, value]) => value === true)
+        )
+      };
+
+      // Add query if provided
+      if (searchQuery.trim()) {
+        params.query = searchQuery.trim();
+      }
+
+      console.log('[FRONTEND] Search params:', params);
 
       const response = await api.get('/jobs', {
-        params: {
-          query: query,
-          location: loc || 'India',
-          ...Object.fromEntries(
-            Object.entries(filters).filter(([, v]) => v)
-          )
-        },
-        timeout: 20000
+        params,
+        timeout: 25000
       });
 
-      console.log(`Successfully fetched ${response.data.jobs?.length || 0} jobs for query: "${query}"`);
+      console.log('[FRONTEND] Search response:', {
+        success: response.data.success,
+        count: response.data.count,
+        jobsLength: response.data.jobs?.length
+      });
       
-      setJobs(response.data.jobs || []);
+      if (response.data.success && response.data.jobs) {
+        setJobs(response.data.jobs);
+      } else {
+        throw new Error('Invalid search response');
+      }
       
     } catch (error) {
-      console.error('Error fetching jobs with query:', error);
-      setError('Failed to fetch jobs. Please try again later.');
+      console.error('[FRONTEND] Search error:', error);
+      setError(`Search failed: ${error.message}`);
       setJobs([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFilterChange = (filterKey) => {
+    console.log('[FRONTEND] Filter changed:', filterKey);
+    setFilters(prev => ({
+      ...prev,
+      [filterKey]: !prev[filterKey]
+    }));
   };
 
   const JobSkeleton = () => (
@@ -198,55 +239,89 @@ const JobRecommendations = () => {
             label="Wheelchair Accessible"
             color={filters.wheelchair_accessible ? 'primary' : 'default'}
             variant={filters.wheelchair_accessible ? 'filled' : 'outlined'}
-            onClick={() => setFilters(f => ({ ...f, wheelchair_accessible: !f.wheelchair_accessible }))}
+            onClick={() => handleFilterChange('wheelchair_accessible')}
+            clickable
           />
           <Chip
             icon={<RemoteIcon />}
             label="Remote Friendly"
             color={filters.remote_friendly ? 'primary' : 'default'}
             variant={filters.remote_friendly ? 'filled' : 'outlined'}
-            onClick={() => setFilters(f => ({ ...f, remote_friendly: !f.remote_friendly }))}
+            onClick={() => handleFilterChange('remote_friendly')}
+            clickable
           />
           <Chip
             icon={<DiversityIcon />}
             label="Inclusive Hiring"
             color={filters.inclusive_hiring ? 'primary' : 'default'}
             variant={filters.inclusive_hiring ? 'filled' : 'outlined'}
-            onClick={() => setFilters(f => ({ ...f, inclusive_hiring: !f.inclusive_hiring }))}
+            onClick={() => handleFilterChange('inclusive_hiring')}
+            clickable
           />
           <Chip
             icon={<HearingIcon />}
             label="Sign Language Support"
             color={filters.sign_language_support ? 'primary' : 'default'}
             variant={filters.sign_language_support ? 'filled' : 'outlined'}
-            onClick={() => setFilters(f => ({ ...f, sign_language_support: !f.sign_language_support }))}
+            onClick={() => handleFilterChange('sign_language_support')}
+            clickable
           />
           <Chip
             icon={<ColorLensIcon />}
             label="Colorblind-friendly UI"
             color={filters.colorblind_friendly_ui ? 'primary' : 'default'}
             variant={filters.colorblind_friendly_ui ? 'filled' : 'outlined'}
-            onClick={() => setFilters(f => ({ ...f, colorblind_friendly_ui: !f.colorblind_friendly_ui }))}
+            onClick={() => handleFilterChange('colorblind_friendly_ui')}
+            clickable
           />
         </Box>
+
+        {/* Active Filters Display */}
+        {Object.entries(filters).some(([, value]) => value) && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Active filters:
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {Object.entries(filters)
+                .filter(([, value]) => value)
+                .map(([key, ]) => (
+                  <Chip
+                    key={key}
+                    label={key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    size="small"
+                    onDelete={() => handleFilterChange(key)}
+                    color="primary"
+                    variant="outlined"
+                  />
+                ))}
+            </Box>
+          </Box>
+        )}
       </Box>
 
       {/* Error Alert */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
       {/* Loading State */}
       {loading && (
-        <Grid container spacing={3}>
-          {[1, 2, 3, 4, 5, 6].map((item) => (
-            <Grid key={item} size={{ xs: 12, sm: 6, lg: 4 }}>
-              <JobSkeleton />
-            </Grid>
-          ))}
-        </Grid>
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
+            <CircularProgress sx={{ mr: 2 }} />
+            <Typography>Loading inclusive job opportunities...</Typography>
+          </Box>
+          <Grid container spacing={3}>
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <Grid key={item} size={{ xs: 12, sm: 6, lg: 4 }}>
+                <JobSkeleton />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       )}
 
       {/* No Jobs Found */}
@@ -257,20 +332,42 @@ const JobRecommendations = () => {
             No jobs found
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 3 }}>
-            Try adjusting your search criteria or check back later for new opportunities.
+            Try adjusting your search criteria or removing some filters to see more opportunities.
           </Typography>
-          <Button variant="contained" onClick={fetchJobs}>
-            Reload Jobs
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button variant="contained" onClick={fetchJobs}>
+              Reload Jobs
+            </Button>
+            <Button 
+              variant="outlined" 
+              onClick={() => {
+                setFilters({
+                  wheelchair_accessible: false,
+                  remote_friendly: false,
+                  inclusive_hiring: false,
+                  sign_language_support: false,
+                  colorblind_friendly_ui: false,
+                });
+                setSearchQuery('');
+              }}
+            >
+              Clear All Filters
+            </Button>
+          </Box>
         </Box>
       )}
 
       {/* Jobs Grid */}
       {!loading && jobs.length > 0 && (
         <>
-          <Typography variant="h6" sx={{ mb: 3 }}>
-            Found {jobs.length} inclusive job opportunities
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">
+              Found {jobs.length} inclusive job opportunities
+            </Typography>
+            <Button variant="outlined" onClick={fetchJobs} disabled={loading}>
+              Refresh
+            </Button>
+          </Box>
           
           <Grid container spacing={3}>
             {jobs.map((job) => (
@@ -280,14 +377,28 @@ const JobRecommendations = () => {
                     height: '100%', 
                     display: 'flex', 
                     flexDirection: 'column',
-                    transition: 'transform 0.2s ease-in-out',
+                    transition: 'all 0.3s ease-in-out',
                     '&:hover': {
                       transform: 'translateY(-4px)',
-                      boxShadow: 3
-                    }
+                      boxShadow: 4
+                    },
+                    border: job.inclusivityScore > 15 ? '2px solid' : '1px solid',
+                    borderColor: job.inclusivityScore > 15 ? 'primary.main' : 'divider'
                   }}
                 >
                   <CardContent sx={{ flexGrow: 1 }}>
+                    {/* High Score Badge */}
+                    {job.inclusivityScore > 15 && (
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                        <Chip 
+                          label="Highly Inclusive" 
+                          color="primary" 
+                          size="small" 
+                          variant="filled"
+                        />
+                      </Box>
+                    )}
+
                     {/* Company Logo & Title */}
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                       {job.logo && (
@@ -321,17 +432,19 @@ const JobRecommendations = () => {
                     </Box>
 
                     {/* Location & Salary */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <LocationIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {job.location}
-                      </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <LocationIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                        <Typography variant="body2" color="text.secondary">
+                          {job.location}
+                        </Typography>
+                      </Box>
                       {job.isRemote && (
-                        <Chip label="Remote" size="small" color="primary" sx={{ ml: 1 }} />
+                        <Chip label="Remote" size="small" color="success" />
                       )}
                     </Box>
 
-                    {job.salary && (
+                    {job.salary && job.salary !== 'Salary Not Specified' && (
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <ScheduleIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
                         <Typography variant="body2" color="text.secondary">
@@ -347,9 +460,15 @@ const JobRecommendations = () => {
                         : job.description}
                     </Typography>
 
-                    {/* Tags */}
+                    {/* Job Type & Tags */}
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
-                      {job.tags?.slice(0, 3).map((tag, index) => (
+                      <Chip
+                        label={job.type}
+                        size="small"
+                        variant="filled"
+                        color="info"
+                      />
+                      {job.tags?.slice(0, 2).map((tag, index) => (
                         <Chip
                           key={index}
                           label={tag}
@@ -362,7 +481,7 @@ const JobRecommendations = () => {
 
                     {/* Accessibility Features */}
                     {job.accessibility && job.accessibility.length > 0 && (
-                      <Box sx={{ mt: 2 }}>
+                      <Box sx={{ mt: 2, p: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
                         <Typography variant="caption" color="primary" sx={{ fontWeight: 'bold', mb: 1, display: 'block' }}>
                           <AccessibilityIcon sx={{ fontSize: 14, mr: 0.5 }} />
                           Accessibility Features:
@@ -377,19 +496,44 @@ const JobRecommendations = () => {
                               variant="outlined"
                             />
                           ))}
+                          {job.accessibility.length > 2 && (
+                            <Chip
+                              label={`+${job.accessibility.length - 2} more`}
+                              size="small"
+                              color="success"
+                              variant="outlined"
+                            />
+                          )}
                         </Box>
                       </Box>
                     )}
 
                     {/* Accessibility Flags Row */}
                     {job.accessibilityFlags && (
-                      <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        {job.accessibilityFlags.wheelchairAccessible && <Chip size="small" icon={<WheelchairIcon sx={{ fontSize: 16 }} />} label="Wheelchair" />}
-                        {job.accessibilityFlags.remoteFriendly && <Chip size="small" icon={<RemoteIcon sx={{ fontSize: 16 }} />} label="Remote" />}
-                        {job.accessibilityFlags.inclusiveHiring && <Chip size="small" icon={<DiversityIcon sx={{ fontSize: 16 }} />} label="Inclusive" />}
-                        {job.accessibilityFlags.signLanguageSupport && <Chip size="small" icon={<HearingIcon sx={{ fontSize: 16 }} />} label="Sign Lang" />}
-                        {job.accessibilityFlags.colorblindFriendlyUI && <Chip size="small" icon={<ColorLensIcon sx={{ fontSize: 16 }} />} label="Colorblind" />}
+                      <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {job.accessibilityFlags.wheelchairAccessible && (
+                          <Chip size="small" icon={<WheelchairIcon sx={{ fontSize: 16 }} />} label="Wheelchair" color="primary" />
+                        )}
+                        {job.accessibilityFlags.remoteFriendly && (
+                          <Chip size="small" icon={<RemoteIcon sx={{ fontSize: 16 }} />} label="Remote" color="primary" />
+                        )}
+                        {job.accessibilityFlags.inclusiveHiring && (
+                          <Chip size="small" icon={<DiversityIcon sx={{ fontSize: 16 }} />} label="Inclusive" color="primary" />
+                        )}
+                        {job.accessibilityFlags.signLanguageSupport && (
+                          <Chip size="small" icon={<HearingIcon sx={{ fontSize: 16 }} />} label="Sign Lang" color="primary" />
+                        )}
+                        {job.accessibilityFlags.colorblindFriendlyUI && (
+                          <Chip size="small" icon={<ColorLensIcon sx={{ fontSize: 16 }} />} label="Colorblind" color="primary" />
+                        )}
                       </Box>
+                    )}
+
+                    {/* Inclusivity Score (for debugging) */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                        Inclusivity Score: {job.inclusivityScore}
+                      </Typography>
                     )}
                   </CardContent>
 
@@ -399,9 +543,15 @@ const JobRecommendations = () => {
                       variant="contained"
                       onClick={() => {
                         if (job.applyUrl) {
-                          window.open(job.applyUrl, '_blank');
+                          window.open(job.applyUrl, '_blank', 'noopener,noreferrer');
                         } else {
                           console.log('No direct apply URL available for:', job.title);
+                        }
+                      }}
+                      sx={{
+                        backgroundColor: job.inclusivityScore > 15 ? 'primary.main' : 'primary.light',
+                        '&:hover': {
+                          backgroundColor: job.inclusivityScore > 15 ? 'primary.dark' : 'primary.main',
                         }
                       }}
                     >
@@ -412,6 +562,15 @@ const JobRecommendations = () => {
               </Grid>
             ))}
           </Grid>
+
+          {/* Load More Button (if needed in future) */}
+          {jobs.length >= 50 && (
+            <Box sx={{ textAlign: 'center', mt: 4 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Showing {jobs.length} jobs. Refine your search for more specific results.
+              </Typography>
+            </Box>
+          )}
         </>
       )}
     </Container>

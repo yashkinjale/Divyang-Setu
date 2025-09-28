@@ -4,7 +4,6 @@ const router = express.Router();
 
 // JSearch API Configuration
 const JSEARCH_API_URL = 'https://jsearch.p.rapidapi.com/search';
-// Read the key at runtime to reflect env changes without process restart or import order issues
 const getRapidApiKey = () => process.env.JSEARCH_API_KEY;
 
 // Broader search terms that are more likely to return results
@@ -37,8 +36,8 @@ const ACCESSIBILITY_KEYWORDS = {
 };
 
 // Simple in-memory cache to reduce upstream calls
-const CACHE_TTL_MS = parseInt(process.env.JOBS_CACHE_TTL_MS || '180000', 10); // 3 minutes
-const jobsCache = new Map(); // key -> { expiry, payload }
+const CACHE_TTL_MS = parseInt(process.env.JOBS_CACHE_TTL_MS || '300000', 10); // 5 minutes
+const jobsCache = new Map();
 
 function buildCacheKey(params) {
   return JSON.stringify(params);
@@ -76,7 +75,6 @@ router.get('/', async (req, res) => {
       query,
       location = 'India',
       page = '1',
-      // Keep backend fast; fewer pages by default
       num_pages = '1',
       wheelchair_accessible,
       remote_friendly,
@@ -85,21 +83,19 @@ router.get('/', async (req, res) => {
       colorblind_friendly_ui
     } = req.query;
 
-    console.log(`Fetching jobs for location: "${location}"`);
+    console.log(`[JOB API] Request params:`, {
+      query,
+      location,
+      filters: {
+        wheelchair_accessible,
+        remote_friendly,
+        inclusive_hiring,
+        sign_language_support,
+        colorblind_friendly_ui
+      }
+    });
 
-    // Fast path: if no API key configured, return mock data immediately
-    if (!getRapidApiKey()) {
-      const mockJobs = getEnhancedMockJobs();
-      return res.json({
-        success: true,
-        count: mockJobs.length,
-        jobs: mockJobs,
-        location,
-        note: 'Using mock data (missing JSEARCH_API_KEY)'
-      });
-    }
-
-    // Build normalized filter params (also used as cache key)
+    // Build normalized filter params
     const filterParams = {
       query: query || '',
       location,
@@ -112,48 +108,74 @@ router.get('/', async (req, res) => {
       colorblind_friendly_ui: parseBoolean(colorblind_friendly_ui)
     };
 
-    // Cache lookup
+    // Check cache first
     const cached = getFromCache(filterParams);
     if (cached) {
+      console.log(`[JOB API] Returning cached results: ${cached.jobs.length} jobs`);
       return res.json(cached);
     }
 
     let allJobs = [];
 
-    // If specific query provided, use it
-    if (query && query !== 'disability inclusive') {
-      const jobs = await fetchJobsFromJSearch(query, location, page, num_pages);
-      allJobs = jobs;
-    } else {
-      // Use multiple broader search terms to get more results
-      console.log('Using multiple search terms to get more inclusive jobs...');
-      
-      // Fetch jobs using different search terms (limit concurrency for responsiveness)
-      const searchPromises = INCLUSIVE_SEARCH_TERMS.slice(0, 3).map(searchTerm =>
-        fetchJobsFromJSearch(`${searchTerm} ${location}`, '', '1', '1')
-      );
-
-      const jobsArrays = await Promise.allSettled(searchPromises);
-      
-      // Combine all successful results
-      jobsArrays.forEach((result, index) => {
-        if (result.status === 'fulfilled' && result.value) {
-          console.log(`Search term "${INCLUSIVE_SEARCH_TERMS[index]}" returned ${result.value.length} jobs`);
-          allJobs = allJobs.concat(result.value);
-        }
-      });
-
-      // Remove duplicates based on job_id
-      allJobs = removeDuplicateJobs(allJobs);
-      
-      // Prioritize jobs with inclusive keywords
-      allJobs = prioritizeInclusiveJobs(allJobs);
+    // Check if API key is available
+    if (!getRapidApiKey()) {
+      console.log(`[JOB API] No API key found, using mock data`);
+      const mockJobs = getEnhancedMockJobs();
+      const payload = {
+        success: true,
+        count: mockJobs.length,
+        jobs: mockJobs,
+        location,
+        note: 'Using mock data (missing JSEARCH_API_KEY)'
+      };
+      saveToCache(filterParams, payload);
+      return res.json(payload);
     }
 
-    console.log(`Total unique jobs fetched: ${allJobs.length}`);
+    // Fetch jobs from API
+    try {
+      if (query && query !== 'disability inclusive') {
+        console.log(`[JOB API] Fetching with specific query: "${query}"`);
+        allJobs = await fetchJobsFromJSearch(query, location, page, num_pages);
+      } else {
+        console.log(`[JOB API] Using multiple search terms strategy`);
+        
+        // Use multiple search terms with limited concurrency
+        const searchPromises = INCLUSIVE_SEARCH_TERMS.slice(0, 3).map(searchTerm =>
+          fetchJobsFromJSearch(`${searchTerm} ${location}`, '', '1', '1')
+            .catch(error => {
+              console.error(`[JOB API] Search term "${searchTerm}" failed:`, error.message);
+              return [];
+            })
+        );
 
-    // If upstream returned nothing, fall back to mock jobs to avoid empty UI
-    if (!allJobs.length) {
+        const jobsArrays = await Promise.all(searchPromises);
+        
+        // Combine all results
+        jobsArrays.forEach((jobs, index) => {
+          if (jobs && jobs.length > 0) {
+            console.log(`[JOB API] Search term "${INCLUSIVE_SEARCH_TERMS[index]}" returned ${jobs.length} jobs`);
+            allJobs = allJobs.concat(jobs);
+          }
+        });
+      }
+
+      console.log(`[JOB API] Total jobs before deduplication: ${allJobs.length}`);
+
+      // Remove duplicates and prioritize
+      allJobs = removeDuplicateJobs(allJobs);
+      allJobs = prioritizeInclusiveJobs(allJobs);
+
+      console.log(`[JOB API] Total unique jobs after processing: ${allJobs.length}`);
+
+    } catch (apiError) {
+      console.error(`[JOB API] API fetch failed:`, apiError.message);
+      allJobs = [];
+    }
+
+    // Fallback to mock data if no results
+    if (allJobs.length === 0) {
+      console.log(`[JOB API] No API results, using mock data`);
       const mockJobs = getEnhancedMockJobs();
       const payload = {
         success: true,
@@ -166,7 +188,7 @@ router.get('/', async (req, res) => {
       return res.json(payload);
     }
 
-    // Transform job data and compute accessibility flags
+    // Transform job data
     const transformedJobs = allJobs.slice(0, 50).map((job, index) => {
       const base = {
         id: job.job_id || `job-${Date.now()}-${index}`,
@@ -195,50 +217,54 @@ router.get('/', async (req, res) => {
       };
     });
 
-    // Sort by inclusivity score (higher first)
+    // Sort by inclusivity score
     transformedJobs.sort((a, b) => b.inclusivityScore - a.inclusivityScore);
 
     // Apply accessibility filters
     const filteredJobs = transformedJobs.filter((job) => {
-      if (parseBoolean(wheelchair_accessible) && !job.accessibilityFlags.wheelchairAccessible) return false;
-      if (parseBoolean(remote_friendly) && !job.accessibilityFlags.remoteFriendly) return false;
-      if (parseBoolean(inclusive_hiring) && !job.accessibilityFlags.inclusiveHiring) return false;
-      if (parseBoolean(sign_language_support) && !job.accessibilityFlags.signLanguageSupport) return false;
-      if (parseBoolean(colorblind_friendly_ui) && !job.accessibilityFlags.colorblindFriendlyUI) return false;
+      if (filterParams.wheelchair_accessible && !job.accessibilityFlags.wheelchairAccessible) return false;
+      if (filterParams.remote_friendly && !job.accessibilityFlags.remoteFriendly) return false;
+      if (filterParams.inclusive_hiring && !job.accessibilityFlags.inclusiveHiring) return false;
+      if (filterParams.sign_language_support && !job.accessibilityFlags.signLanguageSupport) return false;
+      if (filterParams.colorblind_friendly_ui && !job.accessibilityFlags.colorblindFriendlyUI) return false;
       return true;
     });
 
-    const outgoingJobs = filteredJobs.length > 0 ? filteredJobs : transformedJobs;
+    const finalJobs = filteredJobs.length > 0 ? filteredJobs : transformedJobs;
+
+    console.log(`[JOB API] Returning ${finalJobs.length} jobs after filtering`);
 
     const payload = {
       success: true,
-      count: outgoingJobs.length,
-      jobs: outgoingJobs,
+      count: finalJobs.length,
+      jobs: finalJobs,
       searchStrategy: query ? 'specific' : 'multiple_terms',
-      location
+      location,
+      filtersApplied: Object.entries(filterParams).filter(([k, v]) => v && k !== 'query' && k !== 'location' && k !== 'page' && k !== 'num_pages'),
     };
 
     saveToCache(filterParams, payload);
     res.json(payload);
 
   } catch (error) {
-    console.error('Error in jobs route:', error.message);
+    console.error('[JOB API] Unexpected error:', error);
     
-    // Return enhanced mock data
+    // Always return mock data as fallback
     const mockJobs = getEnhancedMockJobs();
     
     res.json({
       success: true,
       count: mockJobs.length,
       jobs: mockJobs,
-      location,
-      note: 'Using mock data due to API issues'
+      location: req.query.location || 'India',
+      note: 'Using mock data due to API error',
+      error: error.message
     });
   }
 });
 
 /**
- * Fetch jobs from JSearch API
+ * Fetch jobs from JSearch API with better error handling
  */
 async function fetchJobsFromJSearch(query, location, page = '1', num_pages = '1') {
   try {
@@ -251,38 +277,42 @@ async function fetchJobsFromJSearch(query, location, page = '1', num_pages = '1'
       query: query,
       page: page,
       num_pages: num_pages,
-      date_posted: 'month', // Get jobs from last month
+      date_posted: 'month',
       employment_types: 'FULLTIME,PARTTIME,CONTRACTOR,INTERN'
     };
 
-    // Add location if provided
-    if (location) {
-      params.country = 'in'; // India
+    if (location && location !== 'India') {
+      params.query += ` ${location}`;
+    } else {
+      params.country = 'in';
     }
 
-    console.log(`JSearch API call - Query: "${query}", Pages: ${num_pages}`);
+    console.log(`[JSEARCH] API call - Query: "${query}", Country: ${params.country || 'global'}`);
 
     const response = await axios.get(JSEARCH_API_URL, {
       headers,
       params,
-      // Keep each upstream call tight so the whole endpoint returns promptly
-      timeout: 6000
+      timeout: 8000
     });
 
-    const jobs = response.data.data || [];
-    console.log(`JSearch returned ${jobs.length} jobs for query: "${query}"`);
+    const jobs = response.data?.data || [];
+    console.log(`[JSEARCH] Returned ${jobs.length} jobs for query: "${query}"`);
     
     return jobs;
 
   } catch (error) {
-    console.error(`JSearch API error for query "${query}":`, error.message);
+    console.error(`[JSEARCH] API error for query "${query}":`, {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText
+    });
+    
+    // Don't throw, return empty array to allow other searches to continue
     return [];
   }
 }
 
-/**
- * Remove duplicate jobs based on job_id and similar titles
- */
+// Rest of your helper functions remain the same...
 function removeDuplicateJobs(jobs) {
   const seen = new Set();
   const unique = [];
@@ -298,9 +328,6 @@ function removeDuplicateJobs(jobs) {
   return unique;
 }
 
-/**
- * Prioritize jobs with inclusive keywords
- */
 function prioritizeInclusiveJobs(jobs) {
   return jobs.sort((a, b) => {
     const scoreA = calculateInclusivityScore(a);
@@ -309,38 +336,27 @@ function prioritizeInclusiveJobs(jobs) {
   });
 }
 
-/**
- * Calculate inclusivity score based on job description
- */
 function calculateInclusivityScore(job) {
   let score = 0;
   const description = (job.job_description || '').toLowerCase();
   const title = (job.job_title || '').toLowerCase();
   const company = (job.employer_name || '').toLowerCase();
 
-  // Check for inclusive keywords
   INCLUSIVE_KEYWORDS.forEach(keyword => {
     if (description.includes(keyword)) score += 3;
     if (title.includes(keyword)) score += 2;
     if (company.includes(keyword)) score += 1;
   });
 
-  // Bonus for remote jobs (more accessible)
   if (job.job_is_remote) score += 5;
-
-  // Bonus for part-time/flexible roles
   if (job.job_employment_type === 'PARTTIME') score += 2;
 
   return score;
 }
 
-/**
- * Format salary information
- */
 function formatSalary(salary) {
   if (!salary) return 'Salary Not Specified';
   
-  // Convert USD to INR if needed (rough conversion)
   if (typeof salary === 'string' && salary.includes('$')) {
     return salary.replace('$', '₹').replace(/(\d+)/g, (match) => {
       return (parseInt(match) * 80).toLocaleString();
@@ -367,84 +383,15 @@ function detectAccessibilityFlags(job, tags = [], accessibility = [], isRemote =
 
   const hasAny = (list) => list.some((k) => description.includes(k) || title.includes(k) || company.includes(k));
 
-  const wheelchairAccessible = hasAny(ACCESSIBILITY_KEYWORDS.wheelchairAccessible) || tags.includes('Wheelchair Accessible') || accessibility.join(' ').toLowerCase().includes('wheelchair');
-  const signLanguageSupport = hasAny(ACCESSIBILITY_KEYWORDS.signLanguageSupport) || accessibility.join(' ').toLowerCase().includes('sign');
-  const colorblindFriendlyUI = hasAny(ACCESSIBILITY_KEYWORDS.colorblindFriendlyUI) || description.includes('wcag');
-  const inclusiveHiring = hasAny(ACCESSIBILITY_KEYWORDS.inclusiveHiring) || tags.includes('Equal Opportunity');
-  const remoteFriendly = isRemote || description.includes('remote') || description.includes('work from home');
-
   return {
-    wheelchairAccessible,
-    signLanguageSupport,
-    colorblindFriendlyUI,
-    inclusiveHiring,
-    remoteFriendly,
+    wheelchairAccessible: hasAny(ACCESSIBILITY_KEYWORDS.wheelchairAccessible) || tags.includes('Wheelchair Accessible'),
+    signLanguageSupport: hasAny(ACCESSIBILITY_KEYWORDS.signLanguageSupport) || accessibility.join(' ').toLowerCase().includes('sign'),
+    colorblindFriendlyUI: hasAny(ACCESSIBILITY_KEYWORDS.colorblindFriendlyUI) || description.includes('wcag'),
+    inclusiveHiring: hasAny(ACCESSIBILITY_KEYWORDS.inclusiveHiring) || tags.includes('Equal Opportunity'),
+    remoteFriendly: isRemote || description.includes('remote') || description.includes('work from home'),
   };
 }
 
-/**
- * Enhanced mock data with more jobs
- */
-function getEnhancedMockJobs() {
-  return [
-    {
-      id: 'mock-1',
-      title: 'Frontend Developer',
-      company: 'TechSoft Solutions',
-      location: 'Mumbai, India',
-      salary: '₹8-12 LPA',
-      logo: '',
-      type: 'Full-time',
-      description: 'Join our inclusive tech team. We provide wheelchair accessible workspace, screen reader compatible tools, and flexible working arrangements.',
-      tags: ['Remote', 'Wheelchair Accessible', 'Screen Reader Compatible', 'Flexible Hours'],
-      accessibility: ['Wheelchair Accessible Workspace', 'Screen Reader Compatible Tools', 'Flexible Working Hours', 'Remote Work Options'],
-      applyUrl: null,
-      postedDate: new Date().toISOString(),
-      isRemote: true,
-      inclusivityScore: 15
-    },
-    {
-      id: 'mock-2',
-      title: 'Data Analyst',
-      company: 'Insight Corp',
-      location: 'Bengaluru, India',
-      salary: '₹6-10 LPA',
-      logo: '',
-      type: 'Full-time',
-      description: 'Seeking a data analyst for our diverse team. We offer assistive technology support, accessible tools, and equal opportunity employment.',
-      tags: ['Hybrid', 'Assistive Technology', 'Equal Opportunity', 'Accessible Tools'],
-      accessibility: ['Assistive Technology Support', 'Accessible Data Tools', 'Inclusive Environment', 'Reasonable Accommodations'],
-      applyUrl: null,
-      postedDate: new Date().toISOString(),
-      isRemote: false,
-      inclusivityScore: 12
-    },
-    // Add 8 more diverse mock jobs...
-    {
-      id: 'mock-3',
-      title: 'Digital Marketing Specialist',
-      company: 'Growth Marketing Inc',
-      location: 'Delhi, India',
-      salary: '₹5-8 LPA',
-      logo: '',
-      type: 'Full-time',
-      description: 'Digital marketing role with flexible schedule and remote work options. We welcome diverse candidates and provide necessary accommodations.',
-      tags: ['Remote', 'Flexible Schedule', 'Diverse Team', 'Accommodations'],
-      accessibility: ['Remote Work', 'Flexible Schedule', 'Accommodation Support', 'Inclusive Culture'],
-      applyUrl: null,
-      postedDate: new Date().toISOString(),
-      isRemote: true,
-      inclusivityScore: 14
-    }
-    // Add more mock jobs as needed...
-  ];
-}
-
-// Keep your existing helper functions for generateAccessibilityTags and generateAccessibilityFeatures
-
-/**
- * Generate accessibility-related tags based on job data
- */
 function generateAccessibilityTags(job) {
   const tags = [];
   const description = (job.job_description || '').toLowerCase();
@@ -456,25 +403,25 @@ function generateAccessibilityTags(job) {
       switch(keyword) {
         case 'wheelchair':
         case 'accessible':
-          tags.push('Wheelchair Accessible');
+          if (!tags.includes('Wheelchair Accessible')) tags.push('Wheelchair Accessible');
           break;
         case 'screen reader':
-          tags.push('Screen Reader Compatible');
+          if (!tags.includes('Screen Reader Compatible')) tags.push('Screen Reader Compatible');
           break;
         case 'flexible':
-          tags.push('Flexible Hours');
+          if (!tags.includes('Flexible Hours')) tags.push('Flexible Hours');
           break;
         case 'equal opportunity':
-          tags.push('Equal Opportunity');
+          if (!tags.includes('Equal Opportunity')) tags.push('Equal Opportunity');
           break;
         case 'accommodation':
-          tags.push('Accommodations Available');
+          if (!tags.includes('Accommodations Available')) tags.push('Accommodations Available');
           break;
       }
     }
   });
   
-  if (job.job_employment_type) {
+  if (job.job_employment_type && !tags.includes(job.job_employment_type)) {
     tags.push(job.job_employment_type);
   }
   
@@ -485,9 +432,6 @@ function generateAccessibilityTags(job) {
   return [...new Set(tags)].slice(0, 4);
 }
 
-/**
- * Generate accessibility features based on job data
- */
 function generateAccessibilityFeatures(job) {
   const features = [];
   const description = (job.job_description || '').toLowerCase();
@@ -500,19 +444,19 @@ function generateAccessibilityFeatures(job) {
     if (description.includes(keyword)) {
       switch(keyword) {
         case 'wheelchair':
-          features.push('Wheelchair Accessible Workspace');
+          if (!features.includes('Wheelchair Accessible Workspace')) features.push('Wheelchair Accessible Workspace');
           break;
         case 'screen reader':
-          features.push('Screen Reader Compatible Tools');
+          if (!features.includes('Screen Reader Compatible Tools')) features.push('Screen Reader Compatible Tools');
           break;
         case 'flexible':
-          features.push('Flexible Working Hours');
+          if (!features.includes('Flexible Working Hours')) features.push('Flexible Working Hours');
           break;
         case 'accommodation':
-          features.push('Reasonable Accommodations');
+          if (!features.includes('Reasonable Accommodations')) features.push('Reasonable Accommodations');
           break;
         case 'diversity':
-          features.push('Diverse and Inclusive Team');
+          if (!features.includes('Diverse and Inclusive Team')) features.push('Diverse and Inclusive Team');
           break;
       }
     }
@@ -523,6 +467,129 @@ function generateAccessibilityFeatures(job) {
   }
   
   return [...new Set(features)];
+}
+
+/**
+ * Enhanced mock data with more realistic jobs
+ */
+function getEnhancedMockJobs() {
+  return [
+    {
+      id: 'mock-1',
+      title: 'Frontend Developer',
+      company: 'TechSoft Solutions',
+      location: 'Mumbai, India',
+      salary: '₹8-12 LPA',
+      logo: '',
+      type: 'Full-time',
+      description: 'Join our inclusive tech team building accessible web applications. We provide wheelchair accessible workspace, screen reader compatible development tools, and flexible working arrangements for all team members.',
+      tags: ['Remote', 'Wheelchair Accessible', 'Screen Reader Compatible', 'Flexible Hours'],
+      accessibility: ['Wheelchair Accessible Workspace', 'Screen Reader Compatible Tools', 'Flexible Working Hours', 'Remote Work Options'],
+      applyUrl: null,
+      postedDate: new Date().toISOString(),
+      isRemote: true,
+      inclusivityScore: 18,
+      accessibilityFlags: {
+        wheelchairAccessible: true,
+        signLanguageSupport: false,
+        colorblindFriendlyUI: true,
+        inclusiveHiring: true,
+        remoteFriendly: true
+      }
+    },
+    {
+      id: 'mock-2',
+      title: 'Data Analyst',
+      company: 'Insight Analytics Corp',
+      location: 'Bengaluru, India',
+      salary: '₹6-10 LPA',
+      logo: '',
+      type: 'Full-time',
+      description: 'Data analyst position in our diverse and inclusive team. We offer assistive technology support, accessible data visualization tools, and comprehensive equal opportunity employment policies.',
+      tags: ['Hybrid', 'Assistive Technology', 'Equal Opportunity', 'Accessible Tools'],
+      accessibility: ['Assistive Technology Support', 'Accessible Data Tools', 'Inclusive Environment', 'Reasonable Accommodations'],
+      applyUrl: null,
+      postedDate: new Date().toISOString(),
+      isRemote: false,
+      inclusivityScore: 15,
+      accessibilityFlags: {
+        wheelchairAccessible: true,
+        signLanguageSupport: true,
+        colorblindFriendlyUI: true,
+        inclusiveHiring: true,
+        remoteFriendly: false
+      }
+    },
+    {
+      id: 'mock-3',
+      title: 'Digital Marketing Specialist',
+      company: 'Growth Marketing Inc',
+      location: 'Delhi, India',
+      salary: '₹5-8 LPA',
+      logo: '',
+      type: 'Full-time',
+      description: 'Marketing role with complete remote work flexibility and accommodating schedule. We welcome candidates with disabilities and provide all necessary workplace accommodations and assistive technologies.',
+      tags: ['Remote', 'Flexible Schedule', 'Diverse Team', 'Accommodations'],
+      accessibility: ['Remote Work Available', 'Flexible Schedule', 'Accommodation Support', 'Inclusive Culture'],
+      applyUrl: null,
+      postedDate: new Date().toISOString(),
+      isRemote: true,
+      inclusivityScore: 16,
+      accessibilityFlags: {
+        wheelchairAccessible: false,
+        signLanguageSupport: false,
+        colorblindFriendlyUI: false,
+        inclusiveHiring: true,
+        remoteFriendly: true
+      }
+    },
+    {
+      id: 'mock-4',
+      title: 'Customer Support Representative',
+      company: 'HelpDesk Solutions',
+      location: 'Pune, India',
+      salary: '₹3-5 LPA',
+      logo: '',
+      type: 'Full-time',
+      description: 'Customer support role with sign language interpretation services available and wheelchair accessible office premises. We provide comprehensive training and support for all accessibility needs.',
+      tags: ['Sign Language Support', 'Wheelchair Accessible', 'Training Provided'],
+      accessibility: ['Sign Language Interpreters', 'Wheelchair Accessible Office', 'Accessibility Training', 'Supportive Environment'],
+      applyUrl: null,
+      postedDate: new Date().toISOString(),
+      isRemote: false,
+      inclusivityScore: 14,
+      accessibilityFlags: {
+        wheelchairAccessible: true,
+        signLanguageSupport: true,
+        colorblindFriendlyUI: false,
+        inclusiveHiring: true,
+        remoteFriendly: false
+      }
+    },
+    {
+      id: 'mock-5',
+      title: 'Content Writer',
+      company: 'Creative Content Co',
+      location: 'Hyderabad, India',
+      salary: '₹4-6 LPA',
+      logo: '',
+      type: 'Part-time',
+      description: 'Flexible content writing position with remote work options and accessible content management systems. Perfect for candidates seeking work-life balance and accommodating schedules.',
+      tags: ['Remote', 'Part-time', 'Flexible', 'Accessible CMS'],
+      accessibility: ['Remote Work Options', 'Flexible Scheduling', 'Accessible Content Tools', 'Inclusive Workplace'],
+      applyUrl: null,
+      postedDate: new Date().toISOString(),
+      isRemote: true,
+      inclusivityScore: 13,
+      accessibilityFlags: {
+        wheelchairAccessible: false,
+        signLanguageSupport: false,
+        colorblindFriendlyUI: true,
+        inclusiveHiring: true,
+        remoteFriendly: true
+      }
+    }
+  ];
 }
 
 module.exports = router;
