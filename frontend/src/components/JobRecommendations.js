@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect, useRef } from 'react'; 
 import {
   Box,
   Container,
@@ -35,6 +35,10 @@ const JobRecommendations = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('India');
+  
+  // Track if initial fetch has happened
+  const hasFetchedRef = useRef(false);
+  
   // Accessibility filter state
   const [filters, setFilters] = useState({
     wheelchair_accessible: false,
@@ -44,9 +48,13 @@ const JobRecommendations = () => {
     colorblind_friendly_ui: false,
   });
 
+  // FIXED: Single useEffect that only runs once on mount
   useEffect(() => {
-    fetchJobs();
-  }, [location]);
+    if (!hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchJobs();
+    }
+  }, []); // Empty dependency array = runs once on mount
 
   const fetchJobs = async () => {
     try {
@@ -62,7 +70,6 @@ const JobRecommendations = () => {
             Object.entries(filters).filter(([, v]) => v)
           )
         },
-        // Extend timeout for potentially slower upstream aggregation
         timeout: 20000
       });
 
