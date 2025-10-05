@@ -65,20 +65,26 @@ api.interceptors.response.use(
 
 // API endpoints - Updated to match your backend routes
 export const donorApi = {
-  register: (data) => api.post('/donors/register', data), // ✅ matches backend
-  login: (data) => api.post('/donors/login', data),       // ✅ matches backend
-  getProfile: () => api.get('/donors/profile'),           // ✅ adjust if you add profile route
+  register: (data) => api.post('/donors/register', data),
+  login: (data) => api.post('/donors/login', data),
+  getProfile: () => api.get('/donors/profile'),
 };
 
 // Updated disabled API to match your existing profileRoutes.js structure
 export const disabledApi = {
   // Auth endpoints (mounted at /api/disabled/)
-  register: (data) => api.post('/disabled/register', data),          // POST /api/disabled/register
-  login: (data) => api.post('/disabled/login', data),                // POST /api/disabled/login
+  register: (data) => api.post('/disabled/register', data),
+  login: (data) => api.post('/disabled/login', data),
   
   // Profile endpoints (mounted at /api/disabled/profile/)
-  getProfile: () => api.get('/disabled/profile'),                    // GET /api/disabled/profile/ (matches your profileRoutes.js)
-  updateProfile: (data) => api.put('/disabled/profile', data),       // PUT /api/disabled/profile/ (matches your profileRoutes.js)
+  getProfile: () => api.get('/disabled/profile'),
+  updateProfile: (data) => api.put('/disabled/profile', data),
+  
+  // Public profiles endpoint (no auth required - for donor dashboard)
+  getPublicProfiles: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return api.get(`/disabled/profile/public${query ? `?${query}` : ''}`);
+  },
   
   // Profile image endpoints
   uploadProfileImage: (formData) => api.post('/disabled/profile/image', formData, {
@@ -102,7 +108,7 @@ export const disabledApi = {
 
 export const wishlistApi = {
   getAll: () => api.get('/wishlist'),
-  getByUser: () => api.get('/wishlist/user'), // If you have user-specific wishlist endpoint
+  getByUser: () => api.get('/wishlist/user'),
   create: (data) => api.post('/wishlist', data),
   update: (id, data) => api.patch(`/wishlist/${id}`, data),
   delete: (id) => api.delete(`/wishlist/${id}`),
@@ -164,4 +170,4 @@ export const authHelpers = {
   }
 };
 
-export default api
+export default api;
