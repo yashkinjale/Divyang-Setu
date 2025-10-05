@@ -10,6 +10,142 @@ const upload = require('../../middleware/upload');
 // PROFILE ROUTES - DEBUG VERSION
 // =============================================
 
+// NEW: Get all profiles for donor dashboard (public route - no auth required)
+router.get('/public', async (req, res) => {
+  try {
+    console.log('=== PUBLIC PROFILES REQUEST ===');
+    
+    // Get query parameters for filtering
+    const { search, category, location } = req.query;
+    
+    // Build query
+    let query = { isVerified: true }; // Only show verified profiles
+    
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { disabilityType: { $regex: search, $options: 'i' } },
+        { needs: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (location && location !== 'all') {
+      query.location = { $regex: location, $options: 'i' };
+    }
+    
+    console.log('Query:', query);
+    
+    // Fetch disabled users with basic info
+    const disabledUsers = await Disabled.find(query)
+      .select('name email phone location address disabilityType needs profileImage createdAt')
+      .limit(50)
+      .sort({ createdAt: -1 });
+    
+    console.log(`Found ${disabledUsers.length} profiles`);
+    
+    // Get wishlist items for all users
+    const userIds = disabledUsers.map(user => user._id);
+    const wishlistItems = await WishlistItem.find({ 
+      userId: { $in: userIds },
+      status: { $ne: 'completed' } // Don't show completed items
+    }).sort({ urgencyLevel: -1, createdAt: -1 });
+    
+    // Group wishlist items by user
+    const wishlistByUser = {};
+    wishlistItems.forEach(item => {
+      const userId = item.userId.toString();
+      if (!wishlistByUser[userId]) {
+        wishlistByUser[userId] = [];
+      }
+      wishlistByUser[userId].push(item);
+    });
+    
+    // Format profiles for donor dashboard
+    const profiles = disabledUsers.map(user => {
+      const userWishlist = wishlistByUser[user._id.toString()] || [];
+      
+      // Calculate totals
+      const totalAmountNeeded = userWishlist.reduce((sum, item) => sum + (item.amountRequired || 0), 0);
+      const totalAmountRaised = userWishlist.reduce((sum, item) => sum + (item.amountRaised || 0), 0);
+      
+      // Determine urgency based on wishlist items
+      let urgency = 'low';
+      if (userWishlist.some(item => item.urgencyLevel === 'High')) {
+        urgency = 'high';
+      } else if (userWishlist.some(item => item.urgencyLevel === 'Medium')) {
+        urgency = 'medium';
+      }
+      
+      // Determine category from wishlist items
+      let category = 'general';
+      if (userWishlist.length > 0) {
+        const categories = userWishlist.map(item => item.category?.toLowerCase());
+        if (categories.includes('technology') || categories.includes('assistive technology')) {
+          category = 'technology';
+        } else if (categories.includes('mobility') || categories.includes('wheelchair')) {
+          category = 'mobility';
+        } else if (categories.includes('education') || categories.includes('educational')) {
+          category = 'education';
+        }
+      }
+      
+      return {
+        id: user._id,
+        name: user.name,
+        age: calculateAge(user.createdAt), // Rough estimate
+        location: user.location || user.address || 'Location not specified',
+        disability: user.disabilityType || 'Not specified',
+        needs: Array.isArray(user.needs) ? user.needs : [user.needs].filter(Boolean),
+        story: `I am a person with ${user.disabilityType || 'disability'} seeking support for essential items and services.`,
+        goalAmount: totalAmountNeeded || 50000,
+        raisedAmount: totalAmountRaised || 0,
+        image: user.profileImage?.url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`,
+        urgency,
+        category,
+        wishlistItems: userWishlist.map(item => ({
+          id: item._id,
+          itemName: item.itemName,
+          description: item.description,
+          amountRequired: item.amountRequired,
+          amountRaised: item.amountRaised,
+          urgencyLevel: item.urgencyLevel,
+          category: item.category
+        }))
+      };
+    });
+    
+    // Apply category filter if provided
+    let filteredProfiles = profiles;
+    if (category && category !== 'all') {
+      filteredProfiles = profiles.filter(p => p.category === category);
+    }
+    
+    console.log(`Returning ${filteredProfiles.length} profiles`);
+    console.log('=== END PUBLIC PROFILES REQUEST ===');
+    
+    res.json({
+      success: true,
+      count: filteredProfiles.length,
+      profiles: filteredProfiles
+    });
+    
+  } catch (error) {
+    console.error('Error fetching public profiles:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching profiles',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+// Helper function to calculate approximate age
+function calculateAge(createdDate) {
+  // This is a rough estimate - you might want to add a birthDate field to your model
+  const monthsSinceCreated = Math.floor((Date.now() - new Date(createdDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
+  return 25 + Math.floor(monthsSinceCreated / 12); // Rough estimate starting at 25
+}
+
 // Get complete profile data with enhanced debugging
 router.get('/', auth, async (req, res) => {
   try {
@@ -212,7 +348,6 @@ router.get('/debug-db', auth, async (req, res) => {
   }
 });
 
-// Rest of your routes remain the same...
 // Update profile information (atomic update to avoid VersionError)
 router.put('/', auth, async (req, res) => {
   try {

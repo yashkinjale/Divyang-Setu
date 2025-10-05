@@ -24,7 +24,6 @@ import {
   Search as SearchIcon,
   FilterList as FilterIcon,
   Person as PersonIcon,
-  LocationOn as LocationIcon,
   Accessibility as AccessibilityIcon,
   AttachMoney as MoneyIcon,
   CardGiftcard as EquipmentIcon,
@@ -53,6 +52,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
+import { disabledApi } from '../utils/api'; // Update this path based on your project structure
 
 // Enhanced DonorNavbar component
 const DonorNavbar = ({ activeTab = "home", onTabChange = () => {} }) => {
@@ -91,7 +91,7 @@ const DonorNavbar = ({ activeTab = "home", onTabChange = () => {} }) => {
   const navigationItems = [
     { id: "home", label: "Home", icon: <HomeIcon /> },
     { id: "donations", label: "General Donations", icon: <MoneyIcon /> },
-    { id: "jobs", label: "Jobs", icon: <WorkIcon /> }, // <-- Add this line
+    { id: "jobs", label: "Jobs", icon: <WorkIcon /> },
     { id: "history", label: "Past Donations", icon: <HistoryIcon /> },
     { id: "saved", label: "Saved Donations", icon: <BookmarkIcon /> },
   ];
@@ -397,112 +397,52 @@ const DonorNavbar = ({ activeTab = "home", onTabChange = () => {} }) => {
 const DonorDashboard = () => {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
   const [activeTab, setActiveTab] = useState("home");
 
-  // Mock data for PwD profiles
-  const mockProfiles = [
-    {
-      id: 1,
-      name: "Priya Sharma",
-      age: 28,
-      location: "Mumbai, Maharashtra",
-      disability: "Visual Impairment",
-      needs: ["Braille Display", "Screen Reader Software", "Voice Recognition"],
-      story:
-        "I am a software developer with visual impairment. I need assistive technology to continue my career in tech and help other developers.",
-      goalAmount: 50000,
-      raisedAmount: 25000,
-      image: "https://i.pravatar.cc/150?img=1",
-      urgency: "high",
-      category: "technology",
-    },
-    {
-      id: 2,
-      name: "Rajesh Patel",
-      age: 35,
-      location: "Delhi, NCR",
-      disability: "Mobility Impairment",
-      needs: ["Electric Wheelchair", "Ramp Installation"],
-      story:
-        "I work as a graphic designer and need a motorized wheelchair for better mobility at work.",
-      goalAmount: 80000,
-      raisedAmount: 45000,
-      image: "https://i.pravatar.cc/150?img=2",
-      urgency: "medium",
-      category: "mobility",
-    },
-    {
-      id: 3,
-      name: "Anita Desai",
-      age: 24,
-      location: "Bangalore, Karnataka",
-      disability: "Hearing Impairment",
-      needs: ["Hearing Aids", "Sign Language Training", "Audio Equipment"],
-      story:
-        "I am pursuing my master's degree and need hearing aids to continue my education effectively.",
-      goalAmount: 30000,
-      raisedAmount: 15000,
-      image: "https://i.pravatar.cc/150?img=3",
-      urgency: "high",
-      category: "education",
-    },
-    {
-      id: 4,
-      name: "Suresh Kumar",
-      age: 42,
-      location: "Chennai, Tamil Nadu",
-      disability: "Multiple Sclerosis",
-      needs: ["Mobility Scooter", "Physical Therapy", "Medical Support"],
-      story:
-        "I run a small business and need mobility assistance to maintain my independence.",
-      goalAmount: 120000,
-      raisedAmount: 60000,
-      image: "https://i.pravatar.cc/150?img=4",
-      urgency: "medium",
-      category: "mobility",
-    },
-    {
-      id: 5,
-      name: "Meera Singh",
-      age: 31,
-      location: "Pune, Maharashtra",
-      disability: "Cerebral Palsy",
-      needs: ["Communication Device", "Occupational Therapy"],
-      story:
-        "I am an artist and need assistive technology to create and sell my artwork online.",
-      goalAmount: 40000,
-      raisedAmount: 20000,
-      image: "https://i.pravatar.cc/150?img=5",
-      urgency: "low",
-      category: "technology",
-    },
-    {
-      id: 6,
-      name: "Vikram Reddy",
-      age: 29,
-      location: "Hyderabad, Telangana",
-      disability: "Spinal Cord Injury",
-      needs: ["Adaptive Computer Setup", "Ergonomic Chair"],
-      story:
-        "I am a data analyst and need specialized equipment to work from home effectively.",
-      goalAmount: 60000,
-      raisedAmount: 30000,
-      image: "https://i.pravatar.cc/150?img=6",
-      urgency: "high",
-      category: "technology",
-    },
-  ];
-
+  // Fetch profiles from backend
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setProfiles(mockProfiles);
-      setLoading(false);
-    }, 1000);
+    fetchProfiles();
   }, []);
+
+  const fetchProfiles = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = {};
+      if (searchTerm) params.search = searchTerm;
+      if (filterType !== 'all') params.category = filterType;
+      if (filterLocation !== 'all') params.location = filterLocation;
+      
+      const response = await disabledApi.getPublicProfiles(params);
+      
+      if (response.data.success) {
+        setProfiles(response.data.profiles || []);
+      } else {
+        setError('Failed to fetch profiles');
+      }
+    } catch (err) {
+      console.error('Error fetching profiles:', err);
+      setError(err.response?.data?.message || 'Failed to load profiles. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refetch when filters change
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!loading) {
+        fetchProfiles();
+      }
+    }, 500); // Debounce search
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, filterType, filterLocation]);
 
   const filteredProfiles = profiles.filter((profile) => {
     const matchesSearch =
@@ -873,6 +813,13 @@ const DonorDashboard = () => {
               </Typography>
             </Box>
 
+            {/* Error Alert */}
+            {error && (
+              <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+                {error}
+              </Alert>
+            )}
+
             {/* Search and Filter Bar */}
             <Paper sx={{ p: 3, mb: 4, boxShadow: 2 }}>
               <Box
@@ -947,7 +894,11 @@ const DonorDashboard = () => {
             </Box>
 
             {/* Profile Cards Grid */}
-            {filteredProfiles.length === 0 ? (
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                <CircularProgress size={60} />
+              </Box>
+            ) : filteredProfiles.length === 0 ? (
               <Paper sx={{ p: 4, textAlign: "center" }}>
                 <Typography variant="h6" color="text.secondary" gutterBottom>
                   No profiles found
@@ -1136,7 +1087,7 @@ const DonorDashboard = () => {
     }
   };
 
-  if (loading) {
+  if (loading && profiles.length === 0) {
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: "#f5f5f5" }}>
         <DonorNavbar activeTab={activeTab} onTabChange={setActiveTab} />
