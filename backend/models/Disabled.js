@@ -85,6 +85,12 @@ const disabledSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    bio: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: [500, "Bio cannot exceed 500 characters"],
+    },
     profileImage: {
       url: String,
       publicId: String,
@@ -107,6 +113,7 @@ const disabledSchema = new mongoose.Schema(
     updatedAt: {
       type: Date,
       default: Date.now,
+    
     },
   },
   {
@@ -130,7 +137,7 @@ disabledSchema.methods.comparePassword = async function (candidatePassword) {
 // Virtual for profile completion percentage
 disabledSchema.virtual("profileCompletionPercentage").get(function () {
   let completedFields = 0;
-  const totalFields = 9;
+  const totalFields = 10;
 
   if (this.name) completedFields++;
   if (this.email) completedFields++;

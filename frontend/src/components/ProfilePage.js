@@ -37,7 +37,8 @@ import {
   Description as DescriptionIcon,
   Favorite as FavoriteIcon,
   Timeline as TimelineIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { disabledApi } from '../utils/api';
@@ -58,6 +59,7 @@ const ProfilePage = () => {
     phone: "",
     location: "",
     address: "",
+    bio: "", // Added bio field
     disabilityType: "",
     needs: "",
     education: "",
@@ -106,6 +108,7 @@ const ProfilePage = () => {
         phone: editedData.phone,
         location: editedData.location,
         address: editedData.address,
+        bio: editedData.bio, // Include bio in payload
         disabilityType: editedData.disabilityType,
         needs: editedData.needs,
         education: editedData.education,
@@ -425,6 +428,45 @@ const ProfilePage = () => {
                   ))}
                 </Box>
 
+                {/* Bio Section */}
+                <Divider sx={{ my: 3 }} />
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Box sx={{ 
+                    p: 1, 
+                    bgcolor: 'primary.50', 
+                    borderRadius: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    minWidth: 40,
+                    height: 40
+                  }}>
+                    <InfoIcon color="primary" />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                      Bio
+                    </Typography>
+                    {isEditing ? (
+                      <TextField
+                        value={editedData.bio || ""}
+                        onChange={(e) => handleInputChange("bio", e.target.value)}
+                        fullWidth
+                        multiline
+                        rows={4}
+                        variant="outlined"
+                        size="small"
+                        placeholder="Tell us about yourself..."
+                        inputProps={{ maxLength: 500 }}
+                        helperText={`${(editedData.bio || "").length}/500 characters`}
+                      />
+                    ) : (
+                      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                        {profileData.bio || "No bio added yet"}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+
                 {isEditing && (
                   <>
                     <Divider sx={{ my: 3 }} />
@@ -442,7 +484,7 @@ const ProfilePage = () => {
                         <TextField
                           key={field}
                           label={label}
-                          value={editedData[field]}
+                          value={editedData[field] || ""}
                           onChange={(e) => handleInputChange(field, e.target.value)}
                           fullWidth
                           multiline={multiline}
