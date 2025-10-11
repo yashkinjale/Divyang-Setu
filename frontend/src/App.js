@@ -97,18 +97,7 @@ const DisabledDashboardHome = () => {
       </Box>
 
       {/* Fund Status Section */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-          Your Fund Status
-        </Typography>
-        <Grid container spacing={3}>
-          {funds.map((fund, index) => (
-            <Grid item xs={12} md={4} key={index}>
-              <FundStatusCard {...fund} />
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+      <WishlistSection />
     </Container>
   );
 };
