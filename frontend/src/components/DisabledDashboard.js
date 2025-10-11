@@ -120,6 +120,7 @@ const DisabledDashboard = () => {
     if (path.includes('/jobs')) return 'jobs';
     if (path.includes('/job-postings')) return 'job-postings';
     if (path.includes('/community')) return 'community';
+    if (path.includes('/messages')) return 'messages';
     if (path.includes('/profile')) return 'profile';
     if (path.includes('/settings')) return 'settings';
     if (path.includes('/help')) return 'help';

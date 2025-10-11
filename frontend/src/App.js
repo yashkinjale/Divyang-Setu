@@ -16,6 +16,7 @@ import FundStatusCard from './components/FundStatusCard';
 import JobRecommendations from './components/JobRecommendations';
 import JobPostings from './components/JobPostings';
 import DonorDashboard from './components/DonorDashboard';
+import MessagesPage from './pages/MessagesPage'; // Import the new MessagesPage
 import theme from './theme';
 
 const PrivateRoute = ({ children, userType }) => {
@@ -171,6 +172,7 @@ const App = () => {
               <Route path="jobs" element={<JobRecommendations />} />
               <Route path="community" element={<SuccessStoriesPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="messages" element={<MessagesPage />} /> {/* Add messages route */}
             </Route>
           </Routes>
         </Router>

@@ -236,7 +236,7 @@ app.use((error, req, res, next) => {
     body: req.body,
   });
 
-  const status = error.status || 500;
+  const status = typeof error.status === 'number' && error.status >= 100 && error.status < 600 ? error.status : 500;
   const message = error.message || "Internal Server Error";
 
   res.status(status).json({

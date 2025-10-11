@@ -45,16 +45,17 @@ router.post("/register", async (req, res) => {
       },
     });
 
-    // Log activity after response (async, non-blocking)
-    setImmediate(async () => {
-      await Disabled.addActivitySafely(
-        disabled._id,
-        "Account Created",
-        "Welcome to DivyangSetu! Your account has been created successfully."
-      );
-    });
-
   } catch (err) {
+    // Enhanced error handling
+    if (err.name === 'ValidationError') {
+      // Mongoose validation error (e.g., password too short)
+      const messages = Object.values(err.errors).map(val => val.message);
+      // Log the specific validation error for debugging
+      console.error("Registration validation error:", messages.join(', '));
+      return res.status(400).json({ message: messages.join(', ') });
+    }
+
+    // Log generic server errors
     console.error("Registration error:", err);
     res.status(500).json({ message: "Server error" });
   }
@@ -87,20 +88,6 @@ router.post("/login", async (req, res) => {
       },
     });
 
-    // Log activity AFTER response (completely separate)
-    setImmediate(async () => {
-      await Disabled.addActivitySafely(
-        disabled._id,
-        "Logged In",
-        "Successfully logged into your account",
-        {
-          ip: req.ip,
-          userAgent: req.get('User-Agent') || 'Unknown',
-          timestamp: new Date()
-        }
-      );
-    });
-
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error" });
@@ -108,3 +95,4 @@ router.post("/login", async (req, res) => {
 });
 
 module.exports = router;
+
