@@ -15,6 +15,7 @@ const wishlistRoutes = require("./routes/wishlist");
 const schemesRoutes = require("./routes/schemesRoutes");
 const jobRoutes = require("./routes/jobRoutes");
 const disabledRoutes = require("./routes/disabled"); // Import disabled routes with other routes
+const donationRoutes = require("./routes/donationRoutes");
 
 const app = express();
 
@@ -121,6 +122,13 @@ mongoose
   })
   .then(() => {
     console.log("✅ Connected to MongoDB successfully");
+    console.log(
+      `💳 Razorpay: ${
+        process.env.RAZORPAY_KEY_ID
+          ? "✅ Configured (Test Mode)"
+          : "❌ Not Configured"
+      }`
+    ); // ADD THIS
     console.log("Database name:", mongoose.connection.name);
   })
   .catch((err) => {
@@ -180,6 +188,12 @@ try {
 } catch (error) {
   console.error("❌ Error registering job routes:", error.message);
 }
+try {
+  app.use("/api/donations", donationRoutes); // ADD THIS
+  console.log("✅ Donation routes registered at /api/donations");
+} catch (error) {
+  console.error("❌ Error registering donation routes:", error.message);
+}
 
 console.log("All routes registered successfully");
 
@@ -236,7 +250,7 @@ app.use((error, req, res, next) => {
     body: req.body,
   });
 
-  const status = typeof error.status === 'number' && error.status >= 100 && error.status < 600 ? error.status : 500;
+  const status = error.status || 500;
   const message = error.message || "Internal Server Error";
 
   res.status(status).json({
@@ -274,6 +288,11 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log("  POST /api/wishlist        - Create wishlist");
   console.log("  GET  /api/schemes         - Get schemes");
   console.log("==========================================\n");
+  console.log("  POST /api/donations/create-order    - Create payment order");
+  console.log("  POST /api/donations/verify-payment  - Verify payment");
+  console.log("  GET  /api/donations/history/:pwdId  - Donation history");
+  console.log("  GET  /api/donations/my-donations    - My donations");
+  console.log("  GET  /api/donations/stats/:pwdId    - Donation stats");
 
   console.log("✅ Server is ready to accept connections!");
 });

@@ -52,7 +52,9 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import { disabledApi } from '../utils/api'; // Update this path based on your project structure
+import { disabledApi } from "../utils/api";
+import { donationApi } from "../utils/api";
+import DonateDialog from "./DonateDialog";
 
 // Enhanced DonorNavbar component
 const DonorNavbar = ({ activeTab = "home", onTabChange = () => {} }) => {
@@ -402,6 +404,8 @@ const DonorDashboard = () => {
   const [filterType, setFilterType] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
   const [activeTab, setActiveTab] = useState("home");
+  const [donateDialogOpen, setDonateDialogOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState(null);
 
   // Fetch profiles from backend
   useEffect(() => {
@@ -412,25 +416,42 @@ const DonorDashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = {};
       if (searchTerm) params.search = searchTerm;
-      if (filterType !== 'all') params.category = filterType;
-      if (filterLocation !== 'all') params.location = filterLocation;
-      
+      if (filterType !== "all") params.category = filterType;
+      if (filterLocation !== "all") params.location = filterLocation;
+
       const response = await disabledApi.getPublicProfiles(params);
-      
+
       if (response.data.success) {
         setProfiles(response.data.profiles || []);
       } else {
-        setError('Failed to fetch profiles');
+        setError("Failed to fetch profiles");
       }
     } catch (err) {
-      console.error('Error fetching profiles:', err);
-      setError(err.response?.data?.message || 'Failed to load profiles. Please try again.');
+      console.error("Error fetching profiles:", err);
+      setError(
+        err.response?.data?.message ||
+          "Failed to load profiles. Please try again."
+      );
     } finally {
       setLoading(false);
     }
+  };
+  const handleDonateClick = (profile) => {
+    setSelectedProfile(profile);
+    setDonateDialogOpen(true);
+  };
+  const handleDonateSuccess = (donationData) => {
+    console.log("Donation successful:", donationData);
+    // Refresh profiles to show updated amounts
+    fetchProfiles();
+  };
+
+  const handleDonateClose = () => {
+    setDonateDialogOpen(false);
+    setSelectedProfile(null);
   };
 
   // Refetch when filters change
@@ -738,9 +759,8 @@ const DonorDashboard = () => {
               variant="contained"
               startIcon={<MoneyIcon />}
               fullWidth
+              onClick={() => handleDonateClick(profile)}
               sx={{
-                bgcolor: "#4caf50",
-                "&:hover": { bgcolor: "#45a049" },
                 fontSize: "0.8rem",
                 py: 1,
               }}
@@ -815,7 +835,11 @@ const DonorDashboard = () => {
 
             {/* Error Alert */}
             {error && (
-              <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+              <Alert
+                severity="error"
+                sx={{ mb: 3 }}
+                onClose={() => setError(null)}
+              >
                 {error}
               </Alert>
             )}
@@ -895,7 +919,7 @@ const DonorDashboard = () => {
 
             {/* Profile Cards Grid */}
             {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
                 <CircularProgress size={60} />
               </Box>
             ) : filteredProfiles.length === 0 ? (
@@ -1112,6 +1136,16 @@ const DonorDashboard = () => {
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {renderTabContent()}
       </Container>
+
+      {/* ✅ Show Donate Dialog only in Home tab */}
+      {activeTab === "home" && (
+        <DonateDialog
+          open={donateDialogOpen}
+          onClose={handleDonateClose}
+          profile={selectedProfile}
+          onSuccess={handleDonateSuccess}
+        />
+      )}
     </Box>
   );
 };

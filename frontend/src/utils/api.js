@@ -2,17 +2,16 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-// Create axios instance with base configuration
+// Axios instance
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  // Add timeout
   timeout: 10000,
 });
 
-// Add request interceptor for debugging and authentication
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -24,7 +23,7 @@ api.interceptors.request.use(
       method: config.method,
       headers: config.headers,
       data: config.data,
-      baseURL: config.baseURL
+      baseURL: config.baseURL,
     });
     return config;
   },
@@ -34,13 +33,13 @@ api.interceptors.request.use(
   }
 );
 
-// Add response interceptor for debugging and error handling
+// Response interceptor
 api.interceptors.response.use(
   (response) => {
     console.log('API Response:', {
       url: response.config.url,
       status: response.status,
-      data: response.data
+      data: response.data,
     });
     return response;
   },
@@ -49,10 +48,9 @@ api.interceptors.response.use(
       url: error.config?.url,
       status: error.response?.status,
       data: error.response?.data,
-      message: error.message
+      message: error.message,
     });
 
-    // Handle 401 errors (unauthorized) - redirect to login
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -63,62 +61,60 @@ api.interceptors.response.use(
   }
 );
 
-// API endpoints - Updated to match your backend routes
+// Donor API
 export const donorApi = {
   register: (data) => api.post('/donors/register', data),
   login: (data) => api.post('/donors/login', data),
   getProfile: () => api.get('/donors/profile'),
 };
 
-// Updated disabled API to match your existing profileRoutes.js structure
+// Disabled / PWD API
 export const disabledApi = {
-  // Auth endpoints (mounted at /api/disabled/)
   register: (data) => api.post('/disabled/register', data),
   login: (data) => api.post('/disabled/login', data),
-  
-  // Profile endpoints (mounted at /api/disabled/profile/)
   getProfile: () => api.get('/disabled/profile'),
   updateProfile: (data) => api.put('/disabled/profile', data),
-  
-  // Public profiles endpoint (no auth required - for donor dashboard)
   getPublicProfiles: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return api.get(`/disabled/profile/public${query ? `?${query}` : ''}`);
   },
-  
-  // Profile image endpoints
-  uploadProfileImage: (formData) => api.post('/disabled/profile/image', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  uploadProfileImage: (formData) =>
+    api.post('/disabled/profile/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   deleteProfileImage: () => api.delete('/disabled/profile/image'),
-  
-  // Document endpoints
-  uploadDocument: (formData) => api.post('/disabled/profile/documents', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  uploadDocument: (formData) =>
+    api.post('/disabled/profile/documents', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   getDocuments: () => api.get('/disabled/profile/documents'),
-  deleteDocument: (documentId) => api.delete(`/disabled/profile/documents/${documentId}`),
-  
-  // Activity endpoint
+  deleteDocument: (documentId) =>
+    api.delete(`/disabled/profile/documents/${documentId}`),
   getActivity: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return api.get(`/disabled/profile/activity${query ? `?${query}` : ''}`);
   },
 };
 
+// Wishlist API
 export const wishlistApi = {
   getAll: () => api.get('/wishlist'),
   getByUser: () => api.get('/wishlist/user'),
   create: (data) => api.post('/wishlist', data),
   update: (id, data) => api.patch(`/wishlist/${id}`, data),
   delete: (id) => api.delete(`/wishlist/${id}`),
-  uploadDocuments: (id, formData) => api.post(`/wishlist/${id}/documents`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+  uploadDocuments: (id, formData) =>
+    api.post(`/wishlist/${id}/documents`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
+// Schemes API
+export const schemesApi = {
+  getAll: () => api.get('/schemes'),
+};
+
+// Jobs API
 export const jobApi = {
   getJobs: (params = {}) => {
     const queryParams = new URLSearchParams();
@@ -126,22 +122,28 @@ export const jobApi = {
     if (params.location) queryParams.append('location', params.location);
     if (params.page) queryParams.append('page', params.page);
     if (params.num_pages) queryParams.append('num_pages', params.num_pages);
-    
+
     const url = `/jobs${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return api.get(url);
-  }
+  },
 };
 
-// Additional helper functions
+// Donations API
+export const donationApi = {
+  createOrder: (data) => api.post('/donations/create-order', data),
+  verifyPayment: (data) => api.post('/donations/verify-payment', data),
+  getHistory: (pwdId) => api.get(`/donations/history/${pwdId}`),
+  getMyDonations: () => api.get('/donations/my-donations'),
+  getStats: (pwdId) => api.get(`/donations/stats/${pwdId}`),
+};
+
+// Auth helpers
 export const authHelpers = {
-  // Check if user is authenticated
   isAuthenticated: () => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     return !!(token && user);
   },
-
-  // Get current user
   getCurrentUser: () => {
     try {
       const user = localStorage.getItem('user');
@@ -151,23 +153,15 @@ export const authHelpers = {
       return null;
     }
   },
-
-  // Get token
-  getToken: () => {
-    return localStorage.getItem('token');
-  },
-
-  // Clear auth data
+  getToken: () => localStorage.getItem('token'),
   clearAuth: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
-
-  // Store auth data
   storeAuth: (userData, token) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
-  }
+  },
 };
 
 export default api;
