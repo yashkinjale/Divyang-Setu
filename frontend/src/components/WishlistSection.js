@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -26,17 +26,13 @@ import {
   Zoom,
   Fade,
   Paper,
-  Divider
 } from '@mui/material';
 import {
   Add as AddIcon,
-  Close as CloseIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon,
   AttachFile as AttachFileIcon,
   CalendarToday as CalendarIcon,
   LocalOffer as LocalOfferIcon,
-  TrendingUp as TrendingUpIcon,
   Favorite as FavoriteIcon,
   CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
@@ -51,6 +47,8 @@ const WishlistSection = () => {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const refreshIntervalRef = useRef(null);
+  
   const [formData, setFormData] = useState({
     itemName: '',
     description: '',
@@ -62,9 +60,51 @@ const WishlistSection = () => {
     supportingDocuments: []
   });
 
+  // Fetch wishlist items with debugging
+  const fetchWishlistItems = async () => {
+    try {
+      if (!user) {
+        return;
+      }
+
+      console.log('🔄 Fetching wishlist items...');
+      const response = await wishlistApi.getAll();
+      
+      console.log('📦 Wishlist data received:');
+      response.data.data.forEach((item, idx) => {
+        console.log(`  [${idx}] ${item.itemName}: ₹${item.amountRaised || 0}/${item.amountRequired} (${item.progress || 0}%)`);
+      });
+
+      // Force re-render by creating new array
+      setWishlistItems([...response.data.data]);
+      setFetchLoading(false);
+    } catch (error) {
+      console.error('Error fetching wishlist items:', error);
+      if (fetchLoading) {
+        showSnackbar(error.response?.data?.message || 'Error fetching wishlist items', 'error');
+        setFetchLoading(false);
+      }
+    }
+  };
+
+  // Set up auto-refresh
   useEffect(() => {
     fetchWishlistItems();
-  }, []);
+
+    // Auto-refresh every 3 seconds
+    refreshIntervalRef.current = setInterval(() => {
+      console.log('⏰ Auto-refresh triggered');
+      fetchWishlistItems();
+    }, 3000);
+
+    // Cleanup on unmount
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        console.log('🛑 Refresh interval cleared');
+      }
+    };
+  }, [user]);
 
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
@@ -72,25 +112,6 @@ const WishlistSection = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
-  };
-
-  const fetchWishlistItems = async () => {
-    try {
-      setFetchLoading(true);
-      if (!user) {
-        showSnackbar('Please log in to access wishlist', 'error');
-        setFetchLoading(false);
-        return;
-      }
-
-      const response = await wishlistApi.getAll();
-      setWishlistItems(response.data.data);
-    } catch (error) {
-      console.error('Error fetching wishlist items:', error);
-      showSnackbar(error.response?.data?.message || 'Error fetching wishlist items', 'error');
-    } finally {
-      setFetchLoading(false);
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -129,7 +150,7 @@ const WishlistSection = () => {
 
       setOpenForm(false);
       resetForm();
-      fetchWishlistItems();
+      await fetchWishlistItems();
       showSnackbar('Wishlist item added successfully');
     } catch (error) {
       console.error('Error adding wishlist item:', error);
@@ -158,7 +179,7 @@ const WishlistSection = () => {
 
       await wishlistApi.delete(deleteDialog.id);
       setDeleteDialog({ open: false, id: null });
-      fetchWishlistItems();
+      await fetchWishlistItems();
       showSnackbar('Wishlist item deleted successfully');
     } catch (error) {
       console.error('Error deleting wishlist item:', error);
@@ -203,11 +224,22 @@ const WishlistSection = () => {
     }
   };
 
-  const calculateProgress = (item) => {
-    if (item.amountRequired && item.currentAmount !== undefined) {
-      return Math.min(Math.round((item.currentAmount / item.amountRequired) * 100), 100);
+  const getProgress = (item) => {
+    if (!item.amountRequired) return 0;
+    
+    if (item.progress !== undefined && item.progress !== null) {
+      return Math.min(Math.max(item.progress, 0), 100);
     }
+    
+    if (item.amountRaised !== undefined) {
+      return Math.min(Math.round((item.amountRaised / item.amountRequired) * 100), 100);
+    }
+    
     return 0;
+  };
+
+  const getAmountRaised = (item) => {
+    return Math.max(item.amountRaised || 0, 0);
   };
 
   if (fetchLoading) {
@@ -232,7 +264,6 @@ const WishlistSection = () => {
       px: { xs: 2, sm: 3, md: 4 }
     }}>
       <Container maxWidth="xl">
-        {/* Header Section */}
         <Fade in timeout={600}>
           <Box sx={{ mb: 4 }}>
             <Box sx={{ 
@@ -293,7 +324,6 @@ const WishlistSection = () => {
           </Box>
         </Fade>
 
-        {/* Empty State */}
         {wishlistItems.length === 0 ? (
           <Zoom in timeout={600}>
             <Paper 
@@ -337,10 +367,11 @@ const WishlistSection = () => {
             </Paper>
           </Zoom>
         ) : (
-          /* Wishlist Grid */
           <Grid container spacing={3}>
             {wishlistItems.map((item, index) => {
-              const progress = calculateProgress(item);
+              const progress = getProgress(item);
+              const amountRaised = getAmountRaised(item);
+              
               return (
                 <Grid item xs={12} sm={6} lg={4} key={item._id}>
                   <Zoom in timeout={400} style={{ transitionDelay: `${index * 80}ms` }}>
@@ -363,7 +394,6 @@ const WishlistSection = () => {
                       }}
                     >
                       <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                        {/* Header with Title and Delete */}
                         <Box sx={{ 
                           display: 'flex', 
                           justifyContent: 'space-between', 
@@ -384,7 +414,6 @@ const WishlistSection = () => {
                               {item.itemName}
                             </Typography>
                             <Chip
-                              icon={<LocalOfferIcon sx={{ fontSize: '0.875rem' }} />}
                               label={item.category}
                               size="small"
                               sx={{ 
@@ -392,10 +421,7 @@ const WishlistSection = () => {
                                 color: '#1976d2',
                                 fontWeight: 600,
                                 fontSize: '0.75rem',
-                                height: '24px',
-                                '& .MuiChip-icon': {
-                                  color: '#1976d2'
-                                }
+                                height: '24px'
                               }}
                             />
                           </Box>
@@ -407,32 +433,27 @@ const WishlistSection = () => {
                               '&:hover': { 
                                 bgcolor: '#fee2e2',
                                 color: '#ef4444'
-                              },
-                              transition: 'all 0.2s'
+                              }
                             }}
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Box>
 
-                        {/* Description */}
                         <Typography 
                           variant="body2" 
                           sx={{ 
                             color: '#64748b',
                             mb: 3,
-                            lineHeight: 1.6,
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            minHeight: '40px'
+                            overflow: 'hidden'
                           }}
                         >
                           {item.description}
                         </Typography>
 
-                        {/* Progress Section */}
                         {item.amountRequired && (
                           <Box sx={{ mb: 3 }}>
                             <Box sx={{ 
@@ -459,7 +480,7 @@ const WishlistSection = () => {
                                   fontSize: '0.875rem'
                                 }}
                               >
-                                ₹{item.currentAmount || 0} / ₹{item.amountRequired.toLocaleString()}
+                                ₹{amountRaised.toLocaleString()} / ₹{item.amountRequired.toLocaleString()}
                               </Typography>
                             </Box>
                             <Box sx={{ position: 'relative' }}>
@@ -509,7 +530,6 @@ const WishlistSection = () => {
                           </Box>
                         )}
 
-                        {/* Info Chips */}
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                           <Chip
                             label={`₹${item.amountRequired.toLocaleString()}`}
@@ -519,10 +539,7 @@ const WishlistSection = () => {
                               color: '#15803d',
                               fontWeight: 700,
                               fontSize: '0.813rem',
-                              height: '28px',
-                              '& .MuiChip-label': {
-                                px: 1.5
-                              }
+                              height: '28px'
                             }}
                           />
                           <Chip
@@ -548,14 +565,12 @@ const WishlistSection = () => {
                           />
                         </Box>
 
-                        {/* Deadline */}
                         {item.deadline && (
                           <Box sx={{ 
                             display: 'flex', 
                             alignItems: 'center', 
                             gap: 1,
                             pt: 2,
-                            mt: 'auto',
                             borderTop: '1px solid #f1f5f9'
                           }}>
                             <CalendarIcon sx={{ fontSize: '1rem', color: '#94a3b8' }} />
@@ -584,7 +599,6 @@ const WishlistSection = () => {
           </Grid>
         )}
 
-        {/* Add Item Dialog */}
         <Dialog 
           open={openForm} 
           onClose={() => !loading && setOpenForm(false)} 
@@ -850,7 +864,6 @@ const WishlistSection = () => {
           </form>
         </Dialog>
 
-        {/* Delete Confirmation Dialog */}
         <Dialog
           open={deleteDialog.open}
           onClose={() => setDeleteDialog({ open: false, id: null })}
@@ -897,7 +910,6 @@ const WishlistSection = () => {
           </DialogActions>
         </Dialog>
 
-        {/* Snackbar Notifications */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
@@ -927,7 +939,6 @@ const WishlistSection = () => {
           </Alert>
         </Snackbar>
 
-        {/* Floating Action Button for Mobile */}
         {wishlistItems.length > 0 && (
           <Zoom in timeout={600} style={{ transitionDelay: '400ms' }}>
             <Fab

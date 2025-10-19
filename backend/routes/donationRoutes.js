@@ -251,10 +251,19 @@ router.post("/verify-payment", async (req, res) => {
         // Update wishlist item
         item.amountRaised += amountToAllocate;
 
+        // ✅ UPDATE PROGRESS - THIS IS THE KEY ADDITION
+        item.progress = Math.round(
+          (item.amountRaised / item.amountRequired) * 100
+        );
+        console.log(
+          `Updated progress for "${item.itemName}": ${item.progress}%`
+        );
+
         // Check if item is now fully funded
         if (item.amountRaised >= item.amountRequired) {
           item.status = "completed";
           item.isCompleted = true;
+          item.progress = 100; // Ensure progress is 100% for completed items
           console.log(`✅ Item "${item.itemName}" fully funded!`);
         }
 

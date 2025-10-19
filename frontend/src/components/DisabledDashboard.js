@@ -147,12 +147,8 @@ const DisabledDashboard = () => {
   };
 
   const sidebarItems = [
-    { icon: DashboardIcon, text: 'Dashboard', section: 'dashboard', route: '/disabled/dashboard' },
-    { icon: DocumentIcon, text: 'Document Verification', section: 'documents', route: '/disabled/dashboard/documents' },
-    { icon: WishlistIcon, text: 'My Wishlist', section: 'wishlist', route: '/disabled/dashboard/wishlist' },
-    { icon: ProgressIcon, text: 'Donation Progress', section: 'progress', route: '/disabled/dashboard/progress' },
+    { icon: DashboardIcon, text: 'Home', section: 'dashboard', route: '/disabled/dashboard' },
     { icon: JobIcon, text: 'Job Recommendations', section: 'jobs', route: '/disabled/dashboard/jobs' },
-    { icon: BusinessIcon, text: 'Job Postings', section: 'job-postings', route: '/job-postings' },
     { icon: SchemeIcon, text: 'Government Schemes', section: 'schemes', route: '/disabled/dashboard/schemes' },
     { icon: CommunityIcon, text: 'Community Forum', section: 'community', route: '/disabled/dashboard/community' },
     { icon: MessageIcon, text: 'Messages', section: 'messages', route: '/disabled/dashboard/messages' },

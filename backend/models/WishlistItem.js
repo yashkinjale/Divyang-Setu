@@ -45,6 +45,14 @@ const wishlistItemSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  // ✅ CHANGED FROM VIRTUAL TO ACTUAL FIELD
+  progress: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
+  },
+  
   quantity: {
     type: Number,
     default: 1,
@@ -64,6 +72,17 @@ const wishlistItemSchema = new mongoose.Schema({
     enum: ['active', 'completed', 'cancelled'],
     default: 'active'
   },
+  
+  // ✅ CHANGED FROM VIRTUAL TO ACTUAL FIELD
+  isCompleted: {
+    type: Boolean,
+    default: false
+  },
+  
+  completedDate: {
+    type: Date
+  },
+  
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Disabled',
@@ -81,15 +100,48 @@ const wishlistItemSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Virtual for progress percentage
-wishlistItemSchema.virtual('progress').get(function() {
-  if (this.amountRequired === 0) return 0;
-  return Math.min(Math.round((this.amountRaised / this.amountRequired) * 100), 100);
+// Pre-save middleware to update progress automatically
+wishlistItemSchema.pre('save', function(next) {
+  // Always recalculate progress before saving
+  if (this.amountRequired > 0) {
+    this.progress = Math.min(
+      Math.round((this.amountRaised / this.amountRequired) * 100),
+      100
+    );
+  } else {
+    this.progress = 0;
+  }
+  
+  // Auto-complete if fully funded
+  if (this.amountRaised >= this.amountRequired && !this.isCompleted) {
+    this.isCompleted = true;
+    this.status = 'completed';
+    this.completedDate = new Date();
+  }
+  
+  next();
 });
 
-// Virtual for completion status
-wishlistItemSchema.virtual('isCompleted').get(function() {
-  return this.amountRaised >= this.amountRequired || this.status === 'completed';
-});
+// Static method to calculate and update progress
+wishlistItemSchema.statics.updateProgress = async function(itemId) {
+  const item = await this.findById(itemId);
+  if (item) {
+    if (item.amountRequired > 0) {
+      item.progress = Math.min(
+        Math.round((item.amountRaised / item.amountRequired) * 100),
+        100
+      );
+    }
+    
+    if (item.amountRaised >= item.amountRequired && !item.isCompleted) {
+      item.isCompleted = true;
+      item.status = 'completed';
+      item.completedDate = new Date();
+    }
+    
+    await item.save();
+  }
+  return item;
+};
 
 module.exports = mongoose.model('WishlistItem', wishlistItemSchema);

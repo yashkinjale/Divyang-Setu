@@ -1,211 +1,221 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
   Typography,
-  TextField,
   Button,
   Grid,
   Card,
   CardContent,
-  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
   Chip,
-  Avatar,
-  Divider,
-  Tab,
-  Tabs,
+  IconButton,
+  LinearProgress,
+  Snackbar,
   Alert,
   CircularProgress,
-  LinearProgress,
-  IconButton,
+  Select,
+  FormControl,
+  InputLabel,
+  Paper,
+  Tab,
+  Tabs,
   useTheme,
   useMediaQuery
 } from '@mui/material';
 import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  AttachFile as AttachFileIcon,
+  CalendarToday as CalendarIcon,
+  LocalOffer as LocalOfferIcon,
+  Favorite as FavoriteIcon,
+  CheckCircle as CheckCircleIcon,
   Edit as EditIcon,
   Save as SaveIcon,
   Close as CloseIcon,
-  LocationOn as LocationOnIcon,
-  Phone as PhoneIcon,
-  Email as EmailIcon,
-  Work as WorkIcon,
-  School as SchoolIcon,
-  Visibility as VisibilityIcon,
-  CheckCircle as CheckCircleIcon,
-  Schedule as ScheduleIcon,
-  Warning as WarningIcon,
   Description as DescriptionIcon,
-  Favorite as FavoriteIcon,
-  Timeline as TimelineIcon,
-  Person as PersonIcon,
-  Info as InfoIcon
+  Timeline as TimelineIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
-import { disabledApi } from '../utils/api';
+import { wishlistApi } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
-const ProfilePage = () => {
+const WishlistSection = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { user } = useAuth();
   
-  const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const [wishlistItems, setWishlistItems] = useState([]);
+  const [openForm, setOpenForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [profileData, setProfileData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    location: "",
-    address: "",
-    bio: "", // Added bio field
-    disabilityType: "",
-    needs: "",
-    education: "",
-    occupation: "",
-    documents: [],
-    wishlist: [],
-    recentActivity: [],
-    isVerified: false,
-    verificationStatus: "pending",
-    profileCompletionPercentage: 0,
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [activeTab, setActiveTab] = useState(0);
+  
+  const [formData, setFormData] = useState({
+    itemName: '',
+    description: '',
+    amountRequired: '',
+    quantity: '1',
+    deadline: '',
+    urgencyLevel: 'Medium',
+    category: '',
+    supportingDocuments: []
   });
 
-  const [editedData, setEditedData] = useState({});
-
-  // Get auth token from localStorage
-  const getAuthToken = () => {
-    return localStorage.getItem("token");
-  };
-
-  // Fetch profile data from backend
-  const fetchProfile = async () => {
+  // Fetch wishlist items
+  const fetchWishlistItems = async () => {
     try {
-      setLoading(true);
-      const response = await disabledApi.getProfile();
-      const data = response.data;
-      setProfileData(data);
-      setEditedData(data);
-    } catch (err) {
-      console.error("Error fetching profile:", err);
-      if (err.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-      } else {
-        setError("Failed to load profile data. Please try again.");
+      console.log('Fetching wishlist...');
+      if (!user) {
+        setLoading(false);
+        return;
       }
-    } finally {
+
+      const response = await wishlistApi.getAll();
+      console.log('Wishlist data:', response.data.data);
+      setWishlistItems(response.data.data || []);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
       setLoading(false);
     }
   };
 
-  const updateProfile = async () => {
+  // Set up polling
+  useEffect(() => {
+    fetchWishlistItems();
+    
+    // Poll every 2 seconds
+    const interval = setInterval(() => {
+      fetchWishlistItems();
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+
     try {
-      setSaving(true);
+      if (!user) {
+        showSnackbar('Please log in to add wishlist items', 'error');
+        return;
+      }
+
       const payload = {
-        name: editedData.name,
-        email: editedData.email,
-        phone: editedData.phone,
-        location: editedData.location,
-        address: editedData.address,
-        bio: editedData.bio, // Include bio in payload
-        disabilityType: editedData.disabilityType,
-        needs: editedData.needs,
-        education: editedData.education,
-        occupation: editedData.occupation,
+        itemName: formData.itemName.trim(),
+        description: formData.description.trim(),
+        amountRequired: parseFloat(formData.amountRequired),
+        quantity: parseInt(formData.quantity),
+        category: formData.category,
+        urgencyLevel: formData.urgencyLevel
       };
 
-      const response = await disabledApi.updateProfile(payload);
-      const result = response.data;
-
-      setSuccessMessage(result.message || "Profile updated successfully!");
-      setProfileData(editedData);
-      setIsEditing(false);
-
-      setTimeout(() => {
-        fetchProfile();
-      }, 1000);
-    } catch (err) {
-      console.error("Error updating profile:", err);
-      if (err.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-      } else {
-        setError(
-          err.response?.data?.message ||
-            "Failed to update profile. Please try again."
-        );
+      if (formData.deadline) {
+        payload.deadline = formData.deadline;
       }
+
+      const response = await wishlistApi.create(payload);
+
+      if (formData.supportingDocuments.length > 0 && formData.supportingDocuments[0].size) {
+        const formDataToSend = new FormData();
+        formData.supportingDocuments.forEach(file => {
+          formDataToSend.append('documents', file);
+        });
+
+        await wishlistApi.uploadDocuments(response.data.data._id, formDataToSend);
+      }
+
+      setOpenForm(false);
+      resetForm();
+      await fetchWishlistItems();
+      showSnackbar('Wishlist item added successfully');
+    } catch (error) {
+      console.error('Error adding wishlist item:', error);
+      showSnackbar(error.response?.data?.message || 'Error adding wishlist item', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    setEditedData({ ...profileData });
+  const handleDeleteClick = (id) => {
+    setDeleteDialog({ open: true, id });
   };
 
-  const handleSave = () => {
-    updateProfile();
+  const handleDeleteConfirm = async () => {
+    try {
+      if (!user) {
+        showSnackbar('Please log in', 'error');
+        return;
+      }
+
+      await wishlistApi.delete(deleteDialog.id);
+      setDeleteDialog({ open: false, id: null });
+      await fetchWishlistItems();
+      showSnackbar('Wishlist item deleted successfully');
+    } catch (error) {
+      console.error('Error deleting:', error);
+      showSnackbar('Error deleting wishlist item', 'error');
+    }
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditedData({ ...profileData });
+  const resetForm = () => {
+    setFormData({
+      itemName: '',
+      description: '',
+      amountRequired: '',
+      quantity: '1',
+      deadline: '',
+      urgencyLevel: 'Medium',
+      category: '',
+      supportingDocuments: []
+    });
   };
 
-  const handleInputChange = (field, value) => {
-    setEditedData((prev) => ({
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setFormData(prev => ({
       ...prev,
-      [field]: value,
+      supportingDocuments: [...prev.supportingDocuments, ...files]
     }));
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "verified":
-        return <CheckCircleIcon sx={{ color: 'success.main' }} />;
-      case "pending":
-        return <ScheduleIcon sx={{ color: 'warning.main' }} />;
-      case "error":
-      case "rejected":
-        return <WarningIcon sx={{ color: 'error.main' }} />;
-      default:
-        return <ScheduleIcon sx={{ color: 'grey.400' }} />;
-    }
+  const removeFile = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      supportingDocuments: prev.supportingDocuments.filter((_, i) => i !== index)
+    }));
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "verified":
-        return "success";
-      case "pending":
-        return "warning";
-      case "error":
-      case "rejected":
-        return "error";
-      default:
-        return "default";
+  const getUrgencyColor = (level) => {
+    switch (level) {
+      case 'High': return 'error';
+      case 'Medium': return 'warning';
+      case 'Low': return 'success';
+      default: return 'default';
     }
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
   };
 
   if (loading) {
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        bgcolor: 'background.default'
-      }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
         <CircularProgress size={60} />
       </Box>
     );
@@ -220,9 +230,8 @@ const ProfilePage = () => {
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="xl">
-        {/* Success/Error Messages */}
         <AnimatePresence>
-          {(error || successMessage) && (
+          {(snackbar.open) && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -230,28 +239,24 @@ const ProfilePage = () => {
               transition={{ duration: 0.3 }}
             >
               <Alert 
-                severity={error ? "error" : "success"}
+                severity={snackbar.severity}
                 action={
                   <IconButton
                     color="inherit"
                     size="small"
-                    onClick={() => {
-                      setError(null);
-                      setSuccessMessage("");
-                    }}
+                    onClick={handleCloseSnackbar}
                   >
                     <CloseIcon />
                   </IconButton>
                 }
                 sx={{ mb: 3 }}
               >
-                {error || successMessage}
+                {snackbar.message}
               </Alert>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -260,453 +265,303 @@ const ProfilePage = () => {
           <Paper elevation={2} sx={{ p: 4, mb: 4, borderRadius: 2 }}>
             <Grid container spacing={3} alignItems="center">
               <Grid item xs={12} md={8}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
-                  <Box sx={{ position: 'relative' }}>
-                    <Avatar
-                      sx={{ 
-                        width: 100, 
-                        height: 100, 
-                        bgcolor: 'primary.light',
-                        fontSize: '2.5rem'
-                      }}
-                      src={profileData.profileImage}
-                    >
-                      {profileData.profileImage ? null : <PersonIcon sx={{ fontSize: '3rem' }} />}
-                    </Avatar>
-                    {profileData.isVerified && (
-                      <CheckCircleIcon
-                        sx={{
-                          position: 'absolute',
-                          bottom: -4,
-                          right: -4,
-                          color: 'success.main',
-                          bgcolor: 'white',
-                          borderRadius: '50%',
-                          fontSize: '2rem'
-                        }}
-                      />
-                    )}
-                  </Box>
-
-                  <Box sx={{ flex: 1 }}>
-                    {isEditing ? (
-                      <TextField
-                        value={editedData.name}
-                        onChange={(e) => handleInputChange("name", e.target.value)}
-                        variant="outlined"
-                        size="medium"
-                        fullWidth
-                        sx={{ mb: 2, maxWidth: 400 }}
-                        InputProps={{
-                          sx: { fontSize: '1.5rem', fontWeight: 'bold' }
-                        }}
-                      />
-                    ) : (
-                      <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
-                        {profileData.name}
-                      </Typography>
-                    )}
-
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                      <Chip
-                        icon={<VisibilityIcon />}
-                        label={profileData.disabilityType || "Not specified"}
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                      />
-                      <Chip
-                        icon={<WorkIcon />}
-                        label={profileData.occupation || "Not specified"}
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                      />
-                      <Chip
-                        icon={<SchoolIcon />}
-                        label={profileData.education || "Not specified"}
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                      />
-                    </Box>
-
-                    {profileData.profileCompletionPercentage < 100 && (
-                      <Box sx={{ maxWidth: 400 }}>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          Profile Completion: {profileData.profileCompletionPercentage}%
-                        </Typography>
-                        <LinearProgress
-                          variant="determinate"
-                          value={profileData.profileCompletionPercentage}
-                          sx={{ height: 8, borderRadius: 1 }}
-                        />
-                      </Box>
-                    )}
-                  </Box>
-                </Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  My Wishlist
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'} in your wishlist
+                </Typography>
               </Grid>
-
               <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
-                <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-                  <Button
-                    variant="contained"
-                    startIcon={saving ? <CircularProgress size={16} color="inherit" /> : (isEditing ? <SaveIcon /> : <EditIcon />)}
-                    onClick={isEditing ? handleSave : handleEdit}
-                    disabled={saving}
-                    size="large"
-                  >
-                    {saving ? "Saving..." : (isEditing ? "Save Changes" : "Edit Profile")}
-                  </Button>
-                  {isEditing && (
-                    <Button
-                      variant="outlined"
-                      startIcon={<CloseIcon />}
-                      onClick={handleCancel}
-                      size="large"
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                </Box>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setOpenForm(true)}
+                  size="large"
+                >
+                  Add New Item
+                </Button>
               </Grid>
             </Grid>
           </Paper>
         </motion.div>
 
-        <Grid container spacing={3}>
-          {/* Contact Information */}
-          <Grid item xs={12} lg={4}>
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <Paper elevation={1} sx={{ p: 3, height: 'fit-content' }}>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
-                  Contact Information
-                </Typography>
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <Paper elevation={1}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs
+                value={activeTab}
+                onChange={(e, val) => setActiveTab(val)}
+                variant={isMobile ? "scrollable" : "fullWidth"}
+                scrollButtons="auto"
+              >
+                <Tab icon={<FavoriteIcon />} label="All Items" />
+              </Tabs>
+            </Box>
 
+            <TabPanel value={activeTab} index={0}>
+              {wishlistItems.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
+                  <FavoriteIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
+                  <Typography variant="h6" gutterBottom>
+                    No wishlist items yet
+                  </Typography>
+                  <Typography variant="body2">
+                    Add items you need to your wishlist
+                  </Typography>
+                </Box>
+              ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                  {[
-                    { icon: <EmailIcon color="primary" />, label: "Email", field: "email", type: "email" },
-                    { icon: <PhoneIcon color="primary" />, label: "Phone", field: "phone", type: "tel" },
-                    { icon: <LocationOnIcon color="primary" />, label: "Location", field: "location", type: "text" }
-                  ].map(({ icon, label, field, type }) => (
-                    <Box key={field} sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                      <Box sx={{ 
-                        p: 1, 
-                        bgcolor: 'primary.50', 
-                        borderRadius: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        minWidth: 40,
-                        height: 40
-                      }}>
-                        {icon}
-                      </Box>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
-                          {label}
-                        </Typography>
-                        {isEditing ? (
-                          <TextField
-                            type={type}
-                            value={editedData[field]}
-                            onChange={(e) => handleInputChange(field, e.target.value)}
-                            fullWidth
-                            size="small"
-                            variant="outlined"
-                          />
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            {profileData[field] || "Not provided"}
-                          </Typography>
+                  {wishlistItems.map((item, index) => (
+                    <Card key={item._id || index} variant="outlined">
+                      <CardContent>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+                              {item.itemName}
+                            </Typography>
+                            {item.description && (
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                {item.description}
+                              </Typography>
+                            )}
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Chip
+                              label={`${item.urgencyLevel || 'medium'} priority`}
+                              color={
+                                item.urgencyLevel === "High" ? "error" :
+                                item.urgencyLevel === "Medium" ? "warning" : "success"
+                              }
+                              size="small"
+                            />
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteClick(item._id)}
+                              sx={{ color: 'error.main' }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </Box>
+
+                        {item.amountRequired && (
+                          <Box sx={{ mb: 2 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                              <Typography variant="body2">Progress</Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                ₹{(item.amountRaised || 0).toLocaleString()} / ₹{(item.amountRequired || 0).toLocaleString()}
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant="determinate"
+                              value={item.progress || 0}
+                              sx={{ height: 8, borderRadius: 1, mb: 1 }}
+                            />
+                            <Typography variant="caption" color="text.secondary">
+                              {item.progress || 0}% completed
+                            </Typography>
+                          </Box>
                         )}
-                      </Box>
-                    </Box>
+
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                          <Chip label={item.category} size="small" variant="outlined" />
+                          <Chip
+                            label={item.isCompleted ? "Completed" : "In Progress"}
+                            color={item.isCompleted ? "success" : "primary"}
+                            size="small"
+                          />
+                          {item.quantity && (
+                            <Chip label={`Qty: ${item.quantity}`} size="small" variant="outlined" />
+                          )}
+                          {item.urgencyLevel && (
+                            <Chip label={item.urgencyLevel} size="small" variant="outlined" />
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
                   ))}
                 </Box>
+              )}
+            </TabPanel>
+          </Paper>
+        </motion.div>
 
-                {/* Bio Section */}
-                <Divider sx={{ my: 3 }} />
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                  <Box sx={{ 
-                    p: 1, 
-                    bgcolor: 'primary.50', 
-                    borderRadius: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    minWidth: 40,
-                    height: 40
-                  }}>
-                    <InfoIcon color="primary" />
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
-                      Bio
-                    </Typography>
-                    {isEditing ? (
-                      <TextField
-                        value={editedData.bio || ""}
-                        onChange={(e) => handleInputChange("bio", e.target.value)}
-                        fullWidth
-                        multiline
-                        rows={4}
-                        variant="outlined"
-                        size="small"
-                        placeholder="Tell us about yourself..."
-                        inputProps={{ maxLength: 500 }}
-                        helperText={`${(editedData.bio || "").length}/500 characters`}
-                      />
-                    ) : (
-                      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                        {profileData.bio || "No bio added yet"}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-
-                {isEditing && (
-                  <>
-                    <Divider sx={{ my: 3 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                      Additional Information
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {[
-                        { label: "Disability Type", field: "disabilityType", multiline: false },
-                        { label: "Education", field: "education", multiline: false },
-                        { label: "Occupation", field: "occupation", multiline: false },
-                        { label: "Address", field: "address", multiline: true, rows: 2 },
-                        { label: "Needs/Requirements", field: "needs", multiline: true, rows: 3 }
-                      ].map(({ label, field, multiline, rows }) => (
-                        <TextField
-                          key={field}
-                          label={label}
-                          value={editedData[field] || ""}
-                          onChange={(e) => handleInputChange(field, e.target.value)}
-                          fullWidth
-                          multiline={multiline}
-                          rows={rows}
-                          variant="outlined"
+        {/* Add Item Dialog */}
+        <Dialog 
+          open={openForm} 
+          onClose={() => !saving && setOpenForm(false)} 
+          maxWidth="sm" 
+          fullWidth
+        >
+          <DialogTitle>Add Wishlist Item</DialogTitle>
+          <form onSubmit={handleSubmit}>
+            <DialogContent sx={{ pt: 3 }}>
+              <Grid container spacing={2.5}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Item Name"
+                    value={formData.itemName}
+                    onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    multiline
+                    rows={3}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Amount Required"
+                    type="number"
+                    value={formData.amountRequired}
+                    onChange={(e) => setFormData({ ...formData, amountRequired: e.target.value })}
+                    required
+                    InputProps={{ startAdornment: '₹' }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Quantity"
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    required
+                    inputProps={{ min: 1 }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      label="Category"
+                      required
+                    >
+                      <MenuItem value="Medical">Medical</MenuItem>
+                      <MenuItem value="Education">Education</MenuItem>
+                      <MenuItem value="Mobility">Mobility</MenuItem>
+                      <MenuItem value="Technology">Technology</MenuItem>
+                      <MenuItem value="Other">Other</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Urgency Level</InputLabel>
+                    <Select
+                      value={formData.urgencyLevel}
+                      onChange={(e) => setFormData({ ...formData, urgencyLevel: e.target.value })}
+                      label="Urgency Level"
+                    >
+                      <MenuItem value="Low">Low</MenuItem>
+                      <MenuItem value="Medium">Medium</MenuItem>
+                      <MenuItem value="High">High</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Deadline (Optional)"
+                    type="date"
+                    value={formData.deadline}
+                    onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    startIcon={<AttachFileIcon />}
+                    fullWidth
+                  >
+                    Upload Documents (Optional)
+                    <input
+                      type="file"
+                      hidden
+                      multiple
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    />
+                  </Button>
+                  {formData.supportingDocuments.length > 0 && (
+                    <Box sx={{ mt: 1.5, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {formData.supportingDocuments.map((file, idx) => (
+                        <Chip
+                          key={idx}
+                          label={file.name}
+                          onDelete={() => removeFile(idx)}
                           size="small"
                         />
                       ))}
                     </Box>
-                  </>
-                )}
-              </Paper>
-            </motion.div>
-          </Grid>
+                  )}
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+              <Button 
+                onClick={() => setOpenForm(false)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={saving}
+                startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <AddIcon />}
+              >
+                {saving ? 'Adding...' : 'Add Item'}
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
 
-          {/* Main Content */}
-          <Grid item xs={12} lg={8}>
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+        {/* Delete Dialog */}
+        <Dialog
+          open={deleteDialog.open}
+          onClose={() => setDeleteDialog({ open: false, id: null })}
+        >
+          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogContent>
+            <Typography>
+              Are you sure you want to delete this wishlist item?
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+            <Button onClick={() => setDeleteDialog({ open: false, id: null })}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDeleteConfirm} 
+              variant="contained"
+              color="error"
             >
-              <Paper elevation={1} sx={{ minHeight: 600 }}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                  <Tabs
-                    value={activeTab}
-                    onChange={handleTabChange}
-                    aria-label="profile tabs"
-                    variant={isMobile ? "scrollable" : "fullWidth"}
-                    scrollButtons="auto"
-                  >
-                    <Tab icon={<DescriptionIcon />} label="Documents" />
-                    <Tab icon={<FavoriteIcon />} label="Wishlist" />
-                    <Tab icon={<TimelineIcon />} label="Activity" />
-                  </Tabs>
-                </Box>
-
-                {/* Documents Tab */}
-                <TabPanel value={activeTab} index={0}>
-                  {profileData.documents.length === 0 ? (
-                    <Box sx={{ 
-                      textAlign: 'center', 
-                      py: 8,
-                      color: 'text.secondary'
-                    }}>
-                      <DescriptionIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
-                      <Typography variant="h6" gutterBottom>
-                        No documents uploaded yet
-                      </Typography>
-                      <Typography variant="body2">
-                        Upload your documents to get verified
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {profileData.documents.map((doc, index) => (
-                        <Card key={doc._id || index} variant="outlined" sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
-                          <CardContent>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <Box sx={{ 
-                                  p: 1, 
-                                  bgcolor: 'primary.50', 
-                                  borderRadius: 1,
-                                  display: 'flex',
-                                  alignItems: 'center'
-                                }}>
-                                  {getStatusIcon(doc.status)}
-                                </Box>
-                                <Box>
-                                  <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                                    {doc.name}
-                                  </Typography>
-                                  <Typography variant="body2" color="text.secondary">
-                                    Last updated: {doc.date}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                              <Chip
-                                label={doc.status}
-                                color={getStatusColor(doc.status)}
-                                size="small"
-                              />
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </Box>
-                  )}
-                </TabPanel>
-
-                {/* Wishlist Tab */}
-                <TabPanel value={activeTab} index={1}>
-                  {profileData.wishlist.length === 0 ? (
-                    <Box sx={{ 
-                      textAlign: 'center', 
-                      py: 8,
-                      color: 'text.secondary'
-                    }}>
-                      <FavoriteIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
-                      <Typography variant="h6" gutterBottom>
-                        No wishlist items yet
-                      </Typography>
-                      <Typography variant="body2">
-                        Add items you need to your wishlist
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      {profileData.wishlist.map((item, index) => (
-                        <Card key={item._id || index} variant="outlined">
-                          <CardContent>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                              <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
-                                  {item.item}
-                                </Typography>
-                                {item.description && (
-                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                    {item.description}
-                                  </Typography>
-                                )}
-                              </Box>
-                              <Chip
-                                label={`${item.priority || 'medium'} priority`}
-                                color={
-                                  item.priority === "high" ? "error" :
-                                  item.priority === "medium" ? "warning" : "success"
-                                }
-                                size="small"
-                              />
-                            </Box>
-
-                            {item.estimatedCost && (
-                              <Box sx={{ mb: 2 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                  <Typography variant="body2">Progress</Typography>
-                                  <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                                    ₹{item.currentAmount || 0} / ₹{item.targetAmount}
-                                  </Typography>
-                                </Box>
-                                <LinearProgress
-                                  variant="determinate"
-                                  value={item.progress}
-                                  sx={{ height: 8, borderRadius: 1, mb: 1 }}
-                                />
-                                <Typography variant="caption" color="text.secondary">
-                                  {item.progress}% completed
-                                </Typography>
-                              </Box>
-                            )}
-
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                              <Chip label={item.category} size="small" variant="outlined" />
-                              <Chip
-                                label={item.isCompleted ? "Completed" : "In Progress"}
-                                color={item.isCompleted ? "success" : "primary"}
-                                size="small"
-                              />
-                              {item.quantity && (
-                                <Chip label={`Qty: ${item.quantity}`} size="small" variant="outlined" />
-                              )}
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </Box>
-                  )}
-                </TabPanel>
-
-                {/* Activity Tab */}
-                <TabPanel value={activeTab} index={2}>
-                  {profileData.recentActivity.length === 0 ? (
-                    <Box sx={{ 
-                      textAlign: 'center', 
-                      py: 8,
-                      color: 'text.secondary'
-                    }}>
-                      <TimelineIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
-                      <Typography variant="h6" gutterBottom>
-                        No recent activity
-                      </Typography>
-                      <Typography variant="body2">
-                        Your activity will appear here
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {profileData.recentActivity.map((activity, index) => (
-                        <Card key={index} variant="outlined" sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
-                          <CardContent>
-                            <Box sx={{ display: 'flex', gap: 2 }}>
-                              <Avatar sx={{ bgcolor: 'primary.light', width: 40, height: 40 }}>
-                                <TimelineIcon />
-                              </Avatar>
-                              <Box sx={{ flex: 1 }}>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mb: 1 }}>
-                                  {activity.action}
-                                </Typography>
-                                {activity.description && (
-                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                    {activity.description}
-                                  </Typography>
-                                )}
-                                <Typography variant="caption" color="text.secondary">
-                                  {activity.date}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </Box>
-                  )}
-                </TabPanel>
-              </Paper>
-            </motion.div>
-          </Grid>
-        </Grid>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );
 };
 
-export default ProfilePage;
+export default WishlistSection;
