@@ -14,14 +14,15 @@ const donorRoutes = require("./routes/donorRoutes");
 const wishlistRoutes = require("./routes/wishlist");
 const schemesRoutes = require("./routes/schemesRoutes");
 const jobRoutes = require("./routes/jobRoutes");
-const disabledRoutes = require("./routes/disabled"); // Import disabled routes with other routes
+const disabledRoutes = require("./routes/disabled");
 const donationRoutes = require("./routes/donationRoutes");
 
 const app = express();
 
-// Enhanced CORS configuration
+// CORS Configuration - SINGLE CONFIGURATION FOR ALL ENVIRONMENTS
 const corsOptions = {
   origin: [
+    "https://divyang-setu.vercel.app",
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
@@ -39,8 +40,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
-// Preflight requests are handled by the CORS middleware above in Express 5
 
 // Enhanced debug logging middleware
 app.use((req, res, next) => {
@@ -128,12 +127,11 @@ mongoose
           ? "✅ Configured (Test Mode)"
           : "❌ Not Configured"
       }`
-    ); // ADD THIS
+    );
     console.log("Database name:", mongoose.connection.name);
   })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err.message);
-    // Don't exit the process, continue without DB for testing
     console.log("⚠️  Continuing without database connection...");
   });
 
@@ -154,7 +152,6 @@ mongoose.connection.on("reconnected", () => {
 console.log("Registering API routes...");
 
 try {
-  // Mount routes
   app.use("/api/donors", donorRoutes);
   console.log("✅ Donor routes registered at /api/donors");
 } catch (error) {
@@ -188,8 +185,9 @@ try {
 } catch (error) {
   console.error("❌ Error registering job routes:", error.message);
 }
+
 try {
-  app.use("/api/donations", donationRoutes); // ADD THIS
+  app.use("/api/donations", donationRoutes);
   console.log("✅ Donation routes registered at /api/donations");
 } catch (error) {
   console.error("❌ Error registering donation routes:", error.message);
@@ -274,6 +272,7 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`🌐 Network URL: http://0.0.0.0:${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`🗄️  Database: ${mongoUri}`);
+  console.log(`✅ CORS enabled for: https://divyang-setu.vercel.app`);
   console.log("\n📋 Available Endpoints:");
   console.log("  GET  /                    - Server status");
   console.log("  GET  /health              - Health check");
@@ -287,13 +286,12 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log("  GET  /api/wishlist        - Get wishlists");
   console.log("  POST /api/wishlist        - Create wishlist");
   console.log("  GET  /api/schemes         - Get schemes");
-  console.log("==========================================\n");
   console.log("  POST /api/donations/create-order    - Create payment order");
   console.log("  POST /api/donations/verify-payment  - Verify payment");
   console.log("  GET  /api/donations/history/:pwdId  - Donation history");
   console.log("  GET  /api/donations/my-donations    - My donations");
   console.log("  GET  /api/donations/stats/:pwdId    - Donation stats");
-
+  console.log("==========================================\n");
   console.log("✅ Server is ready to accept connections!");
 });
 
