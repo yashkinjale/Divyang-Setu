@@ -9,6 +9,11 @@ router.post('/register', async (req, res) => {
   try {
     const { name, email, password, phone, address, disabilityType, needs } = req.body;
 
+    // Validate required fields
+    if (!name || !email || !password || !phone || !address) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
     // Check if disabled person already exists
     let disabled = await Disabled.findOne({ email });
     if (disabled) {
@@ -23,7 +28,8 @@ router.post('/register', async (req, res) => {
       phone,
       address,
       disabilityType,
-      needs
+      needs,
+      location: address
     });
 
     await disabled.save();
@@ -37,13 +43,19 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({
       token,
-      disabled: {
+      user: {
         id: disabled._id,
         name: disabled.name,
-        email: disabled.email
+        email: disabled.email,
+        type: 'disabled'
       }
     });
   } catch (err) {
+    console.error('Registration error:', err);
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map(val => val.message);
+      return res.status(400).json({ message: messages.join(', ') });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -52,6 +64,11 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // Validate inputs
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
     // Check if disabled person exists
     const disabled = await Disabled.findOne({ email });
@@ -74,13 +91,15 @@ router.post('/login', async (req, res) => {
 
     res.json({
       token,
-      disabled: {
+      user: {
         id: disabled._id,
         name: disabled.name,
-        email: disabled.email
+        email: disabled.email,
+        type: 'disabled'
       }
     });
   } catch (err) {
+    console.error('Login error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -91,8 +110,9 @@ router.get('/profile', auth, async (req, res) => {
     const disabled = await Disabled.findById(req.user.id).select('-password');
     res.json(disabled);
   } catch (err) {
+    console.error('Profile fetch error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-module.exports = router; 
+module.exports = router;
