@@ -23,6 +23,7 @@ const app = express();
 const corsOptions = {
   origin: [
     "https://divyang-setu.vercel.app",
+    /\.vercel\.app$/, // Allow all Vercel preview/deployment URLs
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
