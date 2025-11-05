@@ -42,6 +42,8 @@ import {
   ExitToApp as LogoutIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useScreenReader } from '../context/ScreenReaderContext';
+import { useVoiceNav } from '../context/VoiceNavContext';
 import { useAuth } from '../context/AuthContext';
 import { useThemeToggle } from '../context/ThemeContext';
 
@@ -138,8 +140,8 @@ const DisabledDashboard = () => {
   const location = useLocation();
   const { logout } = useAuth();
   const { isHighContrast, toggleTheme } = useThemeToggle();
-  const [screenReader, setScreenReader] = useState(false);
-  const [voiceNav, setVoiceNav] = useState(false);
+  const { enabled: screenReader, toggle: toggleScreenReader, announce } = useScreenReader();
+  const { enabled: voiceNav, toggle: toggleVoiceNav } = useVoiceNav();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -253,7 +255,10 @@ const DisabledDashboard = () => {
             <Tooltip title="Screen Reader Mode">
               <IconButton
                 color={screenReader ? 'primary' : 'default'}
-                onClick={() => setScreenReader(!screenReader)}
+                onClick={() => {
+                  toggleScreenReader();
+                  setTimeout(() => announce(screenReader ? 'Screen reader disabled' : 'Screen reader enabled'), 0);
+                }}
               >
                 <ScreenReaderIcon />
               </IconButton>
@@ -269,7 +274,7 @@ const DisabledDashboard = () => {
             <Tooltip title="Voice Navigation">
               <IconButton
                 color={voiceNav ? 'primary' : 'default'}
-                onClick={() => setVoiceNav(!voiceNav)}
+                onClick={toggleVoiceNav}
               >
                 {voiceNav ? <MicIcon /> : <MicOffIcon />}
               </IconButton>

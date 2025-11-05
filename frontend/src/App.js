@@ -21,6 +21,8 @@ import DonorDashboard from './components/DonorDashboard';
 import MessagesPage from './pages/MessagesPage';
 import theme from './theme';
 import highContrastTheme from './utils/highContrastTheme';
+import { ScreenReaderProvider, useScreenReader } from './context/ScreenReaderContext';
+import { VoiceNavProvider } from './context/VoiceNavContext';
 
 const PrivateRoute = ({ children, userType }) => {
   const { user, loading, isAuthenticated } = useAuth();
@@ -145,64 +147,69 @@ const App = () => {
       <CssBaseline />
       <ThemeContext.Provider value={themeContextValue}>
         <AuthProvider>
-          <Router>
-            <Routes>
-              {/* Landing Page */}
-              <Route path="/" element={<LandingPage />} />
-              
-              {/* Job Postings - Public Route */}
-              <Route path="/job-postings" element={<JobPostings />} />
+          <ScreenReaderProvider>
+            <Router>
+              <VoiceNavProvider>
+                <RouteChangeAnnouncer />
+                <Routes>
+                  {/* Landing Page */}
+                  <Route path="/" element={<LandingPage />} />
+                  
+                  {/* Job Postings - Public Route */}
+                  <Route path="/job-postings" element={<JobPostings />} />
 
-              {/* Donor Routes */}
-              <Route path="/donor/login" element={<DonorAuth isLogin={true} />} />
-              <Route path="/donor/register" element={<DonorAuth isLogin={false} />} />
-              <Route
-                path="/donor/dashboard"
-                element={
-                  <PrivateRoute userType="donor">
-                    <DonorDashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/donor/dashboard/money-donation"
-                element={
-                  <PrivateRoute userType="donor">
-                    <DonorDashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/donor/dashboard/equipment-donation"
-                element={
-                  <PrivateRoute userType="donor">
-                    <DonorDashboard />
-                  </PrivateRoute>
-                }
-              />
+                  {/* Donor Routes */}
+                  <Route path="/donor/login" element={<DonorAuth isLogin={true} />} />
+                  <Route path="/donor/register" element={<DonorAuth isLogin={false} />} />
+                  <Route
+                    path="/donor/dashboard"
+                    element={
+                      <PrivateRoute userType="donor">
+                        <DonorDashboard />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/donor/dashboard/money-donation"
+                    element={
+                      <PrivateRoute userType="donor">
+                        <DonorDashboard />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/donor/dashboard/equipment-donation"
+                    element={
+                      <PrivateRoute userType="donor">
+                        <DonorDashboard />
+                      </PrivateRoute>
+                    }
+                  />
 
-              {/* Disabled Person Routes with Nested Dashboard */}
-              <Route path="/disabled/login" element={<DisabledAuth isLogin={true} />} />
-              <Route path="/disabled/register" element={<DisabledAuth isLogin={false} />} />
-              <Route
-                path="/disabled/dashboard"
-                element={
-                  <PrivateRoute userType="disabled">
-                    <DisabledDashboard />
-                  </PrivateRoute>
-                }
-              >
-                {/* Nested routes within the dashboard */}
-                <Route index element={<DisabledDashboardHome />} />
-                <Route path="schemes" element={<GovernmentSchemesPage />} />
-                <Route path="wishlist" element={<WishlistSection />} />
-                <Route path="jobs" element={<JobRecommendations />} />
-                <Route path="community" element={<SuccessStoriesPage />} />
-                <Route path="profile" element={<ProfilePage />} />
-                <Route path="messages" element={<MessagesPage />} />
-              </Route>
-            </Routes>
-          </Router>
+                  {/* Disabled Person Routes with Nested Dashboard */}
+                  <Route path="/disabled/login" element={<DisabledAuth isLogin={true} />} />
+                  <Route path="/disabled/register" element={<DisabledAuth isLogin={false} />} />
+                  <Route
+                    path="/disabled/dashboard"
+                    element={
+                      <PrivateRoute userType="disabled">
+                        <DisabledDashboard />
+                      </PrivateRoute>
+                    }
+                  >
+                    {/* Nested routes within the dashboard */}
+                    <Route index element={<DisabledDashboardHome />} />
+                    <Route path="schemes" element={<GovernmentSchemesPage />} />
+                    <Route path="wishlist" element={<WishlistSection />} />
+                    <Route path="jobs" element={<JobRecommendations />} />
+                    <Route path="community" element={<SuccessStoriesPage />} />
+                    <Route path="profile" element={<ProfilePage />} />
+                    <Route path="messages" element={<MessagesPage />} />
+                  </Route>
+                </Routes>
+              </VoiceNavProvider>
+            </Router>
+          </ScreenReaderProvider>
         </AuthProvider>
       </ThemeContext.Provider>
     </ThemeProvider>
@@ -210,3 +217,15 @@ const App = () => {
 };
 
 export default App;
+
+// Announces route changes to the screen reader
+const RouteChangeAnnouncer = () => {
+  const { announce, enabled } = useScreenReader();
+  const location = React.useMemo(() => window.location.pathname + window.location.search, [window.location.pathname, window.location.search]);
+  React.useEffect(() => {
+    if (!enabled) return;
+    const title = document.title || 'Page changed';
+    announce(title);
+  }, [location, enabled, announce]);
+  return null;
+};

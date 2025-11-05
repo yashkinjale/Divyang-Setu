@@ -564,7 +564,15 @@ const DonorDashboard = () => {
               }}
             >
               <Avatar
-                src={profile.image}
+                src={(function(){
+                  const raw = profile.profileImage || profile.image || profile.photo || profile.avatarUrl || profile.avatar;
+                  const img = typeof raw === 'string' ? raw : (raw && (raw.url || raw.path || raw.location || raw.secure_url || raw.src));
+                  if (!img || typeof img !== 'string') return undefined;
+                  if (/^(https?:|data:|blob:)/i.test(img)) return img;
+                  const base = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/?api$/, '');
+                  const path = img.charAt(0) === '/' ? img : `/${img}`;
+                  return `${base}${path}`;
+                })()}
                 sx={{ width: 40, height: 40, mr: 1.5 }}
               >
                 <PersonIcon />
