@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "lucide-react": "^0.544.0"
+    "lucide-react": "^0.544.0",
+    "react-slick": "^0.31.0",
+    "slick-carousel": "^1.8.1"
   }
 }

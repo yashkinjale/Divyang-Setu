@@ -1,9 +1,6 @@
 // src/theme.js
 import { createTheme, alpha } from '@mui/material';
 
-const buttonSize = '40px';
-const iconSize = '24px';
-
 const theme = createTheme({
   palette: {
     primary: { main: '#2563eb', light: '#60a5fa', dark: '#1d4ed8' },
@@ -14,7 +11,11 @@ const theme = createTheme({
 
   typography: {
     fontFamily: '"Inter", "Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
-    button: { textTransform: 'none', fontWeight: 500, lineHeight: 1, letterSpacing: '0.01em' },
+    h1: { fontWeight: 700, letterSpacing: '-0.02em' },
+    h2: { fontWeight: 700, letterSpacing: '-0.01em' },
+    h3: { fontWeight: 600, letterSpacing: '-0.01em' },
+    h4: { fontWeight: 600 },
+    button: { textTransform: 'none', fontWeight: 500, letterSpacing: '0.01em' },
   },
 
   shape: { borderRadius: 12 },
@@ -27,43 +28,23 @@ const theme = createTheme({
       },
     },
 
-    MuiButton: {
+    MuiAppBar: {
       styleOverrides: {
         root: {
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          minHeight: buttonSize,
-          lineHeight: 1,
-          padding: '0 16px',
+          borderBottom: '2px solid transparent',
           boxSizing: 'border-box',
-          verticalAlign: 'middle',
-          borderRadius: 12,
+          transition: 'border-color 0.3s ease',
         },
-        startIcon: {
-          width: buttonSize,
-          height: buttonSize,
-          display: 'inline-flex !important',
+      },
+    },
+
+    MuiToolbar: {
+      styleOverrides: {
+        root: {
+          minHeight: '64px',
+          padding: '0 16px',
+          display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: '8px !important',
-          lineHeight: 0,
-          flexShrink: 0,
-        },
-        endIcon: {
-          width: buttonSize,
-          height: buttonSize,
-          display: 'inline-flex !important',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginLeft: '8px !important',
-          lineHeight: 0,
-          flexShrink: 0,
-        },
-        contained: {
-          background: 'linear-gradient(45deg, #2563eb 30%, #60a5fa 90%)',
-          '&:hover': { background: 'linear-gradient(45deg, #1d4ed8 30%, #3b82f6 90%)' },
         },
       },
     },
@@ -71,15 +52,17 @@ const theme = createTheme({
     MuiIconButton: {
       styleOverrides: {
         root: {
-          width: buttonSize,
-          height: buttonSize,
-          padding: 0,
-          margin: 0,
-          display: 'inline-flex',
+          padding: '8px',
+          width: '40px',
+          height: '40px',
+          display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          lineHeight: 1,
-          boxSizing: 'border-box',
+          '& svg': {
+            fontSize: '1.25rem !important',
+            width: '1.25rem !important',
+            height: '1.25rem !important',
+          },
         },
       },
     },
@@ -87,11 +70,40 @@ const theme = createTheme({
     MuiSvgIcon: {
       styleOverrides: {
         root: {
-          width: iconSize,
-          height: iconSize,
-          display: 'block',
-          verticalAlign: 'middle',
+          fontSize: '1.25rem !important',
+          width: '1.25rem !important',
+          height: '1.25rem !important',
           flexShrink: 0,
+        },
+      },
+    },
+
+    MuiListItemIcon: {
+      styleOverrides: {
+        root: {
+          minWidth: '40px',
+          '& svg': {
+            fontSize: '1.25rem !important',
+            width: '1.25rem !important',
+            height: '1.25rem !important',
+          },
+        },
+      },
+    },
+
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          padding: '12px 24px',
+          borderRadius: '8px',
+          boxShadow: 'none',
+          fontSize: '0.95rem',
+        },
+        contained: {
+          background: 'linear-gradient(45deg, #2563eb 30%, #60a5fa 90%)',
+          '&:hover': {
+            background: 'linear-gradient(45deg, #1d4ed8 30%, #3b82f6 90%)',
+          },
         },
       },
     },
@@ -99,39 +111,10 @@ const theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          boxShadow: 'none',
-          backgroundColor: '#ffffff',
-          borderRadius: 12,
-        },
-      },
-    },
-
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          backgroundColor: '#ffffff',
-          borderRadius: 12,
-          boxShadow: 'none',
-        },
-      },
-    },
-
-    MuiOutlinedInput: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          lineHeight: 1,
-        },
-        input: {
-          lineHeight: 1,
-        },
-      },
-    },
-
-    MuiSelect: {
-      styleOverrides: {
-        root: {
-          lineHeight: 1,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          backdropFilter: 'blur(10px)',
+          background: alpha('#ffffff', 0.9),
+          transition: 'all 0.3s ease-in-out',
         },
       },
     },
@@ -139,5 +122,6 @@ const theme = createTheme({
 });
 
 export default theme;
+
 
 

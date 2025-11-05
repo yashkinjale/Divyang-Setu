@@ -24,6 +24,8 @@ import highContrastTheme from './utils/highContrastTheme';
 import { ScreenReaderProvider, useScreenReader } from './context/ScreenReaderContext';
 import { VoiceNavProvider } from './context/VoiceNavContext';
 
+
+
 const PrivateRoute = ({ children, userType }) => {
   const { user, loading, isAuthenticated } = useAuth();
 
