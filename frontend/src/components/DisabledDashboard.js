@@ -43,20 +43,52 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useThemeToggle } from '../context/ThemeContext';
 
 const SidebarItem = ({ icon: Icon, text, onClick, active }) => {
   const theme = useTheme();
+  const { isHighContrast } = useThemeToggle();
+  
   return (
     <ListItemButton
       onClick={onClick}
+      selected={active}
       sx={{
         borderRadius: 1,
         mb: 1,
-        backgroundColor: active ? theme.palette.primary.light : 'transparent',
-        color: active ? theme.palette.primary.main : 'inherit',
+        px: 2,
+        py: 1,
+        minHeight: '48px',
+        backgroundColor: active 
+          ? (isHighContrast ? '#FFFFFF' : theme.palette.primary.light) 
+          : 'transparent',
+        color: active 
+          ? (isHighContrast ? '#FFFF00' : theme.palette.primary.main) 
+          : 'inherit',
         '&:hover': {
-          backgroundColor: theme.palette.primary.light,
-          color: theme.palette.primary.main,
+          backgroundColor: isHighContrast ? '#1a1a1a' : theme.palette.primary.light,
+          color: isHighContrast ? '#FFFFFF' : theme.palette.primary.main,
+        },
+        '&.Mui-selected': {
+          backgroundColor: active 
+            ? (isHighContrast ? '#FFFFFF' : theme.palette.primary.light) 
+            : 'transparent',
+          color: active 
+            ? (isHighContrast ? '#FFFF00' : theme.palette.primary.main) 
+            : 'inherit',
+          '&:hover': {
+            backgroundColor: isHighContrast ? '#DDDDDD' : theme.palette.primary.light,
+          },
+        },
+        // Ensure the icon also changes color
+        '& .MuiListItemIcon-root': {
+          color: active 
+            ? (isHighContrast ? '#FFFF00' : 'inherit') 
+            : 'inherit',
+          minWidth: '40px',
+        },
+        '& .MuiListItemText-primary': {
+          fontWeight: active ? 600 : 400,
         },
       }}
     >
@@ -105,8 +137,8 @@ const DisabledDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const { isHighContrast, toggleTheme } = useThemeToggle();
   const [screenReader, setScreenReader] = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
   const [voiceNav, setVoiceNav] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -226,10 +258,10 @@ const DisabledDashboard = () => {
                 <ScreenReaderIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="High Contrast Mode">
+            <Tooltip title={isHighContrast ? "Disable High Contrast Mode" : "Enable High Contrast Mode"}>
               <IconButton
-                color={highContrast ? 'primary' : 'default'}
-                onClick={() => setHighContrast(!highContrast)}
+                color={isHighContrast ? 'primary' : 'default'}
+                onClick={toggleTheme}
               >
                 <ContrastIcon />
               </IconButton>
@@ -340,4 +372,4 @@ const DisabledDashboard = () => {
   );
 };
 
-export default DisabledDashboard; 
+export default DisabledDashboard;

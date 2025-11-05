@@ -19,7 +19,8 @@ import {
   MenuItem,
   Tooltip,
   Badge,
-  CircularProgress
+  CircularProgress,
+  useColorScheme
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -29,7 +30,8 @@ import {
   ExitToApp as ExitToAppIcon,
   Notifications as NotificationsIcon,
   Mic as MicIcon,
-  MicOff as MicOffIcon
+  MicOff as MicOffIcon,
+  Accessibility as AccessibilityIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -39,7 +41,12 @@ const drawerWidth = 240;
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/disabled/dashboard' },
-  { text: 'Profile', icon: <PersonIcon />, path: '/disabled/profile' },
+  { text: 'Schemes', icon: <AccessibilityIcon />, path: '/disabled/dashboard/schemes' },
+  { text: 'Wishlist', icon: <PersonIcon />, path: '/disabled/dashboard/wishlist' },
+  { text: 'Jobs', icon: <DashboardIcon />, path: '/disabled/dashboard/jobs' },
+  { text: 'Community', icon: <PersonIcon />, path: '/disabled/dashboard/community' },
+  { text: 'Messages', icon: <NotificationsIcon />, path: '/disabled/dashboard/messages' },
+  { text: 'Profile', icon: <PersonIcon />, path: '/disabled/dashboard/profile' },
 ];
 
 const DisabledDashboard = ({ children }) => {
@@ -96,6 +103,7 @@ const DisabledDashboard = ({ children }) => {
       if (menuItem) {
         navigate(menuItem.path);
         speak(`Navigating to ${menuItem.text}`);
+        setMobileOpen(false);
       }
     }
     
@@ -129,24 +137,42 @@ const DisabledDashboard = ({ children }) => {
       speak('Voice navigation disabled');
     } else {
       startListening(handleVoiceCommand);
-      speak('Voice navigation enabled. You can say commands like "go to dashboard" or "open profile"');
+      speak('Voice navigation enabled. You can say commands like go to dashboard or open profile');
     }
   };
 
   const drawer = (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', padding: theme.spacing(2) }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        padding: theme.spacing(2),
+        borderBottom: `2px solid ${theme.palette.divider}`
+      }}>
+        <AccessibilityIcon sx={{ mr: 1 }} />
         <Typography variant="h6" noWrap>
-          Disabled Dashboard
+          Dashboard
         </Typography>
       </div>
       <Divider />
-      <List>
+      <List role="navigation" aria-label="Dashboard navigation">
         {menuItems.map((item) => (
           <ListItemButton
             key={item.text}
-            onClick={() => navigate(item.path)}
+            onClick={() => {
+              navigate(item.path);
+              if (isMobile) setMobileOpen(false);
+            }}
             selected={location.pathname === item.path}
+            aria-current={location.pathname === item.path ? 'page' : undefined}
+            sx={{
+              borderLeft: location.pathname === item.path ? `4px solid ${theme.palette.primary.main}` : 'none',
+              paddingLeft: location.pathname === item.path ? 'calc(16px - 4px)' : '16px',
+              '&:focus': {
+                outline: `3px solid ${theme.palette.primary.main}`,
+                outlineOffset: '-2px'
+              }
+            }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
@@ -157,18 +183,19 @@ const DisabledDashboard = ({ children }) => {
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <AppBar
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
+          borderBottom: `2px solid ${theme.palette.divider}`,
         }}
       >
         <Toolbar>
           <IconButton
             color="inherit"
-            aria-label="open drawer"
+            aria-label="open navigation drawer"
             edge="start"
             onClick={handleDrawerToggle}
             sx={{ mr: 2, display: { sm: 'none' } }}
@@ -176,32 +203,75 @@ const DisabledDashboard = ({ children }) => {
             <MenuIcon />
           </IconButton>
           
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          <Typography 
+            variant="h6" 
+            noWrap 
+            component="div" 
+            sx={{ flexGrow: 1 }}
+            role="heading"
+            aria-level="1"
+          >
             {menuItems.find(item => item.path === location.pathname)?.text || 'Dashboard'}
           </Typography>
 
           <Tooltip title={isListening ? "Disable Voice Navigation" : "Enable Voice Navigation"}>
-            <IconButton color="inherit" onClick={toggleVoiceNavigation}>
+            <IconButton 
+              color="inherit" 
+              onClick={toggleVoiceNavigation}
+              aria-label={isListening ? "Disable voice navigation" : "Enable voice navigation"}
+              aria-pressed={isListening}
+              sx={{
+                '&:focus': {
+                  outline: `3px solid ${theme.palette.primary.main}`,
+                  outlineOffset: '2px'
+                }
+              }}
+            >
               {isListening ? <MicIcon /> : <MicOffIcon />}
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Notifications">
-            <IconButton color="inherit" onClick={handleNotificationsMenuOpen}>
+            <IconButton 
+              color="inherit" 
+              onClick={handleNotificationsMenuOpen}
+              aria-label={`Notifications ${notifications.length} unread`}
+              aria-haspopup="true"
+              sx={{
+                '&:focus': {
+                  outline: `3px solid ${theme.palette.primary.main}`,
+                  outlineOffset: '2px'
+                }
+              }}
+            >
               <Badge badgeContent={notifications.length} color="error">
                 <NotificationsIcon />
               </Badge>
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Profile">
+          <Tooltip title="Profile menu">
             <IconButton
               id="profile-button"
               edge="end"
               onClick={handleProfileMenuOpen}
               color="inherit"
+              aria-label="Profile menu"
+              aria-haspopup="true"
+              sx={{
+                '&:focus': {
+                  outline: `3px solid ${theme.palette.primary.main}`,
+                  outlineOffset: '2px'
+                }
+              }}
             >
-              <Avatar sx={{ width: 32, height: 32 }}>
+              <Avatar sx={{ 
+                width: 32, 
+                height: 32,
+                backgroundColor: theme.palette.secondary.main,
+                color: theme.palette.secondary.contrastText,
+                border: `2px solid ${theme.palette.primary.main}`
+              }}>
                 {user?.name?.charAt(0) || 'U'}
               </Avatar>
             </IconButton>
@@ -212,6 +282,7 @@ const DisabledDashboard = ({ children }) => {
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        aria-label="Dashboard navigation"
       >
         <Drawer
           variant="temporary"
@@ -222,7 +293,11 @@ const DisabledDashboard = ({ children }) => {
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              borderRight: `2px solid ${theme.palette.divider}`
+            },
           }}
         >
           {drawer}
@@ -231,7 +306,11 @@ const DisabledDashboard = ({ children }) => {
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              borderRight: `2px solid ${theme.palette.divider}`
+            },
           }}
           open
         >
@@ -247,9 +326,21 @@ const DisabledDashboard = ({ children }) => {
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: '64px',
         }}
+        role="main"
+        aria-label="Main content"
       >
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              height: 'calc(100vh - 64px)' 
+            }}
+            role="status"
+            aria-live="polite"
+            aria-label="Loading content"
+          >
             <CircularProgress />
           </Box>
         ) : (
@@ -261,16 +352,20 @@ const DisabledDashboard = ({ children }) => {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
+        aria-label="Profile menu"
       >
-        <MenuItem onClick={() => {
-          handleMenuClose();
-          navigate('/disabled/profile');
-        }}>
+        <MenuItem 
+          onClick={() => {
+            handleMenuClose();
+            navigate('/disabled/dashboard/profile');
+          }}
+        >
           <ListItemIcon>
             <PersonIcon fontSize="small" />
           </ListItemIcon>
           Profile
         </MenuItem>
+        <Divider />
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <ExitToAppIcon fontSize="small" />
@@ -283,9 +378,12 @@ const DisabledDashboard = ({ children }) => {
         anchorEl={notificationsAnchorEl}
         open={Boolean(notificationsAnchorEl)}
         onClose={handleMenuClose}
+        aria-label="Notifications menu"
       >
         {notifications.length === 0 ? (
-          <MenuItem>No new notifications</MenuItem>
+          <MenuItem disabled>
+            <Typography variant="body2">No new notifications</Typography>
+          </MenuItem>
         ) : (
           notifications.map((notification, index) => (
             <MenuItem key={index} onClick={handleMenuClose}>
@@ -298,4 +396,4 @@ const DisabledDashboard = ({ children }) => {
   );
 };
 
-export default DisabledDashboard; 
+export default DisabledDashboard;

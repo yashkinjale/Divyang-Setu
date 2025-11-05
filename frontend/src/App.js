@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import { Container, Box, Grid, Typography } from '@mui/material';
+import { Container, Box, Grid, Typography, IconButton, Tooltip } from '@mui/material';
+import { Brightness4, Brightness7 } from '@mui/icons-material';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeContext } from './context/ThemeContext';
 import DonorAuth from './components/auth/DonorAuth';
 import DisabledAuth from './components/auth/DisabledAuth';
 import LandingPage from './components/LandingPage';
@@ -16,8 +18,9 @@ import FundStatusCard from './components/FundStatusCard';
 import JobRecommendations from './components/JobRecommendations';
 import JobPostings from './components/JobPostings';
 import DonorDashboard from './components/DonorDashboard';
-import MessagesPage from './pages/MessagesPage'; // Import the new MessagesPage
+import MessagesPage from './pages/MessagesPage';
 import theme from './theme';
+import highContrastTheme from './utils/highContrastTheme';
 
 const PrivateRoute = ({ children, userType }) => {
   const { user, loading, isAuthenticated } = useAuth();
@@ -34,9 +37,8 @@ const PrivateRoute = ({ children, userType }) => {
   return children;
 };
 
-// Dashboard Home Component (extracted from DisabledDashboard)
+// Dashboard Home Component
 const DisabledDashboardHome = () => {
-  // Sample data for schemes
   const schemes = [
     {
       title: "National Scholarship for Persons with Disabilities",
@@ -61,7 +63,6 @@ const DisabledDashboardHome = () => {
     }
   ];
 
-  // Sample fund data
   const funds = [
     {
       title: "Education Fund",
@@ -88,7 +89,6 @@ const DisabledDashboardHome = () => {
 
   return (
     <Container maxWidth="xl">
-      {/* Government Schemes Slider */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
           Available Schemes & Scholarships
@@ -96,76 +96,115 @@ const DisabledDashboardHome = () => {
         <SchemeSlider schemes={schemes} />
       </Box>
 
-      {/* Fund Status Section */}
       <WishlistSection />
     </Container>
   );
 };
 
 const App = () => {
+  const [isHighContrast, setIsHighContrast] = useState(() => {
+    // Check localStorage or system preference
+    const saved = localStorage.getItem('highContrast');
+    if (saved !== null) return JSON.parse(saved);
+    
+    // Check system preference
+    if (window.matchMedia) {
+      return window.matchMedia('(prefers-contrast: more)').matches;
+    }
+    return false;
+  });
+
+  const toggleTheme = useCallback(() => {
+    setIsHighContrast(prev => {
+      const newValue = !prev;
+      localStorage.setItem('highContrast', JSON.stringify(newValue));
+      return newValue;
+    });
+  }, []);
+
+  const currentTheme = isHighContrast ? highContrastTheme : theme;
+
+  // Listen to system preference changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-contrast: more)');
+    const handleChange = (e) => {
+      setIsHighContrast(e.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  const themeContextValue = {
+    isHighContrast,
+    toggleTheme,
+  };
+
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={currentTheme}>
       <CssBaseline />
-      <AuthProvider>
-        <Router>
-          <Routes>
-            {/* Landing Page */}
-            <Route path="/" element={<LandingPage />} />
-            
-            {/* Job Postings - Public Route */}
-            <Route path="/job-postings" element={<JobPostings />} />
+      <ThemeContext.Provider value={themeContextValue}>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              {/* Landing Page */}
+              <Route path="/" element={<LandingPage />} />
+              
+              {/* Job Postings - Public Route */}
+              <Route path="/job-postings" element={<JobPostings />} />
 
-            {/* Donor Routes */}
-            <Route path="/donor/login" element={<DonorAuth isLogin={true} />} />
-            <Route path="/donor/register" element={<DonorAuth isLogin={false} />} />
-            <Route
-              path="/donor/dashboard"
-              element={
-                <PrivateRoute userType="donor">
-                  <DonorDashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/donor/dashboard/money-donation"
-              element={
-                <PrivateRoute userType="donor">
-                  <DonorDashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/donor/dashboard/equipment-donation"
-              element={
-                <PrivateRoute userType="donor">
-                  <DonorDashboard />
-                </PrivateRoute>
-              }
-            />
+              {/* Donor Routes */}
+              <Route path="/donor/login" element={<DonorAuth isLogin={true} />} />
+              <Route path="/donor/register" element={<DonorAuth isLogin={false} />} />
+              <Route
+                path="/donor/dashboard"
+                element={
+                  <PrivateRoute userType="donor">
+                    <DonorDashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/donor/dashboard/money-donation"
+                element={
+                  <PrivateRoute userType="donor">
+                    <DonorDashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/donor/dashboard/equipment-donation"
+                element={
+                  <PrivateRoute userType="donor">
+                    <DonorDashboard />
+                  </PrivateRoute>
+                }
+              />
 
-            {/* Disabled Person Routes with Nested Dashboard */}
-            <Route path="/disabled/login" element={<DisabledAuth isLogin={true} />} />
-            <Route path="/disabled/register" element={<DisabledAuth isLogin={false} />} />
-            <Route
-              path="/disabled/dashboard"
-              element={
-                <PrivateRoute userType="disabled">
-                  <DisabledDashboard />
-                </PrivateRoute>
-              }
-            >
-              {/* Nested routes within the dashboard */}
-              <Route index element={<DisabledDashboardHome />} />
-              <Route path="schemes" element={<GovernmentSchemesPage />} />
-              <Route path="wishlist" element={<WishlistSection />} />
-              <Route path="jobs" element={<JobRecommendations />} />
-              <Route path="community" element={<SuccessStoriesPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="messages" element={<MessagesPage />} /> {/* Add messages route */}
-            </Route>
-          </Routes>
-        </Router>
-      </AuthProvider>
+              {/* Disabled Person Routes with Nested Dashboard */}
+              <Route path="/disabled/login" element={<DisabledAuth isLogin={true} />} />
+              <Route path="/disabled/register" element={<DisabledAuth isLogin={false} />} />
+              <Route
+                path="/disabled/dashboard"
+                element={
+                  <PrivateRoute userType="disabled">
+                    <DisabledDashboard />
+                  </PrivateRoute>
+                }
+              >
+                {/* Nested routes within the dashboard */}
+                <Route index element={<DisabledDashboardHome />} />
+                <Route path="schemes" element={<GovernmentSchemesPage />} />
+                <Route path="wishlist" element={<WishlistSection />} />
+                <Route path="jobs" element={<JobRecommendations />} />
+                <Route path="community" element={<SuccessStoriesPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="messages" element={<MessagesPage />} />
+              </Route>
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </ThemeContext.Provider>
     </ThemeProvider>
   );
 };
