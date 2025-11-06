@@ -9,6 +9,7 @@ import DonorAuth from './components/auth/DonorAuth';
 import DisabledAuth from './components/auth/DisabledAuth';
 import PWDCertificateVerification from './components/auth/pwdVerification';
 import LandingPage from './components/LandingPage';
+import AboutPage from './components/AboutPage';
 import DisabledDashboard from './components/DisabledDashboard';
 import GovernmentSchemesPage from './components/GovernmentSchemesPage';
 import WishlistSection from './components/WishlistSection';
@@ -160,6 +161,9 @@ const App = () => {
                   
                   {/* Job Postings - Public Route */}
                   <Route path="/job-postings" element={<JobPostings />} />
+
+                  {/* About Page */}
+                  <Route path="/about" element={<AboutPage />} />
 
                   {/* Donor Routes */}
                   <Route path="/donor/login" element={<DonorAuth isLogin={true} />} />

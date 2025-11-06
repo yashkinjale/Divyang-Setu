@@ -65,18 +65,17 @@ const Navbar = () => {
               alignItems: 'center',
               gap: 1,
               cursor: 'pointer',
-              marginLeft: '-42px', // Shift logo/text to the left
+              marginLeft: '-42px',
               transition: 'all 0.3s ease',
             }}
             onClick={() => navigate('/')}
           >
-            {/* Logo Image */}
             <img
               src={require('./Disabled.jpg')}
               alt="DivyangSetu Logo"
               style={{
-                height: scrolled ? 60 : 60, // shrink on scroll
-                opacity: scrolled ? 0.3 : 1, // fade on scroll
+                height: scrolled ? 60 : 60,
+                opacity: scrolled ? 0.3 : 1,
                 transition: 'all 0.3s ease',
               }}
             />
@@ -87,7 +86,7 @@ const Navbar = () => {
                 color: '#4285F4',
                 fontWeight: 'bold',
                 display: { xs: 'none', md: 'block' },
-                fontSize: scrolled ? '1.4rem' : '1.6rem', // slightly smaller on scroll
+                fontSize: scrolled ? '1.4rem' : '1.6rem',
                 transition: 'all 0.3s ease',
               }}
             >
@@ -124,6 +123,7 @@ const Navbar = () => {
                   backgroundColor: 'rgba(66, 133, 244, 0.1)',
                 },
               }}
+              onClick={() => navigate('/about')} // ⬅️ THIS IS THE KEY LINE
             >
               About Us
             </Button>
@@ -139,6 +139,7 @@ const Navbar = () => {
                   backgroundColor: 'rgba(66, 133, 244, 0.1)',
                 },
               }}
+              onClick={() => navigate('/contact')} // If you have a contact page
             >
               Contact Us
             </Button>
@@ -831,9 +832,20 @@ const LandingPage = () => {
               <Link href="/disabled/register" color="text.secondary" display="block" sx={{ mb: 1.5, textDecoration: 'none', fontSize: '14px', '&:hover': { color: 'primary.main' } }}>
                 Get Help
               </Link>
-              <Link href="#" color="text.secondary" display="block" sx={{ mb: 1.5, textDecoration: 'none', fontSize: '14px', '&:hover': { color: 'primary.main' } }}>
-                About Us
-              </Link>
+              <Link 
+              onClick={() => navigate('#about')} 
+              color="text.secondary" 
+              display="block" 
+              sx={{ 
+              mb: 1.5, 
+              textDecoration: 'none', 
+              fontSize: '14px', 
+              cursor: 'pointer',
+              '&:hover': { color: 'primary.main' } 
+  }}
+>
+  About Us
+</Link>
               <Link href="#" color="text.secondary" display="block" sx={{ textDecoration: 'none', fontSize: '14px', '&:hover': { color: 'primary.main' } }}>
                 Contact
               </Link>
