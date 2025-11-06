@@ -106,6 +106,14 @@ const disabledSchema = new mongoose.Schema(
       enum: ["pending", "verified", "rejected"],
       default: "pending",
     },
+    certificateData: {
+      certificateNumber: String,
+      disabilityPercentage: Number,
+      disabilityType: String,
+      dateOfIssue: String,
+      validTill: String,
+      verifiedAt: Date,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

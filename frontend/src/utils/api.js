@@ -122,6 +122,14 @@ export const disabledApi = {
   },
 };
 
+// PWD Verification API
+export const pwdApi = {
+  verify: (formData) =>
+    api.post('/pwd/verify', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+};
+
 // Wishlist API
 export const wishlistApi = {
   getAll: () => api.get('/wishlist'),

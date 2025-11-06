@@ -5,6 +5,7 @@ const Disabled = require("../../models/Disabled");
 const WishlistItem = require("../../models/WishlistItem");
 const auth = require("../../middleware/auth");
 const upload = require("../../middleware/upload");
+const { body, validationResult } = require("express-validator");
 
 // =============================================
 // PROFILE ROUTES - DEBUG VERSION
@@ -19,7 +20,8 @@ router.get("/public", async (req, res) => {
     const { search, category, location } = req.query;
 
     // Build query
-    let query = { isVerified: true }; // Only show verified profiles
+    // Show verified profiles by default; also include those marked verified via verificationStatus
+    let query = { $or: [ { isVerified: true }, { verificationStatus: "verified" } ] };
 
     if (search) {
       query.$or = [
@@ -36,12 +38,22 @@ router.get("/public", async (req, res) => {
     console.log("Query:", query);
 
     // Fetch disabled users with basic info
-    const disabledUsers = await Disabled.find(query)
+    let disabledUsers = await Disabled.find(query)
       .select(
         "name email phone location address disabilityType needs profileImage createdAt"
       )
       .limit(50)
       .sort({ createdAt: -1 });
+
+    // If no results, gracefully fall back to most recent 10 profiles (public preview)
+    if (disabledUsers.length === 0) {
+      disabledUsers = await Disabled.find({})
+        .select(
+          "name email phone location address disabilityType needs profileImage createdAt"
+        )
+        .limit(10)
+        .sort({ createdAt: -1 });
+    }
 
     console.log(`Found ${disabledUsers.length} profiles`);
 
@@ -496,6 +508,78 @@ router.put("/", auth, async (req, res) => {
   } catch (error) {
     console.error("Update profile error:", error);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Upload document
+router.post("/documents", [
+  auth,
+  upload.single("file"), // Changed from 'document' to 'file' to match frontend
+  body("name").trim().notEmpty().withMessage("Document name is required")
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Validation failed",
+        errors: errors.array() 
+      });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false,
+        message: "No document file provided" 
+      });
+    }
+
+    const userId = req.user.userId || req.user.id;
+    const disabled = await Disabled.findById(userId);
+    
+    if (!disabled) {
+      return res.status(404).json({ 
+        success: false,
+        message: "User not found" 
+      });
+    }
+
+    const newDocument = {
+      name: req.body.name || "PWD Certificate",
+      fileName: req.file.originalname,
+      fileUrl: req.file.path,
+      status: "pending"
+    };
+
+    disabled.documents.push(newDocument);
+    await disabled.save();
+    
+    // Add activity if method exists
+    if (disabled.addActivity) {
+      await disabled.addActivity("Uploaded Document", `Uploaded ${newDocument.name}`);
+    }
+
+    res.json({
+      success: true,
+      message: "Document uploaded successfully",
+      document: {
+        _id: disabled.documents[disabled.documents.length - 1]._id,
+        name: newDocument.name,
+        status: newDocument.status,
+        date: new Date().toLocaleDateString("en-IN", { 
+          day: "2-digit", 
+          month: "short", 
+          year: "numeric" 
+        })
+      }
+    });
+  } catch (error) {
+    console.error("Upload document error:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Server error",
+      error: process.env.NODE_ENV === "development" ? error.message : "Internal server error"
+    });
   }
 });
 

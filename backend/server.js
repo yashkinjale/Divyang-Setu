@@ -5,6 +5,8 @@ const dotenv = require("dotenv");
 const path = require("path");
 const fs = require("fs");
 const { errorHandler } = require("./utils/errorHandler");
+const pwdVerificationRoutes = require("./routes/pwdVerificationRoutes");
+
 
 // Load environment variables BEFORE importing routes that read them
 dotenv.config();
@@ -179,6 +181,10 @@ try {
 } catch (error) {
   console.error("❌ Error registering schemes routes:", error.message);
 }
+
+app.use("/api/pwd", pwdVerificationRoutes);
+console.log("✅ PWD Verification route registered at /api/pwd");
+
 
 try {
   app.use("/api/jobs", jobRoutes);

@@ -35,7 +35,7 @@ const schemes = [
     ageGroup: "16-25 years",
     benefits: "Full tuition fee waiver + monthly stipend",
     deadline: "15 May 2025",
-    image: "https://images.unsplash.com/photo-1523240794108-5c1e0c0c8e6f?w=400&h=300&fit=crop",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSz1MnwTn-LFW0HEB8jpDOvuK4VqIbTIfWuPQ&s",
     eligibility: "Enrolled in recognized institution, disability certificate",
     documents: ["Disability certificate", "Admission letter", "Income certificate", "Marksheets"],
     contact: {

@@ -17,6 +17,17 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const FALLBACK_IMG =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+      <rect width="100%" height="100%" fill="#e9edf3"/>
+      <g fill="#9aa7b2" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="middle">
+        <text x="50%" y="50%">Image not available</text>
+      </g>
+    </svg>`
+  );
+
 const SchemeSlider = ({ schemes }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const theme = useTheme();
@@ -88,8 +99,12 @@ const SchemeSlider = ({ schemes }) => {
                 width: { xs: '100%', sm: '50%' },
                 objectFit: 'cover'
               }}
-              image={schemes[currentIndex].image}
+              image={schemes[currentIndex].image || FALLBACK_IMG}
               alt={schemes[currentIndex].title}
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }}
             />
             <Box sx={{ 
               flex: 1,

@@ -35,6 +35,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import SchemeDetailsModal from './SchemeDetailsModal';
 
+// Lightweight SVG fallback to avoid broken image icons
+const FALLBACK_IMG =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+      <rect width="100%" height="100%" fill="#e9edf3"/>
+      <g fill="#9aa7b2" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="middle">
+        <text x="50%" y="50%">Image not available</text>
+      </g>
+    </svg>`
+  );
+
 // Mock data for government schemes
 // REMOVED: local mockSchemes array to ensure frontend uses API data
 
@@ -55,9 +67,11 @@ const SchemeCard = ({ scheme, onViewDetails }) => (
       flexDirection: 'column', 
       position: 'relative',
       width: '100%',
-      minHeight: '520px',
-      maxHeight: '520px',
-      overflow: 'hidden'
+      // Make the card responsive: fixed height on larger screens only
+      minHeight: { xs: 'auto', md: 480 },
+      maxHeight: { xs: 'none', md: 520 },
+      overflow: 'hidden',
+      boxSizing: 'border-box'
     }}>
       {scheme.isRecommended && (
         <Chip
@@ -70,28 +84,40 @@ const SchemeCard = ({ scheme, onViewDetails }) => (
       )}
       <CardMedia 
         component="img" 
-        height="200" 
-        image={scheme.image} 
+        height={{ xs: 180, md: 200 }} 
+        image={scheme.image || FALLBACK_IMG} 
         alt={scheme.name} 
-        sx={{ objectFit: 'cover' }} 
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }}
+        sx={{ 
+          objectFit: 'cover', 
+          width: '100%', 
+          display: 'block',
+          backgroundColor: '#f5f6f8'
+        }} 
       />
       <CardContent sx={{ 
         flexGrow: 1, 
         display: 'flex', 
         flexDirection: 'column',
         p: 2,
-        '&:last-child': { pb: 2 }
+        '&:last-child': { pb: 2 },
+        overflow: 'hidden'
       }}>
         <Typography variant="h6" sx={{ 
           fontWeight: 'bold', 
           mb: 1, 
           lineHeight: 1.2,
-          fontSize: '1rem',
-          height: '2.4rem',
+          fontSize: { xs: '1rem', md: '1.05rem' },
+          minHeight: { md: '2.4rem' },
           overflow: 'hidden',
+          textOverflow: 'ellipsis',
           display: '-webkit-box',
           WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical'
+          WebkitBoxOrient: 'vertical',
+          wordBreak: 'break-word'
         }}>
           {scheme.name}
         </Typography>
@@ -101,13 +127,14 @@ const SchemeCard = ({ scheme, onViewDetails }) => (
           sx={{ 
             flexGrow: 1,
             display: '-webkit-box',
-            WebkitLineClamp: 3,
+            WebkitLineClamp: { xs: 3, md: 4 },
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             lineHeight: 1.4,
             fontSize: '0.875rem',
-            mb: 2
+            mb: 2,
+            wordBreak: 'break-word'
           }}
         >
           {scheme.description}
@@ -295,19 +322,19 @@ const GovernmentSchemesPage = () => {
   const currentSchemes = filteredSchemes.slice((page - 1) * schemesPerPage, page * schemesPerPage);
 
   return (
-    <Box sx={{ bgcolor: 'background.default' }}>
+    <Box sx={{ bgcolor: 'background.default', width: '100%' }}>
       {showContent && (
         <>
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold' }}>Government Schemes for Disabled Persons</Typography>
-              <Typography variant="h6" color="text.secondary">Find schemes tailored to your needs. Use the filters below to narrow down your search or explore our recommendations.</Typography>
+            <Box sx={{ mb: 4, px: { xs: 1, sm: 2 } }}>
+              <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold', fontSize: { xs: '1.75rem', md: '2.25rem' } }}>Government Schemes for Disabled Persons</Typography>
+              <Typography variant="h6" color="text.secondary" sx={{ fontSize: { xs: '1rem', md: '1.1rem' } }}>Find schemes tailored to your needs. Use the filters below to narrow down your search or explore our recommendations.</Typography>
             </Box>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-            <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ mb: 4, px: { xs: 1, sm: 2 } }}>
+              <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                 <TextField
                   fullWidth
                   placeholder="Search for schemes..."
@@ -319,7 +346,7 @@ const GovernmentSchemesPage = () => {
                     endAdornment: tempSearchTerm && <InputAdornment position="end"><IconButton onClick={() => setTempSearchTerm('')}><Typography variant="body2">✕</Typography></IconButton></InputAdornment>
                   }}
                 />
-                <Button variant="contained" onClick={applySearch}>Search</Button>
+                <Button variant="contained" onClick={applySearch} sx={{ alignSelf: { xs: 'stretch', sm: 'auto' } }}>Search</Button>
               </Box>
               {searchTerm && <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{filteredSchemes.length} scheme{filteredSchemes.length !== 1 ? 's' : ''} found for "{searchTerm}"</Typography>}
             </Box>
@@ -338,14 +365,14 @@ const GovernmentSchemesPage = () => {
           {/* Recommendations first unless filtering */}
           {recommendedSchemes.length > 0 && !hasActiveFilters() && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }}>
-              <Box sx={{ mb: 6 }}>
+              <Box sx={{ mb: 6, px: { xs: 1, sm: 2 } }}>
                 <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>Recommended Schemes</Typography>
                 <Box sx={{
                   display: 'grid',
                   gridTemplateColumns: {
                     xs: '1fr',
                     sm: 'repeat(2, 1fr)',
-                    lg: 'repeat(3, 1fr)'
+                    md: 'repeat(3, 1fr)'
                   },
                   gap: 3,
                   width: '100%'
@@ -367,7 +394,7 @@ const GovernmentSchemesPage = () => {
           )}
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.6 }}>
-            <Box>
+            <Box sx={{ px: { xs: 1, sm: 2 } }}>
               <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>All Available Schemes</Typography>
               {currentSchemes.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 8 }}>
@@ -380,7 +407,7 @@ const GovernmentSchemesPage = () => {
                   gridTemplateColumns: {
                     xs: '1fr',
                     sm: 'repeat(2, 1fr)',
-                    lg: 'repeat(3, 1fr)'
+                    md: 'repeat(3, 1fr)'
                   },
                   gap: 3,
                   width: '100%'

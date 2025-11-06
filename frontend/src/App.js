@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeContext } from './context/ThemeContext';
 import DonorAuth from './components/auth/DonorAuth';
 import DisabledAuth from './components/auth/DisabledAuth';
+import PWDCertificateVerification from './components/auth/pwdVerification';
 import LandingPage from './components/LandingPage';
 import DisabledDashboard from './components/DisabledDashboard';
 import GovernmentSchemesPage from './components/GovernmentSchemesPage';
@@ -63,7 +64,7 @@ const DisabledDashboardHome = () => {
       description: "Training and seed funding of up to ₹2,00,000 for starting your own business.",
       type: "Business",
       deadline: "1 June 2024",
-      image: "https://www.wemakescholars.com/uploads/blog/Scholarship-_-Grants-for-Physically-Disabled-students.webp"
+      image: "https://www.udyami.org.in/storage/thumbnail/epa2TluwuA2dlRjzghZnXKpLN68gOypcJRZ1nuGR.png"
     }
   ];
 
@@ -191,6 +192,16 @@ const App = () => {
                   {/* Disabled Person Routes with Nested Dashboard */}
                   <Route path="/disabled/login" element={<DisabledAuth isLogin={true} />} />
                   <Route path="/disabled/register" element={<DisabledAuth isLogin={false} />} />
+                  
+                  <Route
+                    path="/disabled/verification"
+                    element={
+                      <PrivateRoute userType="disabled">
+                        <PWDCertificateVerification />
+                      </PrivateRoute>
+                    }
+                  />
+                  
                   <Route
                     path="/disabled/dashboard"
                     element={

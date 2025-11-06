@@ -10,6 +10,17 @@ import {
   Chip,
 } from "@mui/material";
 
+const FALLBACK_IMG =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+      <rect width="100%" height="100%" fill="#e9edf3"/>
+      <g fill="#9aa7b2" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="middle">
+        <text x="50%" y="50%">Image not available</text>
+      </g>
+    </svg>`
+  );
+
 const SchemeDetailsModal = ({ open, scheme, onClose }) => {
   if (!scheme) return null;
 
@@ -18,9 +29,16 @@ const SchemeDetailsModal = ({ open, scheme, onClose }) => {
       <DialogTitle>{scheme.name || scheme.title}</DialogTitle>
       <DialogContent dividers>
         <Box sx={{ display: "flex", gap: 3, flexDirection: { xs: "column", sm: "row" } }}>
-          {scheme.image && (
-            <Box component="img" src={scheme.image} alt={scheme.name} sx={{ width: { xs: "100%", sm: 280 }, borderRadius: 1, objectFit: "cover" }} />
-          )}
+          <Box
+            component="img"
+            src={scheme.image || FALLBACK_IMG}
+            alt={scheme.name}
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }}
+            sx={{ width: { xs: "100%", sm: 280 }, borderRadius: 1, objectFit: "cover", backgroundColor: '#f5f6f8' }}
+          />
           <Box sx={{ flex: 1 }}>
             <Typography sx={{ mb: 2 }}>{scheme.description}</Typography>
             {scheme.benefits && (

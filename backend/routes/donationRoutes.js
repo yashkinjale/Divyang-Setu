@@ -22,6 +22,9 @@ const razorpay = new Razorpay({
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
   console.error("❌ RAZORPAY CREDENTIALS MISSING IN .env FILE");
 }
+const isRazorpayConfigured = Boolean(
+  process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
+);
 
 // =============================================
 // STEP 1: CREATE RAZORPAY ORDER
@@ -45,11 +48,20 @@ router.post("/create-order", async (req, res) => {
       });
     }
 
+    // Validate Razorpay configuration
+    if (!isRazorpayConfigured) {
+      return res.status(500).json({
+        success: false,
+        message: "Payment gateway not configured. Please try again later.",
+      });
+    }
+
     // Validate amount (minimum ₹1)
-    if (amount < 1) {
+    const amountNumber = Math.round(Number(amount));
+    if (!Number.isFinite(amountNumber) || amountNumber < 1) {
       return res.status(400).json({
         success: false,
-        message: "Minimum donation amount is ₹1",
+        message: "Invalid amount. Minimum donation amount is ₹1",
       });
     }
 
@@ -63,7 +75,7 @@ router.post("/create-order", async (req, res) => {
     }
 
     console.log(`Creating order for PWD: ${pwdUser.name}`);
-    console.log(`Amount: ₹${amount}`);
+    console.log(`Amount: ₹${amountNumber}`);
 
     // Create Razorpay order
     // Amount must be in paise (multiply by 100)
@@ -72,7 +84,7 @@ router.post("/create-order", async (req, res) => {
       .slice(-6)}_${Date.now()}`.slice(0, 40);
 
     const razorpayOrder = await razorpay.orders.create({
-      amount: amount * 100, // Convert rupees to paise
+      amount: amountNumber * 100, // Convert rupees to paise
       currency: "INR",
       receipt: shortReceipt,
       notes: {
@@ -91,7 +103,7 @@ router.post("/create-order", async (req, res) => {
       pwdId,
       donorName: donorName || "Anonymous Donor",
       donorEmail: donorEmail || undefined,
-      amount,
+      amount: amountNumber,
       note: note || "",
       razorpayOrderId: razorpayOrder.id,
       status: "pending",

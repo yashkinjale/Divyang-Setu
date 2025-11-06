@@ -54,7 +54,13 @@ const DisabledAuth = ({ isLogin }) => {
         const res = await disabledApi.login({ email: formData.email, password: formData.password });
         const userData = { ...(res.data.user || res.data.disabled), type: 'disabled' };
         setAuth(userData, res.data.token);
-        navigate('/disabled/dashboard', { replace: true });
+        
+        // Redirect to verification page if not verified
+        if (!userData.isVerified) {
+          navigate('/disabled/verification', { replace: true });
+        } else {
+          navigate('/disabled/dashboard', { replace: true });
+        }
       } else {
         const res = await disabledApi.register({
           name: formData.name,
@@ -79,7 +85,9 @@ const DisabledAuth = ({ isLogin }) => {
           } catch {}
         }
         setAuth(userData, res.data.token);
-        navigate('/disabled/dashboard', { replace: true });
+        
+        // Redirect to verification page after registration
+        navigate('/disabled/verification', { replace: true });
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Request failed');
