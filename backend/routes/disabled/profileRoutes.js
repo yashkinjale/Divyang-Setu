@@ -19,6 +19,7 @@ router.get("/public", async (req, res) => {
     // Get query parameters for filtering
     const { search, category, location } = req.query;
 
+ 
     // Build query
     // Show verified profiles by default; also include those marked verified via verificationStatus
     let query = { $or: [ { isVerified: true }, { verificationStatus: "verified" } ] };
@@ -40,7 +41,7 @@ router.get("/public", async (req, res) => {
     // Fetch disabled users with basic info
     let disabledUsers = await Disabled.find(query)
       .select(
-        "name email phone location address disabilityType needs profileImage createdAt"
+        "name email phone location address disabilityType needs bio profileImage isVerified verificationStatus createdAt"
       )
       .limit(50)
       .sort({ createdAt: -1 });
@@ -120,19 +121,24 @@ router.get("/public", async (req, res) => {
         }
       }
 
+      // Use bio if available, otherwise generate a generic story
+      const story = user.bio && user.bio.trim() 
+        ? user.bio 
+        : `I am a person with ${
+            user.disabilityType || "disability"
+          } seeking support for essential items and services.`;
+
       return {
         id: user._id,
         name: user.name,
         age: calculateAge(user.createdAt), // Rough estimate
         location: user.location || user.address || "Location not specified",
         disability: user.disabilityType || "Not specified",
-        bio: user.bio || "", // <-- NEW FIELD
+        bio: user.bio || "",
         needs: Array.isArray(user.needs)
           ? user.needs
           : [user.needs].filter(Boolean),
-        story: `I am a person with ${
-          user.disabilityType || "disability"
-        } seeking support for essential items and services.`,
+        story: story,
         goalAmount: totalAmountNeeded || 50000,
         raisedAmount: totalAmountRaised || 0,
         image:
@@ -142,6 +148,8 @@ router.get("/public", async (req, res) => {
           )}&background=random`,
         urgency,
         category,
+        isVerified: user.isVerified || false,
+        verificationStatus: user.verificationStatus || "pending",
         wishlistItems: userWishlist.map((item) => ({
           id: item._id,
           itemName: item.itemName,
