@@ -846,9 +846,20 @@ const LandingPage = () => {
 >
   About Us
 </Link>
-              <Link href="#" color="text.secondary" display="block" sx={{ textDecoration: 'none', fontSize: '14px', '&:hover': { color: 'primary.main' } }}>
-                Contact
-              </Link>
+              <Link 
+              onClick={() => navigate('#contact')} 
+              color="text.secondary" 
+              display="block" 
+              sx={{ 
+              mb: 1.5, 
+              textDecoration: 'none', 
+              fontSize: '14px', 
+              cursor: 'pointer',
+              '&:hover': { color: 'primary.main' } 
+  }}
+>
+  Contact Us
+</Link>
             </Grid>
             <Grid item xs={12} md={4}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
