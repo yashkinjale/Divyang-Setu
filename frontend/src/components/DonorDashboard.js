@@ -655,29 +655,41 @@ const DonorDashboard = () => {
               variant="subtitle2"
               sx={{ fontWeight: "bold", fontSize: "0.8rem", mb: 1 }}
             >
-              Needs:
+              Wishlist Items:
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-              {profile.needs.slice(0, 2).map((need, index) => (
-                <Chip
-                  key={index}
-                  label={need}
-                  size="small"
-                  variant="outlined"
-                  sx={{ fontSize: "0.65rem", height: 20 }}
-                />
-              ))}
-              {profile.needs.length > 2 && (
-                <Chip
-                  label={`+${profile.needs.length - 2} more`}
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    fontSize: "0.65rem",
-                    height: 20,
-                    color: "primary.main",
-                  }}
-                />
+              {profile.wishlistItems && profile.wishlistItems.length > 0 ? (
+                <>
+                  {profile.wishlistItems.slice(0, 2).map((item, index) => (
+                    <Chip
+                      key={item.id || index}
+                      label={item.itemName}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: "0.65rem", height: 20 }}
+                    />
+                  ))}
+                  {profile.wishlistItems.length > 2 && (
+                    <Chip
+                      label={`+${profile.wishlistItems.length - 2} more`}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        fontSize: "0.65rem",
+                        height: 20,
+                        color: "primary.main",
+                      }}
+                    />
+                  )}
+                </>
+              ) : (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontSize: "0.7rem" }}
+                >
+                  No wishlist items
+                </Typography>
               )}
             </Box>
           </Box>
@@ -790,7 +802,7 @@ const DonorDashboard = () => {
                 py: 1,
               }}
             >
-              Equipment
+              Message
             </Button>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>

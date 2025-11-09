@@ -19,40 +19,46 @@ router.get("/public", async (req, res) => {
     // Get query parameters for filtering
     const { search, category, location } = req.query;
 
- 
-    // Build query
-    // Show verified profiles by default; also include those marked verified via verificationStatus
-    let query = { $or: [ { isVerified: true }, { verificationStatus: "verified" } ] };
+    // Build query - show all profiles (not just verified) to ensure profiles are displayed
+    let query = {};
 
+    // Add search filter if provided
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
         { disabilityType: { $regex: search, $options: "i" } },
         { needs: { $regex: search, $options: "i" } },
+        { bio: { $regex: search, $options: "i" } },
       ];
     }
 
+    // Add location filter if provided
     if (location && location !== "all") {
       query.location = { $regex: location, $options: "i" };
     }
 
-    console.log("Query:", query);
+    console.log("Query:", JSON.stringify(query, null, 2));
 
     // Fetch disabled users with basic info
+    // Prioritize verified profiles but include all profiles
     let disabledUsers = await Disabled.find(query)
       .select(
         "name email phone location address disabilityType needs bio profileImage isVerified verificationStatus createdAt"
       )
-      .limit(50)
-      .sort({ createdAt: -1 });
+      .limit(100)
+      .sort({ 
+        isVerified: -1,  // Verified profiles first
+        createdAt: -1  // Then by creation date (newest first)
+      });
 
-    // If no results, gracefully fall back to most recent 10 profiles (public preview)
-    if (disabledUsers.length === 0) {
+    // If still no results, try without any filters (show all profiles)
+    if (disabledUsers.length === 0 && (search || location)) {
+      console.log("No results with filters, trying without filters...");
       disabledUsers = await Disabled.find({})
         .select(
-          "name email phone location address disabilityType needs profileImage createdAt"
+          "name email phone location address disabilityType needs bio profileImage isVerified verificationStatus createdAt"
         )
-        .limit(10)
+        .limit(50)
         .sort({ createdAt: -1 });
     }
 
@@ -128,9 +134,17 @@ router.get("/public", async (req, res) => {
             user.disabilityType || "disability"
           } seeking support for essential items and services.`;
 
+      // Build image URL
+      const imageUrl = user.profileImage?.url || 
+        user.profileImage?.path ||
+        (typeof user.profileImage === 'string' ? user.profileImage : null) ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+          user.name
+        )}&background=random`;
+
       return {
-        id: user._id,
-        name: user.name,
+        id: user._id.toString(), // Ensure ID is a string
+        name: user.name || "Anonymous",
         age: calculateAge(user.createdAt), // Rough estimate
         location: user.location || user.address || "Location not specified",
         disability: user.disabilityType || "Not specified",
@@ -141,23 +155,20 @@ router.get("/public", async (req, res) => {
         story: story,
         goalAmount: totalAmountNeeded || 50000,
         raisedAmount: totalAmountRaised || 0,
-        image:
-          user.profileImage?.url ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(
-            user.name
-          )}&background=random`,
+        image: imageUrl,
+        profileImage: imageUrl, // Also include as profileImage for frontend compatibility
         urgency,
         category,
         isVerified: user.isVerified || false,
         verificationStatus: user.verificationStatus || "pending",
         wishlistItems: userWishlist.map((item) => ({
-          id: item._id,
+          id: item._id.toString(),
           itemName: item.itemName,
           description: item.description,
-          amountRequired: item.amountRequired,
-          amountRaised: item.amountRaised,
-          urgencyLevel: item.urgencyLevel,
-          category: item.category,
+          amountRequired: item.amountRequired || 0,
+          amountRaised: item.amountRaised || 0,
+          urgencyLevel: item.urgencyLevel || "low",
+          category: item.category || "general",
         })),
       };
     });
