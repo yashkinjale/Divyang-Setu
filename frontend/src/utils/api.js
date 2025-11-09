@@ -171,6 +171,21 @@ export const donationApi = {
   getStats: (pwdId) => api.get(`/donations/stats/${pwdId}`),
 };
 
+// NEW: Messages API
+export const messageApi = {
+  // Send a new message
+  sendMessage: (data) => api.post('/messages/send', data),
+  
+  // Get chat history between two users
+  getMessages: (userId, chatWithId) => api.get(`/messages/${userId}/${chatWithId}`),
+  
+  // Get all conversations for a user (inbox)
+  getConversations: (userId) => api.get(`/messages/conversations/${userId}`),
+  
+  // Mark message as read
+  markAsRead: (messageId) => api.patch(`/messages/read/${messageId}`),
+};
+
 // Auth helpers
 export const authHelpers = {
   isAuthenticated: () => {
