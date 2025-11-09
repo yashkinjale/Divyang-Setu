@@ -10,6 +10,7 @@ import DisabledAuth from './components/auth/DisabledAuth';
 import PWDCertificateVerification from './components/auth/pwdVerification';
 import LandingPage from './components/LandingPage';
 import AboutPage from './components/AboutPage';
+import ContactPage from './components/ContactUs';
 import DisabledDashboard from './components/DisabledDashboard';
 import GovernmentSchemesPage from './components/GovernmentSchemesPage';
 import WishlistSection from './components/WishlistSection';
@@ -164,6 +165,9 @@ const App = () => {
 
                   {/* About Page */}
                   <Route path="/about" element={<AboutPage />} />
+
+                  {/* Contact Page */}
+                  <Route path="/contact" element={<ContactPage />} />
 
                   {/* Donor Routes */}
                   <Route path="/donor/login" element={<DonorAuth isLogin={true} />} />

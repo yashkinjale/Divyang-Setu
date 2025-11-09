@@ -33,6 +33,44 @@ import {
   Home,
   Accessibility,
 } from '@mui/icons-material';
+import { motion } from 'framer-motion';
+
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 60 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+};
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { duration: 0.8, ease: "easeOut" }
+  }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15
+    }
+  }
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: { 
+    opacity: 1, 
+    scale: 1,
+    transition: { duration: 0.5, ease: "easeOut" }
+  }
+};
 
 const AboutPage = () => {
   const navigate = useNavigate();
@@ -80,7 +118,7 @@ const AboutPage = () => {
       description: 'Social entrepreneur passionate about disability rights and inclusion.'
     },
     {
-      name: 'JayRaj Desai',
+      name: 'Jayraj Desai',
       role: 'CTO',
       image: 'Founder2.jpg',
       description: 'Tech innovator building accessible solutions for social impact.'
@@ -126,203 +164,247 @@ const AboutPage = () => {
         }}
       >
         <Container maxWidth="md">
-          <Typography
-            variant="h2"
-            sx={{ fontWeight: 700, mb: 3, fontSize: { xs: '2.5rem', md: '3.5rem' } }}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={fadeInUp}
           >
-            About DivyangSetu
-          </Typography>
-          <Typography variant="h5" sx={{ opacity: 0.95, mb: 4 }}>
-            Bridging Dreams and Opportunities for Persons with Disabilities
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button
-              variant="contained"
-              size="large"
-              sx={{
-                bgcolor: 'rgba(255, 255, 255, 0.95)',
-                color: '#e3eeffff',
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-                textTransform: 'none',
-                boxShadow: '0 4px 12px rgba(255, 255, 255, 0.3)',
-                '&:hover': { 
-                  bgcolor: 'rgba(255, 255, 255, 1)',
-                  boxShadow: '0 6px 16px rgba(255, 255, 255, 0.4)',
-                },
-              }}
-              onClick={() => navigate('/donor/register')}
+            <Typography
+              variant="h2"
+              sx={{ fontWeight: 700, mb: 3, fontSize: { xs: '2.5rem', md: '3.5rem' } }}
             >
-              Join Our Mission
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              sx={{
-                borderColor: 'rgba(255, 255, 255, 0.95)',
-                bgcolor: 'rgba(255, 255, 255, 0.1)',
-                color: 'white',
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-                textTransform: 'none',
-                '&:hover': { 
-                  borderColor: 'white', 
-                  bgcolor: 'rgba(255,255,255,0.2)' 
-                },
-              }}
-              onClick={() => navigate('/')}
-            >
-              Learn More
-            </Button>
-          </Box>
+              About DivyangSetu
+            </Typography>
+          </motion.div>
+          
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={fadeInUp}
+            transition={{ delay: 0.2 }}
+          >
+            <Typography variant="h5" sx={{ opacity: 0.95, mb: 4 }}>
+              Bridging Dreams and Opportunities for Persons with Disabilities
+            </Typography>
+          </motion.div>
+          
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={fadeIn}
+            transition={{ delay: 0.4 }}
+          >
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="contained"
+                size="large"
+                sx={{
+                  bgcolor: 'rgba(255, 255, 255, 0.95)',
+                   color: '#e5f1ffff',
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  boxShadow: '0 4px 12px rgba(255, 255, 255, 0.3)',
+                  '&:hover': { 
+                    bgcolor: 'rgba(255, 255, 255, 1)',
+                    boxShadow: '0 6px 16px rgba(255, 255, 255, 0.4)',
+                  },
+                }}
+                onClick={() => navigate('/donor/register')}
+              >
+                Join Our Mission
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                sx={{
+                  borderColor: 'rgba(255, 255, 255, 0.95)',
+                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  '&:hover': { 
+                    borderColor: 'white', 
+                    bgcolor: 'rgba(255,255,255,0.2)' 
+                  },
+                }}
+                onClick={() => navigate('/')}
+              >
+                Learn More
+              </Button>
+            </Box>
+          </motion.div>
         </Container>
       </Box>
 
       {/* Stats Section */}
       <Container maxWidth="lg" sx={{ mt: -6, mb: 8 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, flexWrap: 'wrap' }}>
-          {stats.map((stat, index) => (
-            <Card
-              key={index}
-              sx={{
-                textAlign: 'center',
-                p: 3,
-                minWidth: { xs: '140px', sm: '200px', md: '220px' },
-                flex: { xs: '0 1 45%', md: '0 1 22%' },
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                transition: 'transform 0.3s ease',
-                '&:hover': { transform: 'translateY(-8px)' },
-              }}
-            >
-              <stat.icon sx={{ fontSize: 48, color: stat.color, mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                {stat.value}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {stat.label}
-              </Typography>
-            </Card>
-          ))}
-        </Box>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={staggerContainer}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, flexWrap: 'wrap' }}>
+            {stats.map((stat, index) => (
+              <motion.div key={index} variants={scaleIn}>
+                <Card
+                  sx={{
+                    textAlign: 'center',
+                    p: 3,
+                    minWidth: { xs: '140px', sm: '200px', md: '220px' },
+                    flex: { xs: '0 1 45%', md: '0 1 22%' },
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': { transform: 'translateY(-8px)' },
+                  }}
+                >
+                  <stat.icon sx={{ fontSize: 48, color: stat.color, mb: 1 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {stat.label}
+                  </Typography>
+                </Card>
+              </motion.div>
+            ))}
+          </Box>
+        </motion.div>
       </Container>
 
       {/* Mission, Vision, Values Tabs */}
       <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Box sx={{ 
-          borderBottom: 1, 
-          borderColor: 'divider', 
-          mb: 4,
-          background: 'linear-gradient(to right, transparent, rgba(66, 133, 244, 0.1), transparent)',
-          py: 1
-        }}>
-          <Tabs value={activeTab} onChange={handleTabChange} centered>
-            <Tab label="Mission" sx={{ textTransform: 'none', fontWeight: 600, fontSize: '16px' }} />
-            <Tab label="Vision" sx={{ textTransform: 'none', fontWeight: 600, fontSize: '16px' }} />
-            <Tab label="Values" sx={{ textTransform: 'none', fontWeight: 600, fontSize: '16px' }} />
-          </Tabs>
-        </Box>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={fadeInUp}
+        >
+          <Box sx={{ 
+            borderBottom: 1, 
+            borderColor: 'divider', 
+            mb: 4,
+            background: 'linear-gradient(to right, transparent, rgba(66, 133, 244, 0.1), transparent)',
+            py: 1
+          }}>
+            <Tabs value={activeTab} onChange={handleTabChange} centered>
+              <Tab label="Mission" sx={{ textTransform: 'none', fontWeight: 600, fontSize: '16px' }} />
+              <Tab label="Vision" sx={{ textTransform: 'none', fontWeight: 600, fontSize: '16px' }} />
+              <Tab label="Values" sx={{ textTransform: 'none', fontWeight: 600, fontSize: '16px' }} />
+            </Tabs>
+          </Box>
+        </motion.div>
 
-        {activeTab === 0 && (
-          <Card sx={{ p: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', mx: 'auto' }}>
-            <Grid container spacing={4} alignItems="center">
-              <Grid item xs={12} md={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                  <EmojiObjects sx={{ fontSize: 48, color: '#4285F4' }} />
-                  <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                    Our Mission
-                  </Typography>
-                </Box>
-                <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.8, fontSize: '16px' }}>
-                  To empower Persons with Disabilities (PWD) by creating a comprehensive digital ecosystem 
-                  that connects them with opportunities, resources, and a supportive community.
-                </Typography>
-                <Typography variant="body1" sx={{ lineHeight: 1.8, fontSize: '16px' }}>
-                  We believe every individual deserves equal access to employment, education, healthcare, 
-                  and the fulfillment of their dreams. Through technology and compassion, we're making this vision a reality.
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <img
-                    src="https://cdn.prod.website-files.com/65723defcc7c8c842f5d8a69/657fe8525dfc85aa91b475ce_Volunteer-in-Disability.png"
-                    alt="Mission"
-                    style={{ width: '100%', maxWidth: '500px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}
-                  />
-                </Box>
-              </Grid>
-            </Grid>
-          </Card>
-        )}
-
-        {activeTab === 1 && (
-          <Card sx={{ p: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', mx: 'auto' }}>
-            <Grid container spacing={4} alignItems="center">
-              <Grid item xs={12} md={6}>
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <img
-                    src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop"
-                    alt="Vision"
-                    style={{ width: '100%', maxWidth: '500px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}
-                  />
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                  <Visibility sx={{ fontSize: 48, color: '#1976D2' }} />
-                  <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                    Our Vision
-                  </Typography>
-                </Box>
-                <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.8, fontSize: '16px' }}>
-                  A world where disability is not a barrier but a unique perspective that enriches society. 
-                  We envision an inclusive future where every PWD individual has equal opportunities to thrive, 
-                  contribute, and live with dignity.
-                </Typography>
-                <Typography variant="body1" sx={{ lineHeight: 1.8, fontSize: '16px' }}>
-                  By 2030, we aim to become India's largest platform for PWD empowerment, touching millions 
-                  of lives and setting global standards for inclusive technology.
-                </Typography>
-              </Grid>
-            </Grid>
-          </Card>
-        )}
-
-        {activeTab === 2 && (
-          <Card sx={{ p: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', mx: 'auto' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, justifyContent: 'center' }}>
-              <EmojiObjects sx={{ fontSize: 48, color: '#2196F3' }} />
-              <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                Our Values
-              </Typography>
-            </Box>
-            <Grid container spacing={3} justifyContent="center">
-              {values.map((value, index) => (
-                <Grid item xs={12} md={6} key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <Card
-                    sx={{
-                      p: 3,
-                      width: '100%',
-                      maxWidth: '450px',
-                      background: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)',
-                      boxShadow: 'none',
-                      transition: 'all 0.3s ease',
-                      '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
-                    }}
-                  >
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                      {value.title}
+        <motion.div
+          key={activeTab}
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+        >
+          {activeTab === 0 && (
+            <Card sx={{ p: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', mx: 'auto' }}>
+              <Grid container spacing={4} alignItems="center">
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                    <EmojiObjects sx={{ fontSize: 48, color: '#4285F4' }} />
+                    <Typography variant="h3" sx={{ fontWeight: 700 }}>
+                      Our Mission
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {value.desc}
-                    </Typography>
-                  </Card>
+                  </Box>
+                  <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.8, fontSize: '16px' }}>
+                    To empower Persons with Disabilities (PWD) by creating a comprehensive digital ecosystem 
+                    that connects them with opportunities, resources, and a supportive community.
+                  </Typography>
+                  <Typography variant="body1" sx={{ lineHeight: 1.8, fontSize: '16px' }}>
+                    We believe every individual deserves equal access to employment, education, healthcare, 
+                    and the fulfillment of their dreams. Through technology and compassion, we're making this vision a reality.
+                  </Typography>
                 </Grid>
-              ))}
-            </Grid>
-          </Card>
-        )}
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <img
+                      src="https://cdn.prod.website-files.com/65723defcc7c8c842f5d8a69/657fe8525dfc85aa91b475ce_Volunteer-in-Disability.png"
+                      alt="Mission"
+                      style={{ width: '100%', maxWidth: '500px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
+            </Card>
+          )}
+
+          {activeTab === 1 && (
+            <Card sx={{ p: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', mx: 'auto' }}>
+              <Grid container spacing={4} alignItems="center">
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <img
+                      src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop"
+                      alt="Vision"
+                      style={{ width: '100%', maxWidth: '500px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                    <Visibility sx={{ fontSize: 48, color: '#1976D2' }} />
+                    <Typography variant="h3" sx={{ fontWeight: 700 }}>
+                      Our Vision
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.8, fontSize: '16px' }}>
+                    A world where disability is not a barrier but a unique perspective that enriches society. 
+                    We envision an inclusive future where every PWD individual has equal opportunities to thrive, 
+                    contribute, and live with dignity.
+                  </Typography>
+                  <Typography variant="body1" sx={{ lineHeight: 1.8, fontSize: '16px' }}>
+                    By 2030, we aim to become India's largest platform for PWD empowerment, touching millions 
+                    of lives and setting global standards for inclusive technology.
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Card>
+          )}
+
+          {activeTab === 2 && (
+            <Card sx={{ p: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', mx: 'auto' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, justifyContent: 'center' }}>
+                <EmojiObjects sx={{ fontSize: 48, color: '#2196F3' }} />
+                <Typography variant="h3" sx={{ fontWeight: 700 }}>
+                  Our Values
+                </Typography>
+              </Box>
+              <Grid container spacing={3} justifyContent="center">
+                {values.map((value, index) => (
+                  <Grid item xs={12} md={6} key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Card
+                      sx={{
+                        p: 3,
+                        width: '100%',
+                        maxWidth: '450px',
+                        background: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)',
+                        boxShadow: 'none',
+                        transition: 'all 0.3s ease',
+                        '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                        {value.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {value.desc}
+                      </Typography>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Card>
+          )}
+        </motion.div>
       </Container>
 
       {/* Features Section */}
@@ -331,101 +413,80 @@ const AboutPage = () => {
         py: 10 
       }}>
         <Container maxWidth="lg">
-          <Typography variant="h3" align="center" sx={{ fontWeight: 700, mb: 2 }}>
-            What We Offer
-          </Typography>
-          <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 6 }}>
-            Comprehensive solutions for the PWD community
-          </Typography>
-          <Grid container spacing={4} justifyContent="center">
-            {features.map((feature, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <Card
-                  sx={{
-                    p: 3,
-                    height: '100%',
-                    textAlign: 'center',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: '12px',
-                      background: 'linear-gradient(135deg, #4285F4 0%, #1565C0 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 2,
-                    }}
-                  >
-                    <feature.icon sx={{ fontSize: 32, color: 'white' }} />
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {feature.description}
-                  </Typography>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={fadeInUp}
+          >
+            <Typography variant="h3" align="center" sx={{ fontWeight: 700, mb: 2 }}>
+              What We Offer
+            </Typography>
+            <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 6 }}>
+              Comprehensive solutions for the PWD community
+            </Typography>
+          </motion.div>
+          
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={staggerContainer}
+          >
+            <Grid container spacing={4} justifyContent="center">
+              {features.map((feature, index) => (
+                <Grid item xs={12} sm={6} md={3} key={index}>
+                  <motion.div variants={scaleIn}>
+                    <Card
+                      sx={{
+                        p: 3,
+                        height: '100%',
+                        textAlign: 'center',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-8px)',
+                          boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 64,
+                          height: 64,
+                          borderRadius: '12px',
+                          background: 'linear-gradient(135deg, #4285F4 0%, #1565C0 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mx: 'auto',
+                          mb: 2,
+                        }}
+                      >
+                        <feature.icon sx={{ fontSize: 32, color: 'white' }} />
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                        {feature.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {feature.description}
+                      </Typography>
+                    </Card>
+                  </motion.div>
+                </Grid>
+              ))}
+            </Grid>
+          </motion.div>
         </Container>
       </Box>
 
       {/* Timeline Section */}
       <Container maxWidth="md" sx={{ py: 10 }}>
-        <Typography variant="h3" align="center" sx={{ 
-          fontWeight: 700, 
-          mb: 2,
-          background: 'linear-gradient(135deg, #4285F4 0%, #1565C0 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-        }}>
-          Our Journey
-        </Typography>
-        <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 6 }}>
-          Milestones that shaped our impact
-        </Typography>
-        <Box>
-          {milestones.map((milestone, index) => (
-            <Card
-              key={index}
-              sx={{
-                p: 3,
-                mb: 3,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                transition: 'all 0.3s ease',
-                '&:hover': { boxShadow: '0 6px 16px rgba(0,0,0,0.15)' },
-              }}
-            >
-              <Typography variant="h6" sx={{ color: '#4285F4', fontWeight: 600, mb: 1 }}>
-                {milestone.year}
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                {milestone.event}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {milestone.description}
-              </Typography>
-            </Card>
-          ))}
-        </Box>
-      </Container>
-
-      {/* Team Section - UPDATED */}
-      <Box sx={{ 
-        background: 'linear-gradient(180deg, #ffffff 0%, #E3F2FD 50%, #ffffff 100%)',
-        py: 10 
-      }}>
-        <Container maxWidth="lg">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={fadeInUp}
+        >
           <Typography variant="h3" align="center" sx={{ 
             fontWeight: 700, 
             mb: 2,
@@ -433,126 +494,227 @@ const AboutPage = () => {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
-            Meet Our Team
+            Our Journey
           </Typography>
           <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 6 }}>
-            Passionate individuals driving change
+            Milestones that shaped our impact
           </Typography>
-          <Grid container spacing={4} justifyContent="center">
-            {team.map((member, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
+        </motion.div>
+        
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={staggerContainer}
+        >
+          <Box>
+            {milestones.map((milestone, index) => (
+              <motion.div key={index} variants={fadeInUp}>
                 <Card
                   sx={{
-                    height: '100%',
-                    overflow: 'hidden',
-                    borderRadius: '16px',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    background: 'white',
+                    p: 3,
+                    mb: 3,
                     boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                    '&:hover': {
-                      transform: 'translateY(-12px)',
-                      boxShadow: '0 12px 28px rgba(66, 133, 244, 0.25)',
-                    },
+                    transition: 'all 0.3s ease',
+                    '&:hover': { boxShadow: '0 6px 16px rgba(0,0,0,0.15)' },
                   }}
                 >
-                  <Box sx={{ position: 'relative', overflow: 'hidden', height: 280 }}>
-                    <img
-                      src={member.image}
-                      alt={member.name}
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        objectFit: 'cover',
-                        transition: 'transform 0.4s ease'
-                      }}
-                    />
-                  </Box>
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: '#263238' }}>
-                      {member.name}
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        color: '#4285F4', 
-                        fontWeight: 700, 
-                        mb: 1.5,
-                        textTransform: 'uppercase',
-                        fontSize: '12px',
-                        letterSpacing: '0.5px'
-                      }}
-                    >
-                      {member.role}
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary" 
-                      sx={{ 
-                        fontSize: '14px',
-                        lineHeight: 1.6
-                      }}
-                    >
-                      {member.description}
-                    </Typography>
-                  </CardContent>
+                  <Typography variant="h6" sx={{ color: '#4285F4', fontWeight: 600, mb: 1 }}>
+                    {milestone.year}
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
+                    {milestone.event}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {milestone.description}
+                  </Typography>
                 </Card>
-              </Grid>
+              </motion.div>
             ))}
-          </Grid>
-        </Container>
-      </Box>
-
-      {/* CTA Section */}
-      <Box
-        sx={{
-          background: 'linear-gradient(135deg, #4285F4 0%, #1565C0 100%)',
-          color: 'white',
-          py: 10,
-          textAlign: 'center',
-        }}
-      >
-        <Container maxWidth="md">
-          <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
-            Join Us in Making a Difference
-          </Typography>
-          <Typography variant="h6" sx={{ opacity: 0.95, mb: 4 }}>
-            Whether you're a PWD individual seeking opportunities or a donor wanting to make an impact
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button
-              variant="contained"
-              size="large"
-              sx={{
-                bgcolor: 'rgba(255, 255, 255, 0.95)',
-                color: '#e3eeffff',
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-                textTransform: 'none',
-                '&:hover': { bgcolor: 'rgba(255, 255, 255, 1)' },
-              }}
-              onClick={() => navigate('/donor/register')}
-            >
-              Get Started
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              sx={{
-                borderColor: 'white',
-                color: 'white',
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-                textTransform: 'none',
-                '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' },
-              }}
-            >
-              Contact Us
-            </Button>
           </Box>
-        </Container>
+        </motion.div>
+      </Container>
+
+{/* Team Section */}
+<Box sx={{ 
+  background: 'linear-gradient(180deg, #ffffff 0%, #E3F2FD 50%, #ffffff 100%)',
+  py: 10 
+}}>
+  <Container maxWidth="lg">
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.3 }}
+      variants={fadeInUp}
+    >
+      <Typography variant="h3" align="center" sx={{ 
+        fontWeight: 700, 
+        mb: 2,
+        background: 'linear-gradient(135deg, #4285F4 0%, #1565C0 100%)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+      }}>
+        Meet Our Team
+      </Typography>
+      <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 6 }}>
+        Passionate individuals driving change
+      </Typography>
+    </motion.div>
+    
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
+      variants={staggerContainer}
+    >
+      <Grid container spacing={4} justifyContent="center">
+        {team.map((member, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <motion.div 
+              variants={scaleIn}
+              style={{ height: '100%' }}
+            >
+              <Card
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                  borderRadius: '16px',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  background: 'white',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  '&:hover': {
+                    transform: 'translateY(-12px)',
+                    boxShadow: '0 12px 28px rgba(66, 133, 244, 0.25)',
+                  },
+                }}
+              >
+                <Box sx={{ 
+                  position: 'relative', 
+                  overflow: 'hidden', 
+                  height: 280,
+                  flexShrink: 0
+                }}>
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover',
+                      transition: 'transform 0.4s ease'
+                    }}
+                  />
+                </Box>
+                <CardContent sx={{ 
+                  p: 3,
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 700, 
+                    mb: 0.5, 
+                    color: '#263238',
+                    minHeight: '32px'
+                  }}>
+                    {member.name}
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#4285F4', 
+                      fontWeight: 700, 
+                      mb: 1.5,
+                      textTransform: 'uppercase',
+                      fontSize: '12px',
+                      letterSpacing: '0.5px',
+                      minHeight: '20px'
+                    }}
+                  >
+                    {member.role}
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontSize: '14px',
+                      lineHeight: 1.6,
+                      flex: 1
+                    }}
+                  >
+                    {member.description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+        ))}
+      </Grid>
+    </motion.div>
+  </Container>
+</Box>
+
+{/* CTA Section */}
+<motion.div
+  initial="hidden"
+  whileInView="visible"
+  viewport={{ once: true, amount: 0.3 }}
+  variants={fadeInUp}
+>
+  <Box
+    sx={{
+      background: 'linear-gradient(135deg, #4285F4 0%, #1565C0 100%)',
+      color: 'white',
+      py: 10,
+      textAlign: 'center',
+    }}
+  >
+    <Container maxWidth="md">
+      <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
+        Join Us in Making a Difference
+      </Typography>
+      <Typography variant="h6" sx={{ opacity: 0.95, mb: 4 }}>
+        Whether you're a PWD individual seeking opportunities or a donor wanting to make an impact
+      </Typography>
+      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <Button
+          variant="contained"
+          size="large"
+          sx={{
+            bgcolor: 'rgba(255, 255, 255, 0.95)',
+            color: '#e5f1ffff',
+            px: 4,
+            py: 1.5,
+            fontWeight: 600,
+            textTransform: 'none',
+            '&:hover': { bgcolor: 'rgba(255, 255, 255, 1)' },
+          }}
+          onClick={() => navigate('/donor/register')}
+        >
+          Get Started
+        </Button>
+        <Button
+          variant="outlined"
+          size="large"
+          sx={{
+            borderColor: 'white',
+            color: 'white',
+            px: 4,
+            py: 1.5,
+            fontWeight: 600,
+            textTransform: 'none',
+            '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' },
+          }}
+          onClick={() => navigate('/contact')}
+        >
+          Contact Us
+        </Button>
       </Box>
+    </Container>
+  </Box>
+</motion.div>
 
       {/* Footer */}
       <Box component="footer" sx={{ bgcolor: '#263238', color: 'white', py: 6 }}>
