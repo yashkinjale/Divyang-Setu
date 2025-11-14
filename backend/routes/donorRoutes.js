@@ -1,3 +1,4 @@
+// routes/donorRoutes.js - FIXED VERSION
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
@@ -26,22 +27,27 @@ router.post('/register', async (req, res) => {
 
     await donor.save();
 
+    // CRITICAL FIX: Convert ObjectId to string explicitly
+    const donorId = donor._id.toString();
+
     // Create token
     const token = jwt.sign(
-      { id: donor._id, type: 'donor' },
+      { id: donorId, userId: donorId, type: 'donor' },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '1d' }
     );
 
     res.status(201).json({
       token,
-      donor: {
-        id: donor._id,
+      user: {
+        id: donorId,  // Now a proper 24-char string
         name: donor.name,
-        email: donor.email
+        email: donor.email,
+        type: 'donor',
       }
     });
   } catch (err) {
+    console.error('Donor registration error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -63,9 +69,12 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // CRITICAL FIX: Convert ObjectId to string explicitly
+    const donorId = donor._id.toString();
+
     // Create token
     const token = jwt.sign(
-      { id: donor._id, type: 'donor' },
+      { id: donorId, userId: donorId, type: 'donor' },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '1d' }
     );
@@ -73,12 +82,14 @@ router.post('/login', async (req, res) => {
     res.json({
       token,
       donor: {
-        id: donor._id,
+        id: donorId,  // Now a proper 24-char string
         name: donor.name,
-        email: donor.email
+        email: donor.email,
+        type: 'donor',
       }
     });
   } catch (err) {
+    console.error('Donor login error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -89,8 +100,9 @@ router.get('/profile', auth, async (req, res) => {
     const donor = await Donor.findById(req.user.id).select('-password');
     res.json(donor);
   } catch (err) {
+    console.error('Get donor profile error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-module.exports = router; 
+module.exports = router;

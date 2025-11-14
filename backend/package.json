@@ -2,9 +2,10 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "index.js",
+  
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "mocha --timeout 5000"
   },
   "keywords": [],
   "author": "",
@@ -28,5 +29,11 @@
     "tesseract.js": "^4.1.4"
   },
   "description": "",
-  "tesseract.js": "^4.0.2"
+  "tesseract.js": "^4.0.2",
+  "devDependencies": {
+    "chai": "^6.2.0",
+    "mocha": "^11.7.5",
+    "sinon": "^21.0.0",
+    "supertest": "^7.1.4"
+  }
 }

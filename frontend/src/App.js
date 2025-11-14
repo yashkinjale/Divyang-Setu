@@ -21,7 +21,8 @@ import FundStatusCard from './components/FundStatusCard';
 import JobRecommendations from './components/JobRecommendations';
 import JobPostings from './components/JobPostings';
 import DonorDashboard from './components/DonorDashboard';
-import MessagesPage from './pages/MessagesPage';
+import DonorMessagesPage from './components/DonorMessagesPage';
+import MessagesPage from './pages/PwdMessagesPage';
 import theme from './theme';
 import highContrastTheme from './utils/highContrastTheme';
 import { ScreenReaderProvider, useScreenReader } from './context/ScreenReaderContext';
@@ -177,6 +178,15 @@ const App = () => {
                     element={
                       <PrivateRoute userType="donor">
                         <DonorDashboard />
+                      </PrivateRoute>
+                    }
+                  />
+                  {/* Added Donor Messages Route */}
+                  <Route
+                    path="/donor/messages"
+                    element={
+                      <PrivateRoute userType="donor">
+                        <DonorMessagesPage />
                       </PrivateRoute>
                     }
                   />

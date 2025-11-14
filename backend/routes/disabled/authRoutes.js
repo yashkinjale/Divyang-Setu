@@ -1,4 +1,4 @@
-// routes/disabled/authRoutes.js - CLEAN VERSION (routes only)
+// routes/disabled/authRoutes.js - FIXED VERSION
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
@@ -7,8 +7,7 @@ const Disabled = require("../../models/Disabled");
 // Register disabled person
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, phone, address, disabilityType, needs } =
-      req.body;
+    const { name, email, password, phone, address, disabilityType, needs } = req.body;
 
     let disabled = await Disabled.findOne({ email });
     if (disabled) {
@@ -28,17 +27,20 @@ router.post("/register", async (req, res) => {
 
     await disabled.save();
 
+    // CRITICAL FIX: Convert ObjectId to string explicitly
+    const userId = disabled._id.toString();
+
     const token = jwt.sign(
-      { userId: disabled._id, id: disabled._id, type: "disabled" },
+      { userId: userId, id: userId, type: "disabled" },
       process.env.JWT_SECRET || "your-secret-key",
       { expiresIn: "1d" }
     );
 
-    // Send response first
+    // CRITICAL FIX: Ensure ID is a clean string
     res.status(201).json({
       token,
       user: {
-        id: disabled._id,
+        id: userId,  // Now a proper 24-char string
         name: disabled.name,
         email: disabled.email,
         type: "disabled",
@@ -46,16 +48,12 @@ router.post("/register", async (req, res) => {
     });
 
   } catch (err) {
-    // Enhanced error handling
     if (err.name === 'ValidationError') {
-      // Mongoose validation error (e.g., password too short)
       const messages = Object.values(err.errors).map(val => val.message);
-      // Log the specific validation error for debugging
       console.error("Registration validation error:", messages.join(', '));
       return res.status(400).json({ message: messages.join(', ') });
     }
 
-    // Log generic server errors
     console.error("Registration error:", err);
     res.status(500).json({ message: "Server error" });
   }
@@ -71,17 +69,20 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    // CRITICAL FIX: Convert ObjectId to string explicitly
+    const userId = disabled._id.toString();
+
     const token = jwt.sign(
-      { userId: disabled._id, id: disabled._id, type: "disabled" },
+      { userId: userId, id: userId, type: "disabled" },
       process.env.JWT_SECRET || "your-secret-key",
       { expiresIn: "1d" }
     );
 
-    // Send response FIRST
+    // CRITICAL FIX: Ensure ID is a clean string
     res.json({
       token,
       user: {
-        id: disabled._id,
+        id: userId,  // Now a proper 24-char string
         name: disabled.name,
         email: disabled.email,
         type: "disabled",
@@ -95,4 +96,3 @@ router.post("/login", async (req, res) => {
 });
 
 module.exports = router;
-

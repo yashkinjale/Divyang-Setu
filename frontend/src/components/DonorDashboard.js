@@ -32,369 +32,10 @@ import {
   Share as ShareIcon,
   History as HistoryIcon,
   BookmarkBorder as BookmarkIcon,
-  Home as HomeIcon,
-  Notifications as NotificationIcon,
-  Menu as MenuIcon,
-  Logout as LogoutIcon,
-  Settings as SettingsIcon,
 } from "@mui/icons-material";
-import {
-  AppBar,
-  Toolbar,
-  IconButton,
-  Menu,
-  Badge,
-  useTheme,
-  useMediaQuery,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-} from "@mui/material";
 import { disabledApi } from "../utils/api";
-import { donationApi } from "../utils/api";
 import DonateDialog from "./DonateDialog";
-
-// Enhanced DonorNavbar component
-const DonorNavbar = ({ activeTab = "home", onTabChange = () => {} }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [notificationAnchor, setNotificationAnchor] = useState(null);
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleProfileMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleNotificationOpen = (event) => {
-    setNotificationAnchor(event.currentTarget);
-  };
-
-  const handleNotificationClose = () => {
-    setNotificationAnchor(null);
-  };
-
-  const handleMobileDrawerToggle = () => {
-    setMobileDrawerOpen(!mobileDrawerOpen);
-  };
-
-  const handleTabClick = (tabName) => {
-    onTabChange(tabName);
-    setMobileDrawerOpen(false);
-  };
-
-  const navigationItems = [
-    { id: "home", label: "Home", icon: <HomeIcon /> },
-    { id: "donations", label: "General Donations", icon: <MoneyIcon /> },
-    { id: "jobs", label: "Jobs", icon: <WorkIcon /> },
-    { id: "history", label: "Past Donations", icon: <HistoryIcon /> },
-    { id: "saved", label: "Saved Donations", icon: <BookmarkIcon /> },
-  ];
-
-  const profileMenuItems = [
-    {
-      label: "Profile",
-      icon: <PersonIcon />,
-      action: () => handleTabClick("profile"),
-    },
-    {
-      label: "Settings",
-      icon: <SettingsIcon />,
-      action: () => console.log("Settings"),
-    },
-    {
-      label: "Logout",
-      icon: <LogoutIcon />,
-      action: () => console.log("Logout"),
-    },
-  ];
-
-  const notifications = [
-    "Thank you message from Priya Sharma",
-    "New profile matching your interests",
-    "Monthly donation reminder",
-  ];
-
-  const DesktopNavigation = () => (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      {navigationItems.map((item) => (
-        <Button
-          key={item.id}
-          startIcon={item.icon}
-          onClick={() => handleTabClick(item.id)}
-          sx={{
-            color: activeTab === item.id ? "primary.main" : "white",
-            bgcolor:
-              activeTab === item.id
-                ? "rgba(255, 255, 255, 0.15)"
-                : "transparent",
-            "&:hover": {
-              bgcolor: "rgba(255, 255, 255, 0.1)",
-            },
-            borderRadius: 2,
-            px: 2,
-            py: 1,
-            fontWeight: activeTab === item.id ? "bold" : "normal",
-          }}
-        >
-          {item.label}
-        </Button>
-      ))}
-    </Box>
-  );
-
-  const MobileDrawer = () => (
-    <Drawer
-      anchor="left"
-      open={mobileDrawerOpen}
-      onClose={handleMobileDrawerToggle}
-      sx={{
-        "& .MuiDrawer-paper": {
-          width: 280,
-          bgcolor: "#1976d2",
-          color: "white",
-        },
-      }}
-    >
-      <Box sx={{ p: 2, bgcolor: "#1565c0" }}>
-        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-          Donor Dashboard
-        </Typography>
-      </Box>
-
-      <List sx={{ px: 2, py: 1 }}>
-        {navigationItems.map((item) => (
-          <ListItem
-            key={item.id}
-            button
-            onClick={() => handleTabClick(item.id)}
-            sx={{
-              borderRadius: 2,
-              mb: 0.5,
-              bgcolor:
-                activeTab === item.id
-                  ? "rgba(255, 255, 255, 0.15)"
-                  : "transparent",
-              "&:hover": {
-                bgcolor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
-          >
-            <ListItemIcon sx={{ color: "white", minWidth: 40 }}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText
-              primary={item.label}
-              primaryTypographyProps={{
-                fontWeight: activeTab === item.id ? "bold" : "normal",
-              }}
-            />
-          </ListItem>
-        ))}
-      </List>
-
-      <Divider sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", mx: 2, my: 1 }} />
-
-      <List sx={{ px: 2 }}>
-        {profileMenuItems.map((item, index) => (
-          <ListItem
-            key={index}
-            button
-            onClick={item.action}
-            sx={{
-              borderRadius: 2,
-              mb: 0.5,
-              "&:hover": {
-                bgcolor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
-          >
-            <ListItemIcon sx={{ color: "white", minWidth: 40 }}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText primary={item.label} />
-          </ListItem>
-        ))}
-      </List>
-    </Drawer>
-  );
-
-  return (
-    <>
-      <AppBar position="sticky" sx={{ bgcolor: "#1976d2", boxShadow: 3 }}>
-        <Toolbar sx={{ justifyContent: "space-between", px: { xs: 1, sm: 2 } }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            {isMobile && (
-              <IconButton
-                color="inherit"
-                onClick={handleMobileDrawerToggle}
-                sx={{ mr: 1 }}
-              >
-                <MenuIcon />
-              </IconButton>
-            )}
-
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <FavoriteIcon sx={{ color: "#ff4757" }} />
-              {!isMobile && "Donor Dashboard"}
-              {isMobile && "Dashboard"}
-            </Typography>
-          </Box>
-
-          {!isMobile && (
-            <Box
-              sx={{ flex: 1, display: "flex", justifyContent: "center", mx: 4 }}
-            >
-              <DesktopNavigation />
-            </Box>
-          )}
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton
-              color="inherit"
-              onClick={handleNotificationOpen}
-              sx={{
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.1)",
-                },
-              }}
-            >
-              <Badge badgeContent={notifications.length} color="error">
-                <NotificationIcon />
-              </Badge>
-            </IconButton>
-
-            <IconButton
-              onClick={handleProfileMenuOpen}
-              sx={{
-                p: 0.5,
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.1)",
-                },
-              }}
-            >
-              <Avatar
-                sx={{
-                  width: 36,
-                  height: 36,
-                  bgcolor: "#ff4757",
-                  fontSize: "1rem",
-                }}
-              >
-                D
-              </Avatar>
-            </IconButton>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleProfileMenuClose}
-        PaperProps={{
-          sx: {
-            mt: 1.5,
-            minWidth: 200,
-            boxShadow: 3,
-          },
-        }}
-        transformOrigin={{ horizontal: "right", vertical: "top" }}
-        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-      >
-        <Box sx={{ px: 2, py: 1, bgcolor: "#f5f5f5" }}>
-          <Typography variant="subtitle2" fontWeight="bold">
-            John Donor
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            donor@example.com
-          </Typography>
-        </Box>
-        <Divider />
-        {profileMenuItems.map((item, index) => (
-          <MenuItem
-            key={index}
-            onClick={() => {
-              item.action();
-              handleProfileMenuClose();
-            }}
-            sx={{
-              gap: 1.5,
-              py: 1.5,
-              "&:hover": {
-                bgcolor:
-                  item.label === "Logout" ? "error.light" : "action.hover",
-              },
-            }}
-          >
-            {item.icon}
-            <Typography>{item.label}</Typography>
-          </MenuItem>
-        ))}
-      </Menu>
-
-      <Menu
-        anchorEl={notificationAnchor}
-        open={Boolean(notificationAnchor)}
-        onClose={handleNotificationClose}
-        PaperProps={{
-          sx: {
-            mt: 1.5,
-            maxWidth: 320,
-            boxShadow: 3,
-          },
-        }}
-        transformOrigin={{ horizontal: "right", vertical: "top" }}
-        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-      >
-        <Box sx={{ px: 2, py: 1, bgcolor: "#f5f5f5" }}>
-          <Typography variant="subtitle2" fontWeight="bold">
-            Notifications
-          </Typography>
-        </Box>
-        <Divider />
-        {notifications.length === 0 ? (
-          <MenuItem disabled>
-            <Typography variant="body2" color="text.secondary">
-              No new notifications
-            </Typography>
-          </MenuItem>
-        ) : (
-          notifications.map((notification, index) => (
-            <MenuItem
-              key={index}
-              onClick={handleNotificationClose}
-              sx={{
-                whiteSpace: "normal",
-                maxWidth: 300,
-                py: 1.5,
-              }}
-            >
-              <Typography variant="body2">{notification}</Typography>
-            </MenuItem>
-          ))
-        )}
-      </Menu>
-
-      {isMobile && <MobileDrawer />}
-    </>
-  );
-};
+import DonorNavbar from "./DonorNavbar"; // Import the navbar component
 
 const DonorDashboard = () => {
   const [profiles, setProfiles] = useState([]);
@@ -406,6 +47,8 @@ const DonorDashboard = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [donateDialogOpen, setDonateDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [chatDialogOpen, setChatDialogOpen] = useState(false);
+  const [selectedChatProfile, setSelectedChatProfile] = useState(null);
 
   // Fetch profiles from backend
   useEffect(() => {
@@ -439,13 +82,24 @@ const DonorDashboard = () => {
       setLoading(false);
     }
   };
+
+  const handleMessageClick = (profile) => {
+    setSelectedChatProfile(profile);
+    setChatDialogOpen(true);
+  };
+
+  const handleChatClose = () => {
+    setChatDialogOpen(false);
+    setSelectedChatProfile(null);
+  };
+
   const handleDonateClick = (profile) => {
     setSelectedProfile(profile);
     setDonateDialogOpen(true);
   };
+
   const handleDonateSuccess = (donationData) => {
     console.log("Donation successful:", donationData);
-    // Refresh profiles to show updated amounts
     fetchProfiles();
   };
 
@@ -460,7 +114,7 @@ const DonorDashboard = () => {
       if (!loading) {
         fetchProfiles();
       }
-    }, 500); // Debounce search
+    }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm, filterType, filterLocation]);
@@ -564,13 +218,28 @@ const DonorDashboard = () => {
               }}
             >
               <Avatar
-                src={(function(){
-                  const raw = profile.profileImage || profile.image || profile.photo || profile.avatarUrl || profile.avatar;
-                  const img = typeof raw === 'string' ? raw : (raw && (raw.url || raw.path || raw.location || raw.secure_url || raw.src));
-                  if (!img || typeof img !== 'string') return undefined;
+                src={(function () {
+                  const raw =
+                    profile.profileImage ||
+                    profile.image ||
+                    profile.photo ||
+                    profile.avatarUrl ||
+                    profile.avatar;
+                  const img =
+                    typeof raw === "string"
+                      ? raw
+                      : raw &&
+                        (raw.url ||
+                          raw.path ||
+                          raw.location ||
+                          raw.secure_url ||
+                          raw.src);
+                  if (!img || typeof img !== "string") return undefined;
                   if (/^(https?:|data:|blob:)/i.test(img)) return img;
-                  const base = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/?api$/, '');
-                  const path = img.charAt(0) === '/' ? img : `/${img}`;
+                  const base = (
+                    process.env.REACT_APP_API_URL || "http://localhost:5000"
+                  ).replace(/\/?api$/, "");
+                  const path = img.charAt(0) === "/" ? img : `/${img}`;
                   return `${base}${path}`;
                 })()}
                 sx={{ width: 40, height: 40, mr: 1.5 }}
@@ -791,6 +460,7 @@ const DonorDashboard = () => {
               variant="outlined"
               startIcon={<EquipmentIcon />}
               fullWidth
+              onClick={() => handleMessageClick(profile)}
               sx={{
                 borderColor: "#ff9800",
                 color: "#ff9800",
@@ -1134,7 +804,7 @@ const DonorDashboard = () => {
   if (loading && profiles.length === 0) {
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: "#f5f5f5" }}>
-        <DonorNavbar activeTab={activeTab} onTabChange={setActiveTab} />
+        <DonorNavbar />
         <Box
           sx={{
             display: "flex",
@@ -1151,20 +821,23 @@ const DonorDashboard = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f5f5f5" }}>
-      <DonorNavbar activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* Use the imported DonorNavbar component */}
+      <DonorNavbar />
 
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {renderTabContent()}
       </Container>
 
-      {/* ✅ Show Donate Dialog only in Home tab */}
+      {/* Show Donate Dialog and Chat Dialog only in Home tab */}
       {activeTab === "home" && (
-        <DonateDialog
-          open={donateDialogOpen}
-          onClose={handleDonateClose}
-          profile={selectedProfile}
-          onSuccess={handleDonateSuccess}
-        />
+        <>
+          <DonateDialog
+            open={donateDialogOpen}
+            onClose={handleDonateClose}
+            profile={selectedProfile}
+            onSuccess={handleDonateSuccess}
+          />
+        </>
       )}
     </Box>
   );

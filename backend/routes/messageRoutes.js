@@ -1,10 +1,12 @@
-import express from 'express';
-import { 
-  sendMessage, 
-  getMessages, 
+const express = require("express");
+const {
+  sendMessage,
+  getMessages,
   getConversations,
-  markAsRead 
-} from '../controllers/messageController.js';
+  markAsRead,
+  searchDonors,    // NEW
+  searchPWD,       // NEW
+} = require("../controllers/messageController");
 
 const router = express.Router();
 
@@ -20,4 +22,8 @@ router.get('/conversations/:userId', getConversations);
 // Mark messages as read
 router.patch('/read/:messageId', markAsRead);
 
-export default router;
+// NEW: Search routes for finding users to chat with
+router.get('/search/donors', searchDonors);
+router.get('/search/pwd', searchPWD);
+
+module.exports = router;
