@@ -12,7 +12,9 @@ import {
   AppBar,
   Toolbar,
   Link,
-  IconButton
+  IconButton,
+  TextField,
+  InputAdornment
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
@@ -27,6 +29,7 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import SearchIcon from '@mui/icons-material/Search';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -76,10 +79,10 @@ const Navbar = () => {
               src={require('./Disabled.jpg')}
               alt="DivyangSetu Logo"
               style={{
-                height: scrolled ? 60 : 65, // ⬆️ slightly taller normally
+                height: scrolled ? 60 : 65,
                 width: scrolled ? 60 : 65,
                 objectFit: 'contain',
-                opacity: scrolled ? 0.3 : 1, // ⬅️ becomes lighter when scrolled
+                opacity: scrolled ? 0.3 : 1,
                 transition: 'all 0.3s ease',
               }}
             />
@@ -87,7 +90,10 @@ const Navbar = () => {
               variant="h5"
               component="div"
               sx={{
-                color: '#4285F4',
+                background: 'linear-gradient(45deg, #4285F4 0%, #34A853 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
                 fontWeight: 'bold',
                 display: { xs: 'none', md: 'block' },
                 fontSize: scrolled ? '1.4rem' : '1.6rem',
@@ -154,7 +160,6 @@ const Navbar = () => {
   );
 };
 
-
 const TestimonialCard = ({ name, role, content, initial }) => {
   const getAvatarColor = (name) => {
     const colors = ['#4285F4', '#4caf50', '#ff6b9d', '#9c27b0', '#f9f9f9'];
@@ -214,6 +219,7 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [serviceSlide, setServiceSlide] = useState(0);
+  const [searchQuery, setSearchQuery] = useState(''); // ⭐ NEW: Added search state
 
   const backgroundImages = [
     'https://media.istockphoto.com/id/486895162/photo/composite-image-of-cute-disabled-pupil.jpg?s=612x612&w=0&k=20&c=Bst_86KHTmo7HY_-uo20jpnsMQ-wmaeCyISZidpXqG4=',
@@ -302,11 +308,83 @@ const LandingPage = () => {
     return infiniteServices;
   };
 
+  // ⭐ NEW: Search handler function
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const query = searchQuery.toLowerCase().trim();
+    
+    if (!query) return;
+
+    // Search mappings for different keywords
+    const searchMappings = {
+      // PWD/Disabled related
+      'pwd': '/disabled/login',
+      'disabled': '/disabled/login',
+      'disability': '/disabled/login',
+      'divyang': '/disabled/login',
+      'differently abled': '/disabled/login',
+      'specially abled': '/disabled/login',
+      
+      // Pages
+      'about': '/about',
+      'about us': '/about',
+      'contact': '/contact',
+      'contact us': '/contact',
+      
+      // Services
+      'job': '/job-postings',
+      'jobs': '/job-postings',
+      'job posting': '/job-postings',
+      'job postings': '/job-postings',
+      'employment': '/job-postings',
+      'career': '/job-postings',
+      'work': '/job-postings',
+      
+      'donate': '/donor/register',
+      'donation': '/donor/register',
+      'donor': '/donor/register',
+      'contribute': '/donor/register',
+      'charity': '/donor/register',
+      
+      'scheme': '/disabled/login',
+      'schemes': '/disabled/login',
+      'government scheme': '/disabled/login',
+      'government schemes': '/disabled/login',
+      'benefits': '/disabled/login',
+      
+      'community': '/disabled/login',
+      'forum': '/disabled/login',
+      'community forum': '/disabled/login',
+      
+      'recommendation': '/disabled/login',
+      'job recommendation': '/disabled/login',
+    };
+
+    // Check for exact matches first
+    if (searchMappings[query]) {
+      navigate(searchMappings[query]);
+      setSearchQuery('');
+      return;
+    }
+
+    // Check for partial matches
+    for (const [key, path] of Object.entries(searchMappings)) {
+      if (query.includes(key) || key.includes(query)) {
+        navigate(path);
+        setSearchQuery('');
+        return;
+      }
+    }
+
+    // If no match found, show alert
+    alert(`No results found for "${searchQuery}". Try searching for: jobs, donate, about, contact, pwd, schemes, or community`);
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa' }}>
       <Navbar />
 
-      {/* Hero Section */}
+      {/* Hero Section with Carousel */}
       <Box
         sx={{
           position: 'relative',
@@ -317,6 +395,7 @@ const LandingPage = () => {
           overflow: 'hidden',
         }}
       >
+        {/* Background Images Carousel */}
         {backgroundImages.map((image, index) => (
           <Box
             key={index}
@@ -336,6 +415,7 @@ const LandingPage = () => {
           />
         ))}
 
+        {/* Overlay */}
         <Box
           sx={{
             position: 'absolute',
@@ -348,15 +428,41 @@ const LandingPage = () => {
           }}
         />
 
+        {/* Content */}
         <Container maxWidth="md" sx={{ position: 'relative', zIndex: 2 }}>
           <Box textAlign="center">
+            {/* Logo at Top */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                mb: 4,
+              }}
+            >
+              <img
+                src={require('./Disability2.png')}
+                alt="DivyangSetu Logo"
+                style={{
+                  height: 120,
+                  width: 120,
+                  objectFit: 'contain',
+                  animation: 'fadeIn 1s ease-out',
+                  borderRadius: '50%',
+                  background: 'white',
+                  padding: '10px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                }}
+              />
+            </Box>
+
+            {/* Title */}
             <Typography
               variant="h2"
               component="h1"
               sx={{
                 color: 'white',
                 fontWeight: 700,
-                mb: 3,
+                mb: 2,
                 fontSize: { xs: '2.5rem', md: '4rem' },
                 textShadow: '0 2px 10px rgba(0,0,0,0.3)',
                 animation: 'fadeInUp 1s ease-out',
@@ -370,10 +476,16 @@ const LandingPage = () => {
                     transform: 'translateY(0)',
                   },
                 },
+                '@keyframes fadeIn': {
+                  from: { opacity: 0 },
+                  to: { opacity: 1 },
+                },
               }}
             >
               DivyangSetu
             </Typography>
+
+            {/* Description */}
             <Typography
               variant="h5"
               sx={{
@@ -381,6 +493,7 @@ const LandingPage = () => {
                 opacity: 0.95,
                 maxWidth: '600px',
                 mx: 'auto',
+                mb: 5,
                 fontWeight: 400,
                 fontSize: { xs: '1.1rem', md: '1.3rem' },
                 textShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -389,9 +502,72 @@ const LandingPage = () => {
             >
               Bridging the gap between donors and differently-abled individuals
             </Typography>
+
+            {/* ⭐ UPDATED: Search Bar with working functionality */}
+            <Box
+              component="form"
+              onSubmit={handleSearch}
+              sx={{
+                display: 'flex',
+                maxWidth: '700px',
+                mx: 'auto',
+                gap: 0,
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                animation: 'fadeInUp 1s ease-out 0.6s both',
+              }}
+            >
+              <TextField
+                fullWidth
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for services, schemes, jobs..."
+                sx={{
+                  bgcolor: 'white',
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px 0 0 8px',
+                    '& fieldset': {
+                      border: 'none',
+                    },
+                    '& input': {
+                      padding: '18px 20px',
+                      fontSize: '16px',
+                    },
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: '#666', fontSize: 28, ml: 1 }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{
+                  minWidth: 140,
+                  borderRadius: '0 8px 8px 0',
+                  bgcolor: '#d32f2f',
+                  color: 'white',
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  px: 4,
+                  '&:hover': {
+                    bgcolor: '#b71c1c',
+                  },
+                }}
+              >
+                Search
+              </Button>
+            </Box>
           </Box>
         </Container>
 
+        {/* Slide Indicators */}
         <Box
           sx={{
             position: 'absolute',

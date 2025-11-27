@@ -111,14 +111,13 @@ const Logo = () => {
       gap: 1,
       mr: 2
     }}>
-      <AccessibilityIcon 
-        sx={{ 
-          fontSize: 32, 
-          color: theme.palette.primary.main 
-        }} 
+      <img
+        src={require('./Disabled.jpg')}
+        alt="DivyangSetu Logo"
+        style={{ height: 50, width: 50, objectFit: 'contain' }}
       />
       <Typography 
-        variant="h6" 
+        variant="h5" 
         sx={{ 
           fontWeight: 'bold',
           background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
