@@ -7,7 +7,6 @@ const fs = require("fs");
 const { errorHandler } = require("./utils/errorHandler");
 const pwdVerificationRoutes = require("./routes/pwdVerificationRoutes");
 
-
 // Load environment variables BEFORE importing routes that read them
 dotenv.config();
 
@@ -18,6 +17,7 @@ const schemesRoutes = require("./routes/schemesRoutes");
 const jobRoutes = require("./routes/jobRoutes");
 const disabledRoutes = require("./routes/disabled");
 const donationRoutes = require("./routes/donationRoutes");
+const messageRoutes = require("./routes/messageRoutes"); // NEW: Message routes
 
 const app = express();
 
@@ -87,6 +87,7 @@ app.get("/", (req, res) => {
       disabledRegister: "POST /api/disabled/register",
       wishlist: "GET /api/wishlist",
       schemes: "GET /api/schemes",
+      messages: "GET /api/messages", // NEW
     },
   });
 });
@@ -185,7 +186,6 @@ try {
 app.use("/api/pwd", pwdVerificationRoutes);
 console.log("✅ PWD Verification route registered at /api/pwd");
 
-
 try {
   app.use("/api/jobs", jobRoutes);
   console.log("✅ Job routes registered at /api/jobs");
@@ -198,6 +198,14 @@ try {
   console.log("✅ Donation routes registered at /api/donations");
 } catch (error) {
   console.error("❌ Error registering donation routes:", error.message);
+}
+
+// NEW: Register message routes
+try {
+  app.use("/api/messages", messageRoutes);
+  console.log("✅ Message routes registered at /api/messages");
+} catch (error) {
+  console.error("❌ Error registering message routes:", error.message);
 }
 
 console.log("All routes registered successfully");
@@ -239,6 +247,9 @@ app.use((req, res, next) => {
       "GET /api/wishlist",
       "POST /api/wishlist",
       "GET /api/schemes",
+      "POST /api/messages/send", // NEW
+      "GET /api/messages/:userId/:chatWithId", // NEW
+      "GET /api/messages/conversations/:userId", // NEW
     ],
   });
 });
@@ -298,6 +309,10 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log("  GET  /api/donations/history/:pwdId  - Donation history");
   console.log("  GET  /api/donations/my-donations    - My donations");
   console.log("  GET  /api/donations/stats/:pwdId    - Donation stats");
+  console.log("  POST /api/messages/send              - Send message"); // NEW
+  console.log("  GET  /api/messages/:userId/:chatWithId - Get chat"); // NEW
+  console.log("  GET  /api/messages/conversations/:userId - Get conversations"); // NEW
+  console.log("  PATCH /api/messages/read/:messageId  - Mark as read"); // NEW
   console.log("==========================================\n");
   console.log("✅ Server is ready to accept connections!");
 });

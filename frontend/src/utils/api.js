@@ -92,6 +92,7 @@ export const donorApi = {
   register: (data) => api.post('/donors/register', data),
   login: (data) => api.post('/donors/login', data),
   getProfile: () => api.get('/donors/profile'),
+  updateProfile: (data) => api.put('/donors/profile', data),
 };
 
 // Disabled / PWD API
@@ -169,6 +170,33 @@ export const donationApi = {
   getHistory: (pwdId) => api.get(`/donations/history/${pwdId}`),
   getMyDonations: () => api.get('/donations/my-donations'),
   getStats: (pwdId) => api.get(`/donations/stats/${pwdId}`),
+};
+
+// Messages API - COMPLETE WITH SEARCH
+export const messageApi = {
+  // Send a new message
+  sendMessage: (data) => api.post('/messages/send', data),
+  
+  // Get chat history between two users
+  getMessages: (userId, chatWithId) => api.get(`/messages/${userId}/${chatWithId}`),
+  
+  // Get all conversations for a user (inbox)
+  getConversations: (userId) => api.get(`/messages/conversations/${userId}`),
+  
+  // Mark message as read
+  markAsRead: (messageId) => api.patch(`/messages/read/${messageId}`),
+  
+  // NEW: Search for donors (for PWDs to find donors to chat with)
+  searchDonors: (query = '') => {
+    const encodedQuery = encodeURIComponent(query);
+    return api.get(`/messages/search/donors?query=${encodedQuery}`);
+  },
+  
+  // NEW: Search for PWDs (for donors to find PWDs to chat with)
+  searchPWD: (query = '') => {
+    const encodedQuery = encodeURIComponent(query);
+    return api.get(`/messages/search/pwd?query=${encodedQuery}`);
+  },
 };
 
 // Auth helpers

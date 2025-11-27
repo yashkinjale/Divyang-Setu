@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "set BROWSER=msedge && react-scripts start"
+  },
   "dependencies": {
     "lucide-react": "^0.544.0",
     "react-slick": "^0.31.0",

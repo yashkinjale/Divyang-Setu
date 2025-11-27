@@ -1,4 +1,4 @@
-// routes/disabled/profileRoutes.js - Debug version with enhanced logging
+// routes/disabled/profileRoutes.js - Updated with priority sorting
 const express = require("express");
 const router = express.Router();
 const Disabled = require("../../models/Disabled");
@@ -8,7 +8,7 @@ const upload = require("../../middleware/upload");
 const { body, validationResult } = require("express-validator");
 
 // =============================================
-// PROFILE ROUTES - DEBUG VERSION
+// PROFILE ROUTES - WITH PRIORITY SORTING
 // =============================================
 
 // NEW: Get all profiles for donor dashboard (public route - no auth required)
@@ -19,41 +19,43 @@ router.get("/public", async (req, res) => {
     // Get query parameters for filtering
     const { search, category, location } = req.query;
 
- 
-    // Build query
-    // Show verified profiles by default; also include those marked verified via verificationStatus
-    let query = { $or: [ { isVerified: true }, { verificationStatus: "verified" } ] };
+    // Build query - show all profiles (not just verified) to ensure profiles are displayed
+    let query = {};
 
+    // Add search filter if provided
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
         { disabilityType: { $regex: search, $options: "i" } },
         { needs: { $regex: search, $options: "i" } },
+        { bio: { $regex: search, $options: "i" } },
       ];
     }
 
+    // Add location filter if provided
     if (location && location !== "all") {
       query.location = { $regex: location, $options: "i" };
     }
 
-    console.log("Query:", query);
+    console.log("Query:", JSON.stringify(query, null, 2));
 
-    // Fetch disabled users with basic info
+    // Fetch disabled users - sort by creation date (oldest first for base sorting)
     let disabledUsers = await Disabled.find(query)
       .select(
         "name email phone location address disabilityType needs bio profileImage isVerified verificationStatus createdAt"
       )
-      .limit(50)
-      .sort({ createdAt: -1 });
+      .limit(100)
+      .sort({ createdAt: 1 }); // Sort by oldest first (earliest profiles first)
 
-    // If no results, gracefully fall back to most recent 10 profiles (public preview)
-    if (disabledUsers.length === 0) {
+    // If still no results, try without any filters (show all profiles)
+    if (disabledUsers.length === 0 && (search || location)) {
+      console.log("No results with filters, trying without filters...");
       disabledUsers = await Disabled.find({})
         .select(
-          "name email phone location address disabilityType needs profileImage createdAt"
+          "name email phone location address disabilityType needs bio profileImage isVerified verificationStatus createdAt"
         )
-        .limit(10)
-        .sort({ createdAt: -1 });
+        .limit(50)
+        .sort({ createdAt: 1 }); // Oldest first
     }
 
     console.log(`Found ${disabledUsers.length} profiles`);
@@ -128,10 +130,18 @@ router.get("/public", async (req, res) => {
             user.disabilityType || "disability"
           } seeking support for essential items and services.`;
 
+      // Build image URL
+      const imageUrl = user.profileImage?.url || 
+        user.profileImage?.path ||
+        (typeof user.profileImage === 'string' ? user.profileImage : null) ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+          user.name
+        )}&background=random`;
+
       return {
-        id: user._id,
-        name: user.name,
-        age: calculateAge(user.createdAt), // Rough estimate
+        id: user._id.toString(),
+        name: user.name || "Anonymous",
+        age: calculateAge(user.createdAt),
         location: user.location || user.address || "Location not specified",
         disability: user.disabilityType || "Not specified",
         bio: user.bio || "",
@@ -141,23 +151,21 @@ router.get("/public", async (req, res) => {
         story: story,
         goalAmount: totalAmountNeeded || 50000,
         raisedAmount: totalAmountRaised || 0,
-        image:
-          user.profileImage?.url ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(
-            user.name
-          )}&background=random`,
+        image: imageUrl,
+        profileImage: imageUrl,
         urgency,
         category,
         isVerified: user.isVerified || false,
         verificationStatus: user.verificationStatus || "pending",
+        createdAt: user.createdAt, // Keep for sorting
         wishlistItems: userWishlist.map((item) => ({
-          id: item._id,
+          id: item._id.toString(),
           itemName: item.itemName,
           description: item.description,
-          amountRequired: item.amountRequired,
-          amountRaised: item.amountRaised,
-          urgencyLevel: item.urgencyLevel,
-          category: item.category,
+          amountRequired: item.amountRequired || 0,
+          amountRaised: item.amountRaised || 0,
+          urgencyLevel: item.urgencyLevel || "low",
+          category: item.category || "general",
         })),
       };
     });
@@ -168,7 +176,21 @@ router.get("/public", async (req, res) => {
       filteredProfiles = profiles.filter((p) => p.category === category);
     }
 
-    console.log(`Returning ${filteredProfiles.length} profiles`);
+    // PRIORITY SORTING: Sort by urgency first (high > medium > low), then by creation date (earliest first)
+    const urgencyOrder = { high: 1, medium: 2, low: 3 };
+    
+    filteredProfiles.sort((a, b) => {
+      // First compare urgency
+      const urgencyDiff = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+      if (urgencyDiff !== 0) {
+        return urgencyDiff; // Lower number = higher priority
+      }
+      
+      // If urgency is the same, sort by creation date (earliest first)
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    });
+
+    console.log(`Returning ${filteredProfiles.length} profiles (sorted by urgency + creation date)`);
     console.log("=== END PUBLIC PROFILES REQUEST ===");
 
     res.json({
@@ -191,11 +213,10 @@ router.get("/public", async (req, res) => {
 
 // Helper function to calculate approximate age
 function calculateAge(createdDate) {
-  // This is a rough estimate - you might want to add a birthDate field to your model
   const monthsSinceCreated = Math.floor(
     (Date.now() - new Date(createdDate).getTime()) / (1000 * 60 * 60 * 24 * 30)
   );
-  return 25 + Math.floor(monthsSinceCreated / 12); // Rough estimate starting at 25
+  return 25 + Math.floor(monthsSinceCreated / 12);
 }
 
 // Get complete profile data with enhanced debugging
@@ -205,7 +226,6 @@ router.get("/", auth, async (req, res) => {
     console.log("1. Auth middleware passed");
     console.log("2. req.user:", JSON.stringify(req.user, null, 2));
 
-    // Handle both userId and id from your existing auth tokens
     const userId = req.user.userId || req.user.id;
     console.log("3. Extracted userId:", userId);
 
@@ -229,23 +249,11 @@ router.get("/", auth, async (req, res) => {
 
     if (!disabled) {
       console.log("❌ User not found in database");
-      console.log("Available users in database:");
-
-      // Let's see what users exist (limit to 5 for safety)
-      const allUsers = await Disabled.find({})
-        .limit(5)
-        .select("_id name email");
-      console.log(
-        "Sample users:",
-        allUsers.map((u) => ({ id: u._id, name: u.name, email: u.email }))
-      );
-
       return res.status(404).json({
         message: "User not found",
         debug: {
           searchedUserId: userId,
           tokenPayload: req.user,
-          sampleUserIds: allUsers.map((u) => u._id.toString()),
         },
       });
     }
@@ -276,9 +284,8 @@ router.get("/", auth, async (req, res) => {
       ? disabled.documents.filter((doc) => doc.status === "verified").length
       : 0;
 
-    // Format the response to match your existing frontend expectations
+    // Format the response
     const profileData = {
-      // Basic Information
       id: disabled._id,
       name: disabled.name,
       email: disabled.email,
@@ -289,22 +296,16 @@ router.get("/", auth, async (req, res) => {
       needs: disabled.needs,
       education: disabled.education || "",
       occupation: disabled.occupation || "",
-      bio: disabled.bio || "", // <-- ADD THIS
-
-      // Profile Image
+      bio: disabled.bio || "",
       profileImage: disabled.profileImage
         ? {
             url: disabled.profileImage.url,
             publicId: disabled.profileImage.publicId,
           }
         : null,
-
-      // Verification Status
       isVerified: disabled.isVerified || false,
       verificationStatus: disabled.verificationStatus || "pending",
       profileCompletionPercentage: disabled.profileCompletionPercentage || 0,
-
-      // Documents
       documents: disabled.documents
         ? disabled.documents.map((doc) => ({
             _id: doc._id,
@@ -324,8 +325,6 @@ router.get("/", auth, async (req, res) => {
               : "",
           }))
         : [],
-
-      // Wishlist
       wishlist: wishlistItems.map((item) => ({
         _id: item._id,
         item: item.itemName,
@@ -350,8 +349,6 @@ router.get("/", auth, async (req, res) => {
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       })),
-
-      // Recent Activity
       recentActivity: disabled.recentActivity
         ? disabled.recentActivity.slice(0, 10).map((activity) => ({
             action: activity.action,
@@ -366,8 +363,6 @@ router.get("/", auth, async (req, res) => {
             timestamp: activity.date,
           }))
         : [],
-
-      // Statistics
       statistics: {
         totalWishlistItems,
         completedItems,
@@ -383,8 +378,6 @@ router.get("/", auth, async (req, res) => {
             })
           : "",
       },
-
-      // Timestamps
       createdAt: disabled.createdAt,
       updatedAt: disabled.updatedAt,
     };
@@ -415,32 +408,7 @@ router.get("/debug-token", auth, (req, res) => {
   });
 });
 
-// Test endpoint to check database connection
-router.get("/debug-db", auth, async (req, res) => {
-  try {
-    const userCount = await Disabled.countDocuments();
-    const sampleUsers = await Disabled.find({})
-      .limit(3)
-      .select("_id name email");
-
-    res.json({
-      message: "Database debug info",
-      totalUsers: userCount,
-      sampleUsers: sampleUsers.map((u) => ({
-        id: u._id.toString(),
-        name: u.name,
-        email: u.email,
-      })),
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Database error",
-      error: error.message,
-    });
-  }
-});
-
-// Update profile information (atomic update to avoid VersionError)
+// Update profile information
 router.put("/", auth, async (req, res) => {
   try {
     const {
@@ -457,7 +425,6 @@ router.put("/", auth, async (req, res) => {
     } = req.body;
     const userId = req.user.userId || req.user.id;
 
-    // Check if email is already taken by another user
     if (email) {
       const existingUser = await Disabled.findOne({
         email: email,
@@ -468,7 +435,6 @@ router.put("/", auth, async (req, res) => {
       }
     }
 
-    // Build update object dynamically
     const updateFields = {};
     if (name) updateFields.name = name;
     if (email) updateFields.email = email;
@@ -479,9 +445,8 @@ router.put("/", auth, async (req, res) => {
     if (needs) updateFields.needs = needs;
     if (education !== undefined) updateFields.education = education;
     if (occupation !== undefined) updateFields.occupation = occupation;
-    if (bio !== undefined) updateFields.bio = bio; // <-- NEW LINE
+    if (bio !== undefined) updateFields.bio = bio;
 
-    // Perform atomic update
     const disabled = await Disabled.findByIdAndUpdate(
       userId,
       { $set: updateFields },
@@ -492,7 +457,6 @@ router.put("/", auth, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Add activity atomically
     await Disabled.findByIdAndUpdate(userId, {
       $push: {
         recentActivity: {
@@ -522,7 +486,7 @@ router.put("/", auth, async (req, res) => {
 // Upload document
 router.post("/documents", [
   auth,
-  upload.single("file"), // Changed from 'document' to 'file' to match frontend
+  upload.single("file"),
   body("name").trim().notEmpty().withMessage("Document name is required")
 ], async (req, res) => {
   try {
@@ -562,7 +526,6 @@ router.post("/documents", [
     disabled.documents.push(newDocument);
     await disabled.save();
     
-    // Add activity if method exists
     if (disabled.addActivity) {
       await disabled.addActivity("Uploaded Document", `Uploaded ${newDocument.name}`);
     }

@@ -83,6 +83,10 @@ const Navbar = () => {
                 width: scrolled ? 60 : 65,
                 objectFit: 'contain',
                 opacity: scrolled ? 0.3 : 1,
+                height: scrolled ? 60 : 65, // ⬆ slightly taller normally
+                width: scrolled ? 60 : 65,
+                objectFit: 'contain',
+                opacity: scrolled ? 0.3 : 1, // ⬅ becomes lighter when scrolled
                 transition: 'all 0.3s ease',
               }}
             />
