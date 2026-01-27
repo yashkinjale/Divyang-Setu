@@ -55,11 +55,14 @@ const Navbar = () => {
       color="default"
       elevation={0}
       sx={{
-        bgcolor: scrolled ? 'rgba(255, 255, 255, 0.8)' : 'white',
-        backdropFilter: scrolled ? 'blur(10px)' : 'none',
-        borderBottom: '1px solid #e0e0e0',
-        transition: 'background-color 0.3s ease, backdrop-filter 0.3s ease',
-        boxShadow: scrolled ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+        bgcolor: scrolled ? 'rgba(255, 255, 255, 0.7)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(15px)' : 'none',
+        borderBottom: scrolled ? '1px solid rgba(0, 0, 0, 0.05)' : 'none',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: scrolled ? '0 4px 20px rgba(0,0,0,0.05)' : 'none',
+        position: 'fixed',
+        top: 0,
+        zIndex: 1100,
       }}
     >
       <Container maxWidth="lg">
@@ -68,10 +71,12 @@ const Navbar = () => {
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 1,
+              gap: 1.5,
               cursor: 'pointer',
-              marginLeft: '-52px',
-              transition: 'all 0.3s ease',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.02)',
+              },
             }}
             onClick={() => navigate('/')}
           >
@@ -79,15 +84,11 @@ const Navbar = () => {
               src={require('./Disabled.jpg')}
               alt="DivyangSetu Logo"
               style={{
-                height: scrolled ? 60 : 65,
-                width: scrolled ? 60 : 65,
-                objectFit: 'contain',
-                opacity: scrolled ? 0.3 : 1,
-                height: scrolled ? 60 : 65, // ⬆ slightly taller normally
-                width: scrolled ? 60 : 65,
-                objectFit: 'contain',
-                opacity: scrolled ? 0.3 : 1, // ⬅ becomes lighter when scrolled
-                transition: 'all 0.3s ease',
+                height: 50,
+                width: 50,
+                borderRadius: '50%',
+                objectFit: 'cover',
+                boxShadow: scrolled ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
               }}
             />
             <Typography
@@ -97,66 +98,55 @@ const Navbar = () => {
                 background: 'linear-gradient(45deg, #4285F4 0%, #34A853 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                fontWeight: 'bold',
+                fontWeight: 800,
+                letterSpacing: '-0.5px',
                 display: { xs: 'none', md: 'block' },
-                fontSize: scrolled ? '1.4rem' : '1.6rem',
-                transition: 'all 0.3s ease',
+                fontSize: scrolled ? '1.3rem' : '1.5rem',
               }}
             >
               DivyangSetu
             </Typography>
           </Box>
 
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 3, marginRight: '-36px' }}>
-            <Button
-              variant="text"
-              sx={{
-                color: 'text.secondary',
-                textTransform: 'none',
-                fontSize: '14px',
-                fontWeight: 700,
-                '&:hover': {
-                  color: 'primary.main',
-                  backgroundColor: 'rgba(66, 133, 244, 0.1)',
-                },
-              }}
-              onClick={() => navigate('/job-postings')}
-            >
-              Job Postings
-            </Button>
-            <Button
-              variant="text"
-              sx={{
-                color: 'text.secondary',
-                textTransform: 'none',
-                fontSize: '14px',
-                fontWeight: 700,
-                '&:hover': {
-                  color: 'primary.main',
-                  backgroundColor: 'rgba(66, 133, 244, 0.1)',
-                },
-              }}
-              onClick={() => navigate('/about')}
-            >
-              About Us
-            </Button>
-            <Button
-              variant="text"
-              sx={{
-                color: 'text.secondary',
-                textTransform: 'none',
-                fontSize: '14px',
-                fontWeight: 700,
-                '&:hover': {
-                  color: 'primary.main',
-                  backgroundColor: 'rgba(66, 133, 244, 0.1)',
-                },
-              }}
-              onClick={() => navigate('/contact')}
-            >
-              Contact Us
-            </Button>
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+            {[
+              { label: 'Job Postings', path: '/job-postings' },
+              { label: 'About Us', path: '/about' },
+              { label: 'Contact Us', path: '/contact' }
+            ].map((link) => (
+              <Button
+                key={link.label}
+                variant="text"
+                sx={{
+                  color: scrolled ? '#1a1a1a' : 'white',
+                  textTransform: 'none',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  px: 2,
+                  position: 'relative',
+                  '&:hover': {
+                    color: 'primary.main',
+                    backgroundColor: 'transparent',
+                    '&::after': {
+                      width: '70%',
+                    }
+                  },
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: 6,
+                    left: '15%',
+                    width: '0%',
+                    height: '2px',
+                    bgcolor: 'primary.main',
+                    transition: 'width 0.3s ease',
+                  }
+                }}
+                onClick={() => navigate(link.path)}
+              >
+                {link.label}
+              </Button>
+            ))}
           </Box>
         </Toolbar>
       </Container>
@@ -164,55 +154,66 @@ const Navbar = () => {
   );
 };
 
-const TestimonialCard = ({ name, role, content, initial }) => {
-  const getAvatarColor = (name) => {
-    const colors = ['#4285F4', '#4caf50', '#ff6b9d', '#9c27b0', '#f9f9f9'];
-    return colors[name.length % colors.length];
-  };
-
+const TestimonialCard = ({ name, role, content, image, reverse = false }) => {
   return (
     <Card
       sx={{
-        height: '100%',
-        p: 3,
-        borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid #f0f0f0',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'translateY(-6px)',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
-          borderColor: 'transparent',
+        display: 'flex',
+        flexDirection: {
+          xs: 'column',
+          md: reverse ? 'row-reverse' : 'row',
         },
+        borderRadius: '22px',
+        overflow: 'hidden',
+        boxShadow: '0 18px 45px rgba(0,0,0,0.12)',
+        border: '1px solid rgba(0,0,0,0.06)',
       }}
     >
-      <CardContent sx={{ p: 0 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Avatar
-            sx={{
-              bgcolor: getAvatarColor(name),
-              mr: 2,
-              width: 40,
-              height: 40,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'scale(1.2)',
-              },
-            }}
-          >
-            {initial}
-          </Avatar>
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {name}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {role}
-            </Typography>
-          </Box>
-        </Box>
-        <Typography variant="body2" sx={{ lineHeight: 1.6, color: 'text.secondary' }}>
-          "{content}"
+      <Box
+        component="img"
+        src={image}
+        alt={name}
+        sx={{
+          width: { xs: '100%', md: '50%' },
+          height: { xs: 260, md: 320 },
+          objectFit: 'cover',
+        }}
+      />
+      <CardContent
+        sx={{
+          flex: 1,
+          p: { xs: 3.5, md: 5 },
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 800, mb: 1.5, color: '#1a1a1a', letterSpacing: '-0.8px' }}
+        >
+          {name}
+        </Typography>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            mb: 2.5,
+            color: 'text.secondary',
+            fontWeight: 600,
+            letterSpacing: '0.02em',
+          }}
+        >
+          {role}
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{
+            lineHeight: 1.85,
+            color: '#444',
+            fontSize: '1rem',
+          }}
+        >
+          {content}
         </Typography>
       </CardContent>
     </Card>
@@ -231,9 +232,9 @@ const LandingPage = () => {
     'https://images.unsplash.com/photo-1584515933487-779824d29309?w=1920&q=80',
     'https://images.unsplash.com/photo-1576765608866-5b51046452be?w=1920&q=80',
     'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=1920&q=80',
-    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR4noUzqkrIfnQXoMKU8wi0m2Hjk2z1dEZThw&s',
-    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLrsdXA6gQMrmmjkC6mjanD5yT6F0wQI6D0g&s',
-    'https://images.unsplash.com/photo-1609619385002-f40a96e737d8?w=1920&q=80'
+    'https://media.istockphoto.com/id/1533346592/photo/a-disabled-person-in-a-wheelchair-with-a-friend-on-summer-vacation-having-fun-laughing-a-lot.jpg?s=612x612&w=0&k=20&c=q1hbzmdGjnWuivgSjxhPX0XhL3hp7k48X0CSQpefUak=',
+    'https://d1nslcd7m2225b.cloudfront.net/Pictures/1024x536/4/9/1/1363491_criptales_589981.jpg',
+    'https://t4.ftcdn.net/jpg/05/11/10/13/360_F_511101375_7vjfaOLPn3KOt754vFGNFlcXZDdrzigX.jpg'
   ];
 
   const services = [
@@ -241,40 +242,40 @@ const LandingPage = () => {
       icon: AccountBalanceIcon,
       title: "Government Schemes",
       description: "Access information and apply for various government schemes and benefits.",
-      gradientBg: 'linear-gradient(135deg, #d1a3e0, #b56fc9)',
-      gradientColor: 'linear-gradient(135deg, #8E24AA, #9C27B0)',
+      gradientBg: 'rgba(0, 0, 0, 0.02)', // Off-white/Transparent grey
+      iconColor: '#9C27B0', // Purple
       redirect: '/disabled/login',
     },
     {
       icon: EmojiObjectsIcon,
       title: "Job Recommendation",
       description: "Get personalized job recommendations based on your skills and preferences.",
-      gradientBg: 'linear-gradient(135deg, #f497b7, #ec407a)',
-      gradientColor: 'linear-gradient(135deg, #EC407A, #FF4081)',
+      gradientBg: 'rgba(0, 0, 0, 0.02)',
+      iconColor: '#FF4081', // Pink
       redirect: '/disabled/login',
     },
     {
       icon: WorkIcon,
       title: "Job Postings",
       description: "Browse and apply for jobs from inclusive employers looking for diverse talent.",
-      gradientBg: 'linear-gradient(135deg, #90caf9, #42a5f5)',
-      gradientColor: 'linear-gradient(135deg, #1976D2, #42A5F5)',
+      gradientBg: 'rgba(0, 0, 0, 0.02)',
+      iconColor: '#1976D2', // Blue
       redirect: '/donor/login',
     },
     {
       icon: PeopleIcon,
       title: "Community Forum",
       description: "Connect with peers, share experiences, and find support in a safe space.",
-      gradientBg: 'linear-gradient(135deg, #a5d6a7, #4caf50)',
-      gradientColor: 'linear-gradient(135deg, #388E3C, #4CAF50)',
+      gradientBg: 'rgba(0, 0, 0, 0.02)',
+      iconColor: '#388E3C', // Green
       redirect: '/disabled/login',
     },
     {
       icon: VolunteerActivismIcon,
       title: "Donate",
       description: "Make a meaningful contribution and support differently-abled individuals in need.",
-      gradientBg: 'linear-gradient(135deg, #d4a5a5, #8b0000)',
-      gradientColor: 'linear-gradient(135deg, #8b0000, #a52a2a)',
+      gradientBg: 'rgba(0, 0, 0, 0.02)',
+      iconColor: '#D32F2F', // Red
       redirect: '/donor/register',
     },
   ];
@@ -316,7 +317,7 @@ const LandingPage = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     const query = searchQuery.toLowerCase().trim();
-    
+
     if (!query) return;
 
     // Search mappings for different keywords
@@ -328,13 +329,13 @@ const LandingPage = () => {
       'divyang': '/disabled/login',
       'differently abled': '/disabled/login',
       'specially abled': '/disabled/login',
-      
+
       // Pages
       'about': '/about',
       'about us': '/about',
       'contact': '/contact',
       'contact us': '/contact',
-      
+
       // Services
       'job': '/job-postings',
       'jobs': '/job-postings',
@@ -343,23 +344,23 @@ const LandingPage = () => {
       'employment': '/job-postings',
       'career': '/job-postings',
       'work': '/job-postings',
-      
+
       'donate': '/donor/register',
       'donation': '/donor/register',
       'donor': '/donor/register',
       'contribute': '/donor/register',
       'charity': '/donor/register',
-      
+
       'scheme': '/disabled/login',
       'schemes': '/disabled/login',
       'government scheme': '/disabled/login',
       'government schemes': '/disabled/login',
       'benefits': '/disabled/login',
-      
+
       'community': '/disabled/login',
       'forum': '/disabled/login',
       'community forum': '/disabled/login',
-      
+
       'recommendation': '/disabled/login',
       'job recommendation': '/disabled/login',
     };
@@ -392,7 +393,7 @@ const LandingPage = () => {
       <Box
         sx={{
           position: 'relative',
-          minHeight: 'calc(100vh - 64px)',
+          minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -427,7 +428,7 @@ const LandingPage = () => {
             left: 0,
             width: '100%',
             height: '100%',
-            background: 'linear-gradient(135deg, rgba(25, 47, 89, 0.88) 0%, rgba(66, 133, 244, 0.85) 100%)',
+            background: 'linear-gradient(135deg, rgba(25, 47, 89, 0.6) 0%, rgba(66, 133, 244, 0.5) 100%)',
             zIndex: 1,
           }}
         />
@@ -435,29 +436,7 @@ const LandingPage = () => {
         {/* Content */}
         <Container maxWidth="md" sx={{ position: 'relative', zIndex: 2 }}>
           <Box textAlign="center">
-            {/* Logo at Top */}
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                mb: 4,
-              }}
-            >
-              <img
-                src={require('./Disability2.png')}
-                alt="DivyangSetu Logo"
-                style={{
-                  height: 120,
-                  width: 120,
-                  objectFit: 'contain',
-                  animation: 'fadeIn 1s ease-out',
-                  borderRadius: '50%',
-                  background: 'white',
-                  padding: '10px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                }}
-              />
-            </Box>
+
 
             {/* Title */}
             <Typography
@@ -507,19 +486,22 @@ const LandingPage = () => {
               Bridging the gap between donors and differently-abled individuals
             </Typography>
 
-            {/* ⭐ UPDATED: Search Bar with working functionality */}
+            {/* ⭐ UPDATED: Professional Search Bar */}
             <Box
               component="form"
               onSubmit={handleSearch}
               sx={{
                 display: 'flex',
-                maxWidth: '700px',
+                maxWidth: '750px',
                 mx: 'auto',
                 gap: 0,
-                boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
-                borderRadius: '8px',
+                boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
+                borderRadius: '50px', // Rounder for modern look
                 overflow: 'hidden',
                 animation: 'fadeInUp 1s ease-out 0.6s both',
+                backdropFilter: 'blur(10px)',
+                background: 'rgba(255, 255, 255, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
               }}
             >
               <TextField
@@ -528,22 +510,22 @@ const LandingPage = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for services, schemes, jobs..."
                 sx={{
-                  bgcolor: 'white',
+                  bgcolor: 'rgba(255, 255, 255, 0.95)',
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px 0 0 8px',
+                    borderRadius: '50px 0 0 50px',
                     '& fieldset': {
                       border: 'none',
                     },
                     '& input': {
-                      padding: '18px 20px',
-                      fontSize: '16px',
+                      padding: '20px 30px',
+                      fontSize: '17px',
                     },
                   },
                 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon sx={{ color: '#666', fontSize: 28, ml: 1 }} />
+                      <SearchIcon sx={{ color: '#4285F4', fontSize: 26, ml: 2 }} />
                     </InputAdornment>
                   ),
                 }}
@@ -552,16 +534,16 @@ const LandingPage = () => {
                 type="submit"
                 variant="contained"
                 sx={{
-                  minWidth: 140,
-                  borderRadius: '0 8px 8px 0',
-                  bgcolor: '#d32f2f',
+                  minWidth: 160,
+                  borderRadius: '0 50px 50px 0',
+                  bgcolor: '#4285F4',
                   color: 'white',
                   textTransform: 'none',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontSize: '18px',
-                  px: 4,
+                  px: 5,
                   '&:hover': {
-                    bgcolor: '#b71c1c',
+                    bgcolor: '#3367d6',
                   },
                 }}
               >
@@ -604,113 +586,213 @@ const LandingPage = () => {
         </Box>
       </Box>
 
-      {/* User Type Selection */}
-      <Container maxWidth="lg" sx={{ py: 12 }}>
-        <Grid container spacing={6} justifyContent="center">
+      {/* User Type Selection with Dancing Cards */}
+      <Container
+        maxWidth="lg"
+        sx={{
+          py: 13,
+          mt: 5, // extra gap below the hero section
+        }}
+      >
+        <Grid
+          container
+          spacing={6}
+          justifyContent="center"
+          alignItems="stretch"
+        >
           {[
             {
               emoji: '👩‍🦽',
               title: 'I am Differently-Abled',
-              desc: 'Register to connect with donors and receive the support you need',
+              desc: 'Empower yourself by connecting with a community of donors and inclusive employers built specifically for you.',
               register: '/disabled/register',
               login: '/disabled/login',
+              delay: '0s',
             },
             {
-              emoji: '🤲💚',
+              emoji: '🤝',
               title: 'I am a Donor',
-              desc: 'Support individuals by providing aid and making a difference.',
+              desc: 'Make a direct impact. Your support provides essential aid and transforms lives in the differently-abled community.',
               register: '/donor/register',
               login: '/donor/login',
+              delay: '0.2s',
             },
           ].map((user, idx) => (
-            <Grid item xs={12} md={5} key={idx}>
-              <Card
+            <Grid
+              item
+              xs={12}
+              sm={10}
+              md={6}
+              lg={5}
+              key={idx}
+              sx={{
+                display: "flex",
+                justifyContent: idx === 0 ? "flex-end" : "flex-start",
+              }}
+            >
+              <Box
                 sx={{
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                  height: '100%',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  background: 'linear-gradient(135deg, #fdfdfd, #f5f5f5)',
-                  '&:hover': {
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                    transform: 'translateY(-5px)',
-                    background: 'linear-gradient(135deg, #f9f9f9, #eeeeee)',
+                  animation: `float 6s ease-in-out infinite`,
+                  animationDelay: user.delay,
+                  '@keyframes float': {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-20px)' },
                   },
+                  height: '100%',
+                  maxWidth: 500, // a bit wider
                 }}
               >
-                <CardContent sx={{ textAlign: 'center', p: 5 }}>
-                  <Box sx={{ fontSize: '72px', mb: 3 }}>{user.emoji}</Box>
-                  <Typography
-                    variant="h5"
-                    component="h2"
-                    gutterBottom
+                <Card
+                  sx={{
+                    borderRadius: '24px',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+                    height: '100%',
+                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'pointer',
+                    background: 'white',
+                    border: '1px solid rgba(0,0,0,0.03)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&:hover': {
+                      boxShadow: '0 30px 60px rgba(0,0,0,0.12)',
+                      transform: 'scale(1.02)',
+                      borderColor: 'primary.light',
+                      '& .card-gradient': {
+                        opacity: 0.05,
+                      }
+                    },
+                  }}
+                >
+                  {/* Decorative background gradient on hover */}
+                  <Box
+                    className="card-gradient"
                     sx={{
-                      fontWeight: 600,
-                      mb: 2,
-                      color: '#333',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(135deg, #4285F4 0%, #34A853 100%)',
+                      opacity: 0,
+                      transition: 'opacity 0.5s ease',
+                      pointerEvents: 'none',
+                    }}
+                  />
+
+                  <CardContent
+                    sx={{
+                      textAlign: 'center',
+                      p: 2.5, // less vertical padding
+                      position: 'relative',
+                      zIndex: 1,
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
                     }}
                   >
-                    {user.title}
-                  </Typography>
-                  <Typography paragraph sx={{ fontSize: '15px', mb: 4, lineHeight: 1.6, color: '#555' }}>
-                    {user.desc}
-                  </Typography>
-                  <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
-                    <Button
-                      variant="contained"
-                      size="large"
-                      onClick={() => navigate(user.register)}
+                    <Box
                       sx={{
-                        borderRadius: '6px',
-                        px: 4,
-                        py: 1.5,
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        fontSize: '15px',
-                        boxShadow: 'none',
-                        background: '#4285F4',
-                        color: 'white',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-                          transform: 'translateY(-2px)',
-                          background: '#1976d2',
-                        },
+                        fontSize: '56px', // slightly smaller
+                        mb: 2.5, // less vertical space
+                        filter: 'drop-shadow(0 10px 10px rgba(0,0,0,0.1))',
+                        transition: 'transform 0.5s ease',
+                        '&:hover': { transform: 'rotate(10deg) scale(1.1)' }
                       }}
                     >
-                      Register
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="large"
-                      onClick={() => navigate(user.login)}
+                      {user.emoji}
+                    </Box>
+                    <Typography
+                      variant="h4"
+                      gutterBottom
                       sx={{
-                        borderRadius: '6px',
-                        px: 4,
-                        py: 1.5,
-                        textTransform: 'none',
-                        fontWeight: 600,
+                        fontWeight: 800,
+                        mb: 3,
+                        color: '#1a1a1a',
+                        letterSpacing: '-1px'
+                      }}
+                    >
+                      {user.title}
+                    </Typography>
+                    <Typography
+                      paragraph
+                      sx={{
                         fontSize: '15px',
-                        borderWidth: '2px',
-                        borderColor: '#ccc',
-                        color: '#333',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
+                        mb: 3.5,
+                        lineHeight: 1.5,
+                        color: 'text.secondary',
+                        maxWidth: '100%',
+                        mx: 'auto'
+                      }}
+                    >
+                      {user.desc}
+                    </Typography>
+                    <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <Button
+                        variant="contained"
+                        size="large"
+                        onClick={() => navigate(user.register)}
+                        sx={{
+                          borderRadius: '12px',
+                          py: 2,
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          fontSize: '16px',
+                          background: 'linear-gradient(45deg, #63a4ff 0%, #1976d2 100%)', // lighter blue
+                          boxShadow: '0 3px 10px rgba(25, 118, 210, 0.25)',
+                          '&:hover': {
+                            background: 'linear-gradient(45deg, #5393ff 0%, #1565c0 100%)',
+                            boxShadow: '0 6px 18px rgba(25, 118, 210, 0.35)',
+                            transform: 'translateY(-2px)',
+                          },
+                        }}
+                      >
+                        Create an Account
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        onClick={() => navigate(user.login)}
+                        sx={{
+                          borderRadius: '12px',
+                          py: 2,
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          fontSize: '16px',
                           borderWidth: '2px',
-                          backgroundColor: '#f0f0f0',
-                        },
-                      }}
-                    >
-                      Login
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
+                          borderColor: '#e0e0e0',
+                          color: '#444',
+                          '&:hover': {
+                            borderWidth: '2px',
+                            borderColor: '#4285F4',
+                            backgroundColor: 'rgba(66, 133, 244, 0.04)',
+                            color: '#4285F4',
+                          },
+                        }}
+                      >
+                        Sign In
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
             </Grid>
           ))}
         </Grid>
       </Container>
+
+      {/* Blue Divider */}
+      <Box
+        sx={{
+          width: '80px',
+          height: '5px',
+          bgcolor: 'primary.main',
+          borderRadius: '10px',
+          mx: 'auto',
+          mt: 4, // Reduced gap from top boxes
+          mb: 6,
+          boxShadow: '0 2px 10px rgba(66, 133, 244, 0.3)',
+        }}
+      />
 
       {/* Services Section with Hero Slider */}
       <Container maxWidth="xl" sx={{ py: 10, position: 'relative' }}>
@@ -802,13 +884,17 @@ const LandingPage = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    minHeight: '320px',
+                    minHeight: '280px', // More compact height
                     transition: 'all 0.3s ease',
                     cursor: 'pointer',
-                    background: service.gradientBg,
+                    background: service.gradientBg, // Off-white color
+                    border: '1px solid rgba(0,0,0,0.08)', // Defined border
+                    p: 2.5, // Reduced padding
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)', // Soft shadow
                     '&:hover': {
-                      transform: 'translateY(-6px) scale(1.03)',
-                      boxShadow: '0 16px 24px rgba(0,0,0,0.18)',
+                      transform: 'translateY(-8px) scale(1.02)',
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
+                      borderColor: service.iconColor,
                     },
                   }}
                 >
@@ -816,13 +902,11 @@ const LandingPage = () => {
                     <Box>
                       <service.icon
                         sx={{
-                          fontSize: 48,
-                          mb: 2,
-                          background: service.gradientColor,
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          transition: 'transform 0.3s ease',
-                          '&:hover': { transform: 'rotate(12deg) scale(1.1)' },
+                          fontSize: 56, // Slightly smaller icon
+                          mb: 1.5,
+                          color: service.iconColor, // Dynamic color
+                          transition: 'all 0.4s ease',
+                          '&:hover': { transform: 'rotate(5deg) scale(1.1)' },
                         }}
                       />
                       <Typography
@@ -830,38 +914,39 @@ const LandingPage = () => {
                         gutterBottom
                         component="div"
                         sx={{
-                          fontWeight: 600,
+                          fontWeight: 700,
                           mb: 2,
-                          background: service.gradientColor,
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
+                          color: '#333',
                         }}
                       >
                         {service.title}
                       </Typography>
                       <Typography
                         variant="body2"
-                        sx={{ mb: 3, opacity: 0.9, lineHeight: 1.6, color: '#333' }}
+                        sx={{ mb: 3, opacity: 0.8, lineHeight: 1.6, color: '#555' }}
                       >
                         {service.description}
                       </Typography>
                     </Box>
                     <Button
-                      variant="contained"
-                      disableElevation
+                      variant="outlined"
                       sx={{
                         mt: 2,
-                        borderRadius: '6px',
-                        background: service.gradientColor,
-                        color: 'white',
+                        borderRadius: '8px',
+                        borderColor: service.iconColor,
+                        color: service.iconColor,
                         textTransform: 'none',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         px: 3,
                         transition: 'all 0.3s ease',
-                        pointerEvents: 'none',
+                        '&:hover': {
+                          bgcolor: service.iconColor,
+                          color: 'white',
+                          borderColor: service.iconColor,
+                        },
                       }}
                     >
-                      Available Now
+                      Explore Service
                     </Button>
                   </CardContent>
                 </Card>
@@ -899,6 +984,20 @@ const LandingPage = () => {
         </Box>
       </Container>
 
+      {/* Section Divider between Services and Success Stories */}
+      <Box
+        sx={{
+          width: '80px',
+          height: '5px',
+          bgcolor: 'primary.main',
+          borderRadius: '10px',
+          mx: 'auto',
+          mt: 4,
+          mb: 6,
+          boxShadow: '0 2px 10px rgba(66, 133, 244, 0.3)',
+        }}
+      />
+
       {/* Testimonials */}
       <Box sx={{ bgcolor: 'white', py: 10 }}>
         <Container maxWidth="lg">
@@ -908,29 +1007,46 @@ const LandingPage = () => {
           <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 8 }}>
             Hear from our community members
           </Typography>
-          <Grid container spacing={4} justifyContent="center">
-            <Grid item xs={12} md={4}>
+          <Grid container spacing={5} direction="column">
+            {/* Story 1: Image left, info right */}
+            <Grid item xs={12}>
               <TestimonialCard
-                name="Priya Sharma"
-                role="Recipient"
-                content="DivyangSetu helped me get the wheelchair I needed. The platform made it easy to connect with kind donors who understood my needs."
-                initial="P"
+                name="Ananya Desai"
+                role="Engineering Student • Recipient"
+                content="With support from DivyangSetu, I received a lightweight laptop with accessibility tools. Now I can join online lectures, submit projects on time, and study independently without relying on my family every day."
+                image="https://media.istockphoto.com/id/1319190867/photo/asian-indian-beautiful-woman-with-disability-using-wheelchair-exploring-downtown-district-in.jpg?s=612x612&w=0&k=20&c=F4APAddtdzQYzClJ4u1mOYd6ncqNdV4mVoYm9bPIbb0="
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+
+            {/* Story 2: Info left, image right */}
+            <Grid item xs={12}>
               <TestimonialCard
-                name="Rajesh Patel"
-                role="Donor"
-                content="I'm proud to be part of this community. The transparent and direct connection with recipients make the donation process meaningful."
-                initial="R"
+                name="Rahul Menon"
+                role="Young Professional • Recipient"
+                content="An adaptive workstation funded through this platform helped me continue my first job after a spinal injury. The customized setup means I can focus on my work instead of struggling with basic tasks."
+                image="https://thumbs.dreamstime.com/b/indian-bearded-disabled-handicapped-businessman-sitting-working-laptop-computer-wheelchair-asian-male-female-288447140.jpg"
+                reverse
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+
+            {/* Story 3: Image left, info right */}
+            <Grid item xs={12}>
               <TestimonialCard
-                name="Rudraraj Mali"
-                role="Recipient"
-                content="Through this platform, I received funding for my prosthetic leg, which has been life-changing. Thank you DivyangSetu!"
-                initial="R"
+                name="Meera Kulkarni"
+                role="Home Entrepreneur • Recipient"
+                content="Thanks to the assistive devices and small equipment I received, I was able to start an online craft store from home. DivyangSetu turned my idea into a real source of income for my family."
+                image="https://t3.ftcdn.net/jpg/07/40/45/56/360_F_740455685_cCQubv0OcWYzPMotsfsjxTrZN3YFbae8.jpg"
+              />
+            </Grid>
+
+            {/* Story 4: Info left, image right */}
+            <Grid item xs={12}>
+              <TestimonialCard
+                name="Sahil Verma"
+                role="College Graduate • Recipient"
+                content="Screen‑reader software, keyboard guards, and a scholarship from DivyangSetu helped me complete my degree on time. The right tools made my campus accessible and opened the door to my first full‑time job."
+                image="https://www.shutterstock.com/image-photo/new-delhi-indiasep-1-2019-260nw-2038984052.jpg"
+                reverse
               />
             </Grid>
           </Grid>
@@ -1043,30 +1159,30 @@ const LandingPage = () => {
               <Link href="/disabled/register" color="text.secondary" display="block" sx={{ mb: 1.5, textDecoration: 'none', fontSize: '14px', '&:hover': { color: 'primary.main' } }}>
                 Get Help
               </Link>
-              <Link 
-                onClick={() => navigate('/about')} 
-                color="text.secondary" 
-                display="block" 
-                sx={{ 
-                  mb: 1.5, 
-                  textDecoration: 'none', 
-                  fontSize: '14px', 
+              <Link
+                onClick={() => navigate('/about')}
+                color="text.secondary"
+                display="block"
+                sx={{
+                  mb: 1.5,
+                  textDecoration: 'none',
+                  fontSize: '14px',
                   cursor: 'pointer',
-                  '&:hover': { color: 'primary.main' } 
+                  '&:hover': { color: 'primary.main' }
                 }}
               >
                 About Us
               </Link>
-              <Link 
-                onClick={() => navigate('/contact')} 
-                color="text.secondary" 
-                display="block" 
-                sx={{ 
-                  mb: 1.5, 
-                  textDecoration: 'none', 
-                  fontSize: '14px', 
+              <Link
+                onClick={() => navigate('/contact')}
+                color="text.secondary"
+                display="block"
+                sx={{
+                  mb: 1.5,
+                  textDecoration: 'none',
+                  fontSize: '14px',
                   cursor: 'pointer',
-                  '&:hover': { color: 'primary.main' } 
+                  '&:hover': { color: 'primary.main' }
                 }}
               >
                 Contact Us
