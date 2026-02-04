@@ -11,10 +11,13 @@ const Disabled = require("../models/Disabled");
 const auth = require("../middleware/auth");
 
 // 📂 Create upload folder if missing
-const uploadDir = path.join(__dirname, "../uploads/pwd");
+const os = require("os");
+
+// 📂 Create upload folder if missing (Use system temp dir for Vercel compatibility)
+const uploadDir = path.join(os.tmpdir(), "pwd-uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
-  console.log("Created uploads/pwd folder");
+  console.log("Created temp uploads folder:", uploadDir);
 }
 
 // ⚙️ Setup multer for uploads
