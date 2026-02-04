@@ -281,7 +281,7 @@ const isPWDCertificate = (text) => {
 const performOCR = async (imagePath) => {
   try {
     console.log("🔍 Starting OCR processing...");
-    
+
     // Verify file exists
     if (!fs.existsSync(imagePath)) {
       throw new Error("Image file not found");
@@ -296,7 +296,7 @@ const performOCR = async (imagePath) => {
       console.error("❌ Image metadata error:", error);
       throw new Error("Unable to read image file. Please ensure it's a valid image format.");
     }
-    
+
     // Try multiple preprocessing strategies for better results
     const strategies = [
       // Strategy 1: Standard preprocessing (greyscale + normalize)
@@ -308,7 +308,7 @@ const performOCR = async (imagePath) => {
           .toFile(processedPath);
         return processedPath;
       },
-      
+
       // Strategy 2: High contrast
       async () => {
         const processedPath = imagePath.replace(/\.[^.]+$/, '_processed_1.png');
@@ -319,7 +319,7 @@ const performOCR = async (imagePath) => {
           .toFile(processedPath);
         return processedPath;
       },
-      
+
       // Strategy 3: Threshold (binary) - good for clear text
       async () => {
         const processedPath = imagePath.replace(/\.[^.]+$/, '_processed_2.png');
@@ -331,16 +331,16 @@ const performOCR = async (imagePath) => {
         return processedPath;
       },
     ];
-    
+
     let bestResult = { text: "", confidence: 0 };
-    
+
     // Try each preprocessing strategy
     for (let i = 0; i < strategies.length; i++) {
       let processedPath = null;
       try {
         processedPath = await strategies[i]();
         console.log(`📸 Trying preprocessing strategy ${i + 1}...`);
-        
+
         // Perform OCR with Tesseract
         const { data: { text, confidence } } = await Tesseract.recognize(
           processedPath,
@@ -351,9 +351,12 @@ const performOCR = async (imagePath) => {
                 console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
               }
             },
+            // 🌐 Use CDN for WASM/Core to avoid missing file errors on Vercel
+            corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.0.0/tesseract-core.wasm.js',
+            workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/worker.min.js',
           }
         );
-        
+
         // Clean up processed image
         if (processedPath && fs.existsSync(processedPath)) {
           try {
@@ -362,7 +365,7 @@ const performOCR = async (imagePath) => {
             console.warn(`⚠️ Could not delete ${processedPath}:`, err.message);
           }
         }
-        
+
         // Keep the best result
         if (confidence > bestResult.confidence && text.trim().length > bestResult.text.trim().length) {
           bestResult = { text, confidence };
@@ -374,14 +377,14 @@ const performOCR = async (imagePath) => {
         if (processedPath && fs.existsSync(processedPath)) {
           try {
             fs.unlinkSync(processedPath);
-          } catch {}
+          } catch { }
         }
       }
     }
-    
+
     console.log(`✅ OCR completed. Best confidence: ${Math.round(bestResult.confidence)}%`);
     console.log(`📄 Extracted text length: ${bestResult.text.length} characters`);
-    
+
     return bestResult;
   } catch (error) {
     console.error("❌ OCR Error:", error);
@@ -393,7 +396,7 @@ const performOCR = async (imagePath) => {
 // 🧠 POST route: Verify PWD Certificate with OCR
 router.post("/verify", auth, upload.single("file"), async (req, res) => {
   let filePath = null;
-  
+
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file uploaded" });
@@ -411,8 +414,8 @@ router.post("/verify", auth, upload.single("file"), async (req, res) => {
     if (req.file.mimetype === "application/pdf") {
       try {
         fs.unlinkSync(filePath);
-      } catch {}
-      
+      } catch { }
+
       return res.status(400).json({
         success: false,
         message: "PDF files are not supported yet. Please upload a clear image (JPG/PNG) of your certificate.",
@@ -437,13 +440,13 @@ router.post("/verify", auth, upload.single("file"), async (req, res) => {
     if (hasLittleText || hasLowConfidence) {
       console.log("⚠️ Low OCR quality detected. Sending for manual review...");
       console.log(`   Confidence: ${Math.round(confidence)}%, Text length: ${text?.length || 0}`);
-      
+
       // Still try basic keyword check to see if it might be a certificate
       let mightBeCertificate = false;
       if (text && text.trim().length > 0) {
         const textLower = text.toLowerCase();
         const basicKeywords = [
-          "certificate", "disability", "government", "india", "ministry", 
+          "certificate", "disability", "government", "india", "ministry",
           "pwd", "hospital", "medical", "authority"
         ];
         const foundKeywords = basicKeywords.filter(kw => textLower.includes(kw));
@@ -453,7 +456,7 @@ router.post("/verify", auth, upload.single("file"), async (req, res) => {
       // Clean up uploaded file
       try {
         fs.unlinkSync(filePath);
-      } catch {}
+      } catch { }
 
       // Update user status to pending manual review
       try {
@@ -523,12 +526,12 @@ router.post("/verify", auth, upload.single("file"), async (req, res) => {
     // Clean up uploaded file
     try {
       fs.unlinkSync(filePath);
-    } catch {}
+    } catch { }
 
     // If validation fails but we have some certificate-like content, send for manual review
     // Only reject if it's clearly not a certificate (very low score, no keywords at all)
     if (!validation.isValid) {
-      const hasSomeCertificateIndicators = 
+      const hasSomeCertificateIndicators =
         validation.score >= 3 || // At least 3/8 indicators
         extractedData.hasGovernmentKeywords ||
         extractedData.hasDisabilityKeywords ||
@@ -537,7 +540,7 @@ router.post("/verify", auth, upload.single("file"), async (req, res) => {
       if (hasSomeCertificateIndicators) {
         // Send for manual review instead of rejecting
         console.log("⚠️ Validation failed but has certificate indicators. Sending for manual review...");
-        
+
         try {
           await Disabled.findByIdAndUpdate(
             userId,
@@ -603,7 +606,7 @@ router.post("/verify", auth, upload.single("file"), async (req, res) => {
 
     // Certificate is valid - approve and verify user
     console.log("✅ Certificate validated successfully!");
-    
+
     try {
       await Disabled.findByIdAndUpdate(
         userId,
@@ -665,11 +668,11 @@ router.post("/verify", auth, upload.single("file"), async (req, res) => {
     if (filePath) {
       try {
         fs.unlinkSync(filePath);
-      } catch {}
+      } catch { }
     }
 
     console.error("❌ Verification Error:", error);
-    
+
     // On any error, try to send for manual review instead of rejecting
     const userId = req.user?.userId || req.user?.id;
     if (userId) {
@@ -703,9 +706,9 @@ router.post("/verify", auth, upload.single("file"), async (req, res) => {
         console.warn("⚠️ Could not update verification status:", e.message);
       }
     }
-    
+
     const errorMessage = error.message || "Server error during verification";
-    
+
     // Return success with manual review status instead of error
     return res.json({
       success: true,
