@@ -33,6 +33,7 @@ import {
   Circle as CircleIcon,
   PersonAdd as PersonAddIcon,
   Logout as LogoutIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { messageApi, authHelpers } from '../utils/api';
 
@@ -59,12 +60,12 @@ const PWDMessagesPage = () => {
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
   const [sessionError, setSessionError] = useState(false);
-  
+
   // Search functionality
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  
+
   const messagesEndRef = useRef(null);
   const searchTimeoutRef = useRef(null);
   const currentUserRef = useRef(authHelpers.getCurrentUser());
@@ -83,7 +84,7 @@ const PWDMessagesPage = () => {
 
       // Validate MongoDB ObjectId format (exactly 24 hex characters)
       const isValidObjectId = /^[a-f\d]{24}$/i.test(currentUser.id);
-      
+
       console.log('Session Validation:', {
         userId: currentUser.id,
         idLength: currentUser.id.length,
@@ -118,21 +119,21 @@ const PWDMessagesPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log("Fetching conversations for user:", currentUser.id);
       const response = await messageApi.getConversations(currentUser.id);
-      
+
       console.log("Conversations response:", response.data);
-      
+
       if (response.data.success) {
         const convData = response.data.conversations || response.data.data || [];
-        
+
         if (convData.length === 0) {
           setConversations([]);
           setLoading(false);
           return;
         }
-        
+
         const transformedConversations = convData.map((conv) => ({
           id: conv.otherUser._id || conv.otherUser.id,
           userId: conv.otherUser._id || conv.otherUser.id,
@@ -149,7 +150,7 @@ const PWDMessagesPage = () => {
     } catch (err) {
       console.error("Error fetching conversations:", err);
       console.error("Error response:", err.response?.data);
-      
+
       // Check for authentication/session errors
       if (err.response?.status === 400 && err.response?.data?.message === "Invalid user IDs") {
         setSessionError(true);
@@ -198,11 +199,11 @@ const PWDMessagesPage = () => {
     try {
       setSearchLoading(true);
       console.log("Searching for donors with query:", query);
-      
+
       const response = await messageApi.searchDonors(query);
-      
+
       console.log("Search donors response:", response.data);
-      
+
       if (response.data.success) {
         const results = response.data.data || [];
         setSearchResults(results);
@@ -230,7 +231,7 @@ const PWDMessagesPage = () => {
       isDonor: true,
       email: donor.email,
     };
-    
+
     setSelectedChat(newConversation);
     setMessages([]);
     setSearchTerm("");
@@ -240,25 +241,25 @@ const PWDMessagesPage = () => {
   const fetchMessages = async (conversation) => {
     try {
       setError(null);
-      
+
       if (!conversation || !conversation.userId) {
         console.error("Invalid conversation object");
         return;
       }
-      
+
       console.log("Fetching messages between:", currentUser.id, "and", conversation.userId);
       const response = await messageApi.getMessages(currentUser.id, conversation.userId);
-      
+
       console.log("Messages response:", response.data);
-      
+
       if (response.data.success) {
         const messageData = response.data.data || [];
-        
+
         if (messageData.length === 0) {
           setMessages([]);
           return;
         }
-        
+
         const transformedMessages = messageData.map((msg) => ({
           id: msg._id,
           sender: (msg.senderId === currentUser.id) ? 'You' : conversation.name,
@@ -268,9 +269,10 @@ const PWDMessagesPage = () => {
           avatar: (msg.senderId === currentUser.id)
             ? currentUser.profileImage || 'https://mui.com/static/images/avatar/4.jpg'
             : conversation.avatar,
+          type: msg.type || 'text',
         }));
         setMessages(transformedMessages);
-        
+
         // Mark unread messages as read
         const unreadMessages = messageData.filter(
           (msg) => !msg.read && msg.senderId !== currentUser.id
@@ -281,7 +283,7 @@ const PWDMessagesPage = () => {
       }
     } catch (err) {
       console.error("Error fetching messages:", err);
-      
+
       if (err.response?.status === 404) {
         setMessages([]);
       } else if (err.response?.status !== 404) {
@@ -306,7 +308,7 @@ const PWDMessagesPage = () => {
 
       try {
         console.log("Sending message from:", currentUser.id, "to:", selectedChat.userId);
-        
+
         const response = await messageApi.sendMessage({
           senderId: currentUser.id,
           receiverId: selectedChat.userId,
@@ -388,11 +390,11 @@ const PWDMessagesPage = () => {
         variants={pageVariants}
         transition={pageTransition}
       >
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center', 
-          alignItems: 'center', 
+          justifyContent: 'center',
+          alignItems: 'center',
           minHeight: '100vh',
           bgcolor: '#f5f5f5',
           p: 3
@@ -445,13 +447,13 @@ const PWDMessagesPage = () => {
         </Alert>
       )}
 
-      <Box sx={{ 
-        height: 'calc(100vh - 100px)', 
+      <Box sx={{
+        height: 'calc(100vh - 100px)',
         display: 'flex',
         backgroundColor: '#f8f9fa'
       }}>
         {/* Left Sidebar - Conversations List */}
-        <Box sx={{ 
+        <Box sx={{
           width: { xs: selectedChat ? '0' : '100%', md: '350px' },
           display: { xs: selectedChat ? 'none' : 'flex', md: 'flex' },
           backgroundColor: '#ffffff',
@@ -463,7 +465,7 @@ const PWDMessagesPage = () => {
             <Typography variant="h5" sx={{ fontWeight: 600, color: '#1a1a1a', mb: 3 }}>
               Messages
             </Typography>
-            
+
             {/* Search */}
             <TextField
               fullWidth
@@ -483,8 +485,8 @@ const PWDMessagesPage = () => {
                     <CircularProgress size={20} />
                   </InputAdornment>
                 ),
-                sx: { 
-                  borderRadius: '20px', 
+                sx: {
+                  borderRadius: '20px',
                   backgroundColor: '#f1f3f4',
                   '& .MuiOutlinedInput-notchedOutline': {
                     border: 'none'
@@ -566,7 +568,7 @@ const PWDMessagesPage = () => {
                   key={conv.id}
                   button
                   onClick={() => handleConversationSelect(conv)}
-                  sx={{ 
+                  sx={{
                     px: 3,
                     py: 2,
                     backgroundColor: selectedChat?.id === conv.id ? '#e3f2fd' : 'transparent',
@@ -586,8 +588,8 @@ const PWDMessagesPage = () => {
                         ) : null
                       }
                     >
-                      <Avatar 
-                        alt={conv.name} 
+                      <Avatar
+                        alt={conv.name}
                         src={conv.avatar}
                         sx={{ width: 48, height: 48 }}
                       />
@@ -647,26 +649,32 @@ const PWDMessagesPage = () => {
         </Box>
 
         {/* Right Side - Chat Area */}
-        <Box sx={{ 
-          flexGrow: 1, 
+        <Box sx={{
+          flexGrow: 1,
           display: { xs: !selectedChat ? 'none' : 'flex', md: 'flex' },
-          flexDirection: 'column', 
-          backgroundColor: '#ffffff' 
+          flexDirection: 'column',
+          backgroundColor: '#ffffff'
         }}>
           {selectedChat ? (
             <>
               {/* Chat Header */}
-              <Box sx={{ 
-                p: 3, 
-                display: 'flex', 
-                alignItems: 'center', 
+              <Box sx={{
+                p: 3,
+                display: 'flex',
+                alignItems: 'center',
                 borderBottom: '1px solid #e1e5e9',
                 backgroundColor: '#ffffff'
               }}>
-                <Avatar 
-                  alt={selectedChat.name} 
-                  src={selectedChat.avatar} 
-                  sx={{ mr: 2, width: 40, height: 40 }} 
+                <IconButton
+                  sx={{ display: { xs: 'block', md: 'none' }, mr: 1 }}
+                  onClick={() => setSelectedChat(null)}
+                >
+                  <ArrowBackIcon />
+                </IconButton>
+                <Avatar
+                  alt={selectedChat.name}
+                  src={selectedChat.avatar}
+                  sx={{ mr: 2, width: 40, height: 40 }}
                 />
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a1a' }}>
@@ -688,13 +696,15 @@ const PWDMessagesPage = () => {
                   </IconButton>
                 </Box>
               </Box>
-              
+
               {/* Messages Area */}
-              <Box sx={{ 
-                flexGrow: 1, 
-                p: 3, 
-                overflowY: 'auto', 
+              <Box sx={{
+                flexGrow: 1,
+                p: 3,
+                overflowY: 'auto',
                 backgroundColor: '#f8f9fa',
+                backgroundImage: "linear-gradient(rgba(25,118,210,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(25,118,210,0.03) 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 2
@@ -707,47 +717,88 @@ const PWDMessagesPage = () => {
                   </Box>
                 ) : (
                   messages.map((message) => (
-                    <Box 
+                    <Box
                       key={message.id}
-                      sx={{ 
-                        display: 'flex', 
+                      sx={{
+                        display: 'flex',
                         justifyContent: message.isOwn ? 'flex-end' : 'flex-start',
                         alignItems: 'flex-start',
                         gap: 1
                       }}
                     >
                       {!message.isOwn && (
-                        <Avatar 
-                          src={message.avatar} 
+                        <Avatar
+                          src={message.avatar}
                           sx={{ width: 32, height: 32, mt: 0.5 }}
                         />
                       )}
-                      <Box sx={{ 
+                      <Box sx={{
                         maxWidth: '60%',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: message.isOwn ? 'flex-end' : 'flex-start'
                       }}>
-                        <Paper 
-                          elevation={0}
-                          sx={{ 
-                            p: 2,
-                            backgroundColor: message.isOwn ? '#1976d2' : '#ffffff',
-                            color: message.isOwn ? 'white' : '#1a1a1a',
-                            borderRadius: '18px',
-                            border: message.isOwn ? 'none' : '1px solid #e1e5e9',
-                            maxWidth: '100%',
-                            wordBreak: 'break-word'
-                          }}
-                        >
-                          <Typography variant="body1" sx={{ lineHeight: 1.4 }}>
-                            {message.content}
-                          </Typography>
-                        </Paper>
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
-                            color: '#5f6368', 
+                        {message.type === 'donation' ? (
+                          <Paper
+                            elevation={3}
+                            sx={{
+                              maxWidth: '100%',
+                              p: 0,
+                              overflow: 'hidden',
+                              bgcolor: 'white',
+                              borderRadius: '18px 18px 4px 18px',
+                              border: '1px solid #bbdefb',
+                            }}
+                          >
+                            <Box sx={{ bgcolor: '#1976d2', p: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <DonorIcon sx={{ color: 'white' }} />
+                              <Typography variant="subtitle2" sx={{ color: 'white', fontWeight: 'bold' }}>
+                                Donation Received
+                              </Typography>
+                            </Box>
+                            <Box sx={{ p: 2 }}>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  mb: 0.5,
+                                  lineHeight: 1.6,
+                                  whiteSpace: 'pre-wrap',
+                                  color: '#333',
+                                  fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                                }}
+                              >
+                                {message.content}
+                              </Typography>
+                            </Box>
+                          </Paper>
+                        ) : (
+                          <Paper
+                            elevation={1}
+                            sx={{
+                              p: 1.5,
+                              pl: 2,
+                              pr: 2,
+                              backgroundColor: message.isOwn ? '#1976d2' : '#ffffff',
+                              color: message.isOwn ? 'white' : '#1a1a1a',
+                              borderRadius: message.isOwn
+                                ? '18px 18px 4px 18px'
+                                : '18px 18px 18px 4px',
+                              maxWidth: '100%',
+                              wordBreak: 'break-word',
+                              boxShadow: message.isOwn
+                                ? "0 2px 8px rgba(25, 118, 210, 0.3)"
+                                : "0 2px 5px rgba(0,0,0,0.05)",
+                            }}
+                          >
+                            <Typography variant="body1" sx={{ lineHeight: 1.5, fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>
+                              {message.content}
+                            </Typography>
+                          </Paper>
+                        )}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: '#5f6368',
                             mt: 0.5,
                             fontSize: '0.75rem'
                           }}
@@ -756,8 +807,8 @@ const PWDMessagesPage = () => {
                         </Typography>
                       </Box>
                       {message.isOwn && (
-                        <Avatar 
-                          src={message.avatar} 
+                        <Avatar
+                          src={message.avatar}
                           sx={{ width: 32, height: 32, mt: 0.5 }}
                         />
                       )}
@@ -768,14 +819,14 @@ const PWDMessagesPage = () => {
               </Box>
 
               {/* Message Input */}
-              <Box sx={{ 
-                p: 3, 
+              <Box sx={{
+                p: 3,
                 backgroundColor: '#ffffff',
                 borderTop: '1px solid #e1e5e9'
               }}>
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 2,
                   backgroundColor: '#f8f9fa',
                   borderRadius: '24px',
@@ -798,7 +849,7 @@ const PWDMessagesPage = () => {
                     disabled={sending}
                     InputProps={{
                       disableUnderline: true,
-                      sx: { 
+                      sx: {
                         fontSize: '14px',
                         '& input': {
                           padding: '8px 0'

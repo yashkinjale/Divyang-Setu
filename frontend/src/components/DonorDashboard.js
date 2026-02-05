@@ -33,11 +33,13 @@ import {
   History as HistoryIcon,
   BookmarkBorder as BookmarkIcon,
 } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import { disabledApi } from "../utils/api";
 import DonateDialog from "./DonateDialog";
 import DonorNavbar from "./DonorNavbar"; // Import the navbar component
 
 const DonorDashboard = () => {
+  const navigate = useNavigate();
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -76,7 +78,7 @@ const DonorDashboard = () => {
       console.error("Error fetching profiles:", err);
       setError(
         err.response?.data?.message ||
-          "Failed to load profiles. Please try again."
+        "Failed to load profiles. Please try again."
       );
     } finally {
       setLoading(false);
@@ -84,13 +86,7 @@ const DonorDashboard = () => {
   };
 
   const handleMessageClick = (profile) => {
-    setSelectedChatProfile(profile);
-    setChatDialogOpen(true);
-  };
-
-  const handleChatClose = () => {
-    setChatDialogOpen(false);
-    setSelectedChatProfile(null);
+    navigate('/donor/messages', { state: { profile } });
   };
 
   const handleDonateClick = (profile) => {
@@ -190,7 +186,7 @@ const DonorDashboard = () => {
     return (
       <Card
         sx={{
-          height: 520,
+          height: { xs: "auto", md: 520 },
           display: "flex",
           flexDirection: "column",
           transition: "transform 0.2s, box-shadow 0.2s",
@@ -229,11 +225,11 @@ const DonorDashboard = () => {
                     typeof raw === "string"
                       ? raw
                       : raw &&
-                        (raw.url ||
-                          raw.path ||
-                          raw.location ||
-                          raw.secure_url ||
-                          raw.src);
+                      (raw.url ||
+                        raw.path ||
+                        raw.location ||
+                        raw.secure_url ||
+                        raw.src);
                   if (!img || typeof img !== "string") return undefined;
                   if (/^(https?:|data:|blob:)/i.test(img)) return img;
                   const base = (
@@ -420,14 +416,14 @@ const DonorDashboard = () => {
                     progressPercentage > 75
                       ? "success.light"
                       : progressPercentage > 50
-                      ? "warning.light"
-                      : "error.light",
+                        ? "warning.light"
+                        : "error.light",
                   color:
                     progressPercentage > 75
                       ? "success.dark"
                       : progressPercentage > 50
-                      ? "warning.dark"
-                      : "error.dark",
+                        ? "warning.dark"
+                        : "error.dark",
                   px: 1,
                   py: 0.5,
                   borderRadius: 1,

@@ -25,6 +25,11 @@ const messageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    type: {
+      type: String,
+      enum: ['text', 'donation', 'image'],
+      default: 'text',
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt automatically

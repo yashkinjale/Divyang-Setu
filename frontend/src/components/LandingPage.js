@@ -14,7 +14,11 @@ import {
   Link,
   IconButton,
   TextField,
-  InputAdornment
+  InputAdornment,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
@@ -30,10 +34,22 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import SearchIcon from '@mui/icons-material/Search';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const navItems = [
+    { label: 'Job Postings', path: '/job-postings' },
+    { label: 'About Us', path: '/about' },
+    { label: 'Contact Us', path: '/contact' }
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -108,12 +124,21 @@ const Navbar = () => {
             </Typography>
           </Box>
 
+
+
+          {/* Mobile Menu Button */}
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ display: { md: 'none' }, color: scrolled ? '#1a1a1a' : '#1a1a1a' }} // Ensure visibility
+          >
+            <MenuIcon />
+          </IconButton>
+
           <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
-            {[
-              { label: 'Job Postings', path: '/job-postings' },
-              { label: 'About Us', path: '/about' },
-              { label: 'Contact Us', path: '/contact' }
-            ].map((link) => (
+            {navItems.map((link) => (
               <Button
                 key={link.label}
                 variant="text"
@@ -150,7 +175,7 @@ const Navbar = () => {
           </Box>
         </Toolbar>
       </Container>
-    </AppBar>
+    </AppBar >
   );
 };
 

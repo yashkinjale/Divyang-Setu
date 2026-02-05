@@ -31,6 +31,7 @@ import {
   Accessibility as AccessibilityIcon,
   ArrowBack as ArrowBackIcon,
   PersonAdd as PersonAddIcon,
+  VolunteerActivism as VolunteerActivismIcon, // Added for donation messages
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { messageApi, authHelpers } from "../utils/api";
@@ -46,12 +47,12 @@ const DonorMessagesPage = ({ profile }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
-  
+
   // Search states
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  
+
   const messagesEndRef = useRef(null);
   const searchTimeoutRef = useRef(null);
   const currentUserRef = useRef(authHelpers.getCurrentUser());
@@ -60,11 +61,11 @@ const DonorMessagesPage = ({ profile }) => {
   // Fetch conversations on mount
   useEffect(() => {
     let isMounted = true;
-    
+
     if (currentUser?.id && isMounted) {
       fetchConversations();
     }
-    
+
     return () => {
       isMounted = false;
     };
@@ -74,7 +75,7 @@ const DonorMessagesPage = ({ profile }) => {
   // Handle profile prop and auto-select
   useEffect(() => {
     if (conversations.length === 0) return;
-    
+
     if (profile && !selectedConversation) {
       const profileConv = conversations.find((c) => c.userId === profile.id || c.name === profile.name);
       if (profileConv) {
@@ -116,7 +117,7 @@ const DonorMessagesPage = ({ profile }) => {
     try {
       setSearchLoading(true);
       const response = await messageApi.searchPWD(query);
-      
+
       if (response.data.success) {
         setSearchResults(response.data.pwds || response.data.data || []);
         setShowSearchResults(true);
@@ -143,7 +144,7 @@ const DonorMessagesPage = ({ profile }) => {
       location: pwd.location,
       age: pwd.age,
     };
-    
+
     setSelectedConversation(newConversation);
     setMessages([]);
     setSearchTerm("");
@@ -154,7 +155,7 @@ const DonorMessagesPage = ({ profile }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Check if currentUser and id exist
       if (!currentUser || !currentUser.id) {
         console.error("No current user found");
@@ -165,21 +166,21 @@ const DonorMessagesPage = ({ profile }) => {
 
       console.log("Fetching conversations for user:", currentUser.id);
       const response = await messageApi.getConversations(currentUser.id);
-      
+
       console.log("Conversations response:", response.data);
-      
+
       if (response.data.success) {
         const convData = response.data.conversations || response.data.data || [];
-        
+
         if (convData.length === 0) {
           setConversations([]);
           setLoading(false);
           return;
         }
-        
+
         const transformedConversations = convData.map((conv) => ({
-          id: conv.otherUser?._id || conv._id,
-          userId: conv.otherUser?._id || conv._id,
+          id: conv.otherUser?.id || conv.otherUser?._id || conv.id || conv._id,
+          userId: conv.otherUser?.id || conv.otherUser?._id || conv.id || conv._id,
           name: conv.otherUser?.name || conv.name,
           avatar: conv.otherUser?.profileImage || conv.profileImage || conv.avatar,
           lastMessage: conv.lastMessage?.content || conv.lastMessage || "No messages yet",
@@ -195,7 +196,7 @@ const DonorMessagesPage = ({ profile }) => {
     } catch (err) {
       console.error("Error fetching conversations:", err);
       console.error("Error response:", err.response?.data);
-      
+
       // If it's a 404 or no conversations, just show empty state
       if (err.response?.status === 404) {
         setConversations([]);
@@ -211,7 +212,7 @@ const DonorMessagesPage = ({ profile }) => {
     try {
       setError(null);
       const response = await messageApi.getMessages(currentUser.id, conversation.userId);
-      
+
       if (response.data.success) {
         const msgData = response.data.messages || response.data.data || [];
         const transformedMessages = msgData.map((msg) => ({
@@ -220,9 +221,10 @@ const DonorMessagesPage = ({ profile }) => {
           text: msg.content || msg.message || msg.text,
           timestamp: new Date(msg.createdAt || msg.timestamp),
           read: msg.read,
+          type: msg.type || 'text', // Capture message type
         }));
         setMessages(transformedMessages);
-        
+
         // Mark messages as read
         const unreadMessages = msgData.filter(
           (msg) => !msg.read && (msg.senderId !== currentUser.id && msg.sender !== currentUser.id)
@@ -257,7 +259,7 @@ const DonorMessagesPage = ({ profile }) => {
         const response = await messageApi.sendMessage({
           senderId: currentUser.id,
           receiverId: selectedConversation.userId,
-          content: messageText,
+          message: messageText,
         });
 
         if (response.data.success) {
@@ -422,6 +424,7 @@ const DonorMessagesPage = ({ profile }) => {
                         {pwd.name}
                       </Typography>
                     }
+                    secondaryTypographyProps={{ component: "div" }}
                     secondary={
                       <Box sx={{ display: "flex", gap: 0.5, mt: 0.5, flexWrap: "wrap" }}>
                         {pwd.disability && (
@@ -526,6 +529,7 @@ const DonorMessagesPage = ({ profile }) => {
                         </Typography>
                       </Box>
                     }
+                    secondaryTypographyProps={{ component: "div" }}
                     secondary={
                       <>
                         <Typography
@@ -690,34 +694,97 @@ const DonorMessagesPage = ({ profile }) => {
                         },
                       }}
                     >
-                      <Paper
-                        elevation={2}
-                        sx={{
-                          maxWidth: "65%",
-                          p: 2,
-                          bgcolor: msg.sender === "donor" ? "#1976d2" : "white",
-                          color: msg.sender === "donor" ? "white" : "black",
-                          borderRadius:
-                            msg.sender === "donor"
-                              ? "18px 18px 4px 18px"
-                              : "18px 18px 18px 4px",
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ mb: 0.5, lineHeight: 1.6 }}>
-                          {msg.text}
-                        </Typography>
-                        <Typography
-                          variant="caption"
+                      {/* DONATION MESSAGE STYLE */}
+                      {msg.type === "donation" ? (
+                        <Paper
+                          elevation={3}
                           sx={{
-                            display: "block",
-                            textAlign: "right",
-                            opacity: 0.8,
-                            fontSize: "0.7rem",
+                            maxWidth: "75%",
+                            p: 0,
+                            overflow: "hidden",
+                            bgcolor: "white",
+                            borderRadius: "18px 18px 4px 18px",
+                            border: "1px solid #bbdefb",
                           }}
                         >
-                          {formatTime(msg.timestamp)}
-                        </Typography>
-                      </Paper>
+                          <Box sx={{ bgcolor: "#1976d2", p: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
+                            <VolunteerActivismIcon sx={{ color: "white" }} />
+                            <Typography variant="subtitle2" sx={{ color: "white", fontWeight: "bold" }}>
+                              Donation Support
+                            </Typography>
+                          </Box>
+                          <Box sx={{ p: 2 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                mb: 0.5,
+                                lineHeight: 1.6,
+                                whiteSpace: "pre-wrap", // Preserve line breaks
+                                color: "#333",
+                                fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                              }}
+                            >
+                              {msg.text}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                display: "block",
+                                textAlign: "right",
+                                opacity: 0.7,
+                                fontSize: "0.7rem",
+                                mt: 1,
+                                color: "#666",
+                              }}
+                            >
+                              {formatTime(msg.timestamp)}
+                            </Typography>
+                          </Box>
+                        </Paper>
+                      ) : (
+                        /* STANDARD TEXT MESSAGE STYLE */
+                        <Paper
+                          elevation={1}
+                          sx={{
+                            maxWidth: "70%",
+                            p: 1.5,
+                            pl: 2,
+                            pr: 2,
+                            bgcolor: msg.sender === "donor" ? "#2196f3" : "white",
+                            color: msg.sender === "donor" ? "white" : "#333",
+                            borderRadius:
+                              msg.sender === "donor"
+                                ? "18px 18px 4px 18px"
+                                : "18px 18px 18px 4px",
+                            boxShadow: msg.sender === "donor"
+                              ? "0 2px 8px rgba(33, 150, 243, 0.3)"
+                              : "0 2px 5px rgba(0,0,0,0.05)",
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              mb: 0.5,
+                              lineHeight: 1.5,
+                              whiteSpace: "pre-wrap",
+                              fontSize: "0.95rem"
+                            }}
+                          >
+                            {msg.text}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              display: "block",
+                              textAlign: "right",
+                              opacity: 0.85,
+                              fontSize: "0.7rem",
+                            }}
+                          >
+                            {formatTime(msg.timestamp)}
+                          </Typography>
+                        </Paper>
+                      )}
                     </Box>
                   ))
                 )}

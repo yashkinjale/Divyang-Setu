@@ -6,7 +6,9 @@ const crypto = require("crypto");
 const Donation = require("../models/Donation");
 const Disabled = require("../models/Disabled");
 const WishlistItem = require("../models/WishlistItem");
+const Message = require("../models/Message"); // Import Message model
 const auth = require("../middleware/auth");
+const jwt = require("jsonwebtoken"); // Import jwt for manual token verification
 
 // =============================================
 // RAZORPAY SETUP
@@ -39,6 +41,22 @@ router.post("/create-order", async (req, res) => {
   try {
     console.log("=== CREATE RAZORPAY ORDER ===");
     const { pwdId, amount, donorName, donorEmail, note } = req.body;
+
+    // Optional: Manually check for auth token since this route is public
+    const authHeader = req.header('Authorization');
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        if (token) {
+          const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+          const verified = jwt.verify(token, jwtSecret);
+          req.user = verified;
+          console.log("User authenticated for donation:", verified.id);
+        }
+      } catch (tokenError) {
+        console.warn("Token verification failed in create-order (ignoring):", tokenError.message);
+      }
+    }
 
     // Validate required fields
     if (!pwdId || !amount) {
@@ -207,6 +225,9 @@ router.post("/verify-payment", async (req, res) => {
     donation.razorpaySignature = razorpaySignature;
     donation.status = "success";
 
+    console.log("Donation object for verification:", donation);
+    console.log("Donor ID present:", donation.donorId);
+
     // -----------------------------------------------
     // STEP 2.3: ALLOCATE FUNDS TO WISHLIST ITEMS
     // -----------------------------------------------
@@ -249,6 +270,7 @@ router.post("/verify-payment", async (req, res) => {
     // Allocate donation amount to wishlist items
     let remainingAmount = donation.amount;
     const allocations = [];
+    const fundedItemNames = []; // Track funded items for message
 
     for (const item of wishlistItems) {
       if (remainingAmount <= 0) break;
@@ -262,6 +284,7 @@ router.post("/verify-payment", async (req, res) => {
 
         // Update wishlist item
         item.amountRaised += amountToAllocate;
+        fundedItemNames.push(item.itemName); // Add item name to list
 
         // ✅ UPDATE PROGRESS - THIS IS THE KEY ADDITION
         item.progress = Math.round(
@@ -338,7 +361,46 @@ router.post("/verify-payment", async (req, res) => {
       }
 
       await pwdUser.save();
+      await pwdUser.save();
       console.log(`✅ Updated PWD profile: ${pwdUser.name}`);
+    }
+
+    // -----------------------------------------------
+    // STEP 2.6: SEND AUTOMATED MESSAGE (Donor -> PWD)
+    // -----------------------------------------------
+
+    if (donation.donorId) {
+      try {
+        const itemNamesStr = fundedItemNames.length > 0
+          ? fundedItemNames.join(", ")
+          : "your needs";
+
+        // Warmer, more human-like automated message
+        const automatedMessage = `Hello! 👋
+        
+I hope this message finds you well. I was really moved by your story and wanted to support you.
+
+I've just made a donation of ₹${donation.amount} towards ${itemNamesStr}.
+
+Please accept this small token of support. I'm cheering for you! ✨
+
+Warmly,
+${donation.donorName}`;
+
+        await Message.create({
+          senderId: donation.donorId,
+          receiverId: donation.pwdId,
+          message: automatedMessage,
+          read: false,
+          type: 'donation', // Mark as donation message for special styling
+          timestamp: new Date()
+        });
+
+        console.log(`✅ Automated message sent from Donor (${donation.donorId}) to PWD (${donation.pwdId})`);
+      } catch (msgError) {
+        console.error("Failed to send automated message:", msgError);
+        // Don't fail the entire request if just the message fails
+      }
     }
 
     // -----------------------------------------------
