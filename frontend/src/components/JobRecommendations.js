@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -36,9 +36,10 @@ const JobRecommendations = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('India');
 
+  // Track if initial fetch has happened
+  const hasFetchedRef = useRef(false);
 
-
-  // Filters state
+  // Accessibility filter state
   const [filters, setFilters] = useState({
     wheelchair_accessible: false,
     remote_friendly: false,
@@ -77,9 +78,14 @@ const JobRecommendations = () => {
       if (response.data.note) {
         console.log('[FRONTEND] API Note:', response.data.note);
       }
-    } catch (err) {
-      console.error('Error fetching jobs:', err);
-      setError(err.message || 'Failed to fetch jobs');
+    } catch (error) {
+      console.error('[FRONTEND] Error fetching jobs:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+
+      setError(`Failed to fetch jobs: ${error.message}`);
       setJobs([]);
     } finally {
       setLoading(false);
@@ -187,7 +193,7 @@ const JobRecommendations = () => {
                 </InputAdornment>
               ),
             }}
-            sx={{ minWidth: 300 }}
+            sx={{ minWidth: { xs: '100%', sm: 300 } }}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
           <TextField
@@ -201,7 +207,7 @@ const JobRecommendations = () => {
                 </InputAdornment>
               ),
             }}
-            sx={{ minWidth: 200 }}
+            sx={{ minWidth: { xs: '100%', sm: 200 } }}
           />
           <Button
             variant="contained"
@@ -209,6 +215,7 @@ const JobRecommendations = () => {
             startIcon={<SearchIcon />}
             disabled={loading}
             size="large"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             Search
           </Button>

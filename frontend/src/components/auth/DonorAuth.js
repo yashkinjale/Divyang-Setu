@@ -109,36 +109,109 @@ const DonorAuth = ({ isLogin }) => {
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
-        background: `linear-gradient(135deg, ${theme.palette.secondary.light} 0%, ${theme.palette.secondary.main} 100%)`,
+        justifyContent: 'center',
+        background: `linear-gradient(135deg, ${theme.palette.secondary.light}11 0%, ${theme.palette.secondary.main}22 100%), 
+                    radial-gradient(circle at 10% 20%, rgba(216, 241, 230, 0.46) 0.1%, rgba(233, 226, 226, 0.28) 90.1%)`,
+        backgroundAttachment: 'fixed',
         py: 4,
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: '20%',
+          left: '10%',
+          width: '300px',
+          height: '300px',
+          background: `radial-gradient(circle, ${theme.palette.secondary.light}33 0%, transparent 70%)`,
+          filter: 'blur(50px)',
+          zIndex: 0,
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          bottom: '20%',
+          right: '10%',
+          width: '400px',
+          height: '400px',
+          background: `radial-gradient(circle, ${theme.palette.secondary.main}22 0%, transparent 70%)`,
+          filter: 'blur(60px)',
+          zIndex: 0,
+        }
       }}
     >
-      <Container component="main" maxWidth="sm">
+      <Container component="main" maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
         <Paper
-          elevation={3}
+          elevation={0}
           sx={{
-            p: 4,
+            p: { xs: 3, md: 5 },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            background: 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            borderRadius: '24px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
           }}
         >
-          <VolunteerActivismIcon
-            sx={{ fontSize: 40, color: theme.palette.secondary.main, mb: 2 }}
-          />
-          <Typography component="h1" variant="h4" align="center" gutterBottom>
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: `${theme.palette.secondary.main}15`,
+              color: theme.palette.secondary.main,
+              mb: 3,
+              transition: 'transform 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'scale(1.1) rotate(5deg)',
+              }
+            }}
+          >
+            <VolunteerActivismIcon sx={{ fontSize: 32 }} />
+          </Box>
+
+          <Typography 
+            component="h1" 
+            variant="h3" 
+            align="center" 
+            sx={{ 
+              fontWeight: 800, 
+              mb: 1,
+              background: `linear-gradient(45deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.main})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.5px'
+            }}
+          >
             {isLogin ? 'Welcome Back!' : 'Join as a Donor'}
           </Typography>
-          <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
+          
+          <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4, fontWeight: 500 }}>
             {isLogin
               ? 'Sign in to continue making a difference'
               : 'Create an account to start helping others'}
           </Typography>
 
           {error && (
-            <Typography color="error" align="center" sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: 1 }}>
-              {error}
-            </Typography>
+            <Box 
+              sx={{ 
+                mb: 3, 
+                p: 2, 
+                bgcolor: 'rgba(211, 47, 47, 0.05)', 
+                borderRadius: '12px',
+                border: '1px solid rgba(211, 47, 47, 0.1)',
+                width: '100%'
+              }}
+            >
+              <Typography color="error" align="center" variant="body2" sx={{ fontWeight: 600 }}>
+                {error}
+              </Typography>
+            </Box>
           )}
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
@@ -153,6 +226,15 @@ const DonorAuth = ({ isLogin }) => {
                 onChange={handleChange}
                 autoFocus
                 disabled={loading}
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    transition: 'all 0.2s',
+                    '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' },
+                    '&.Mui-focused': { bgcolor: 'white' }
+                  }
+                }}
               />
             )}
             <TextField
@@ -166,6 +248,14 @@ const DonorAuth = ({ isLogin }) => {
               onChange={handleChange}
               autoFocus={isLogin}
               disabled={loading}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  transition: 'all 0.2s',
+                  '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' },
+                  '&.Mui-focused': { bgcolor: 'white' }
+                }
+              }}
             />
             <TextField
               margin="normal"
@@ -177,6 +267,14 @@ const DonorAuth = ({ isLogin }) => {
               value={formData.password}
               onChange={handleChange}
               disabled={loading}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  transition: 'all 0.2s',
+                  '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' },
+                  '&.Mui-focused': { bgcolor: 'white' }
+                }
+              }}
             />
             {!isLogin && (
               <>
@@ -189,6 +287,14 @@ const DonorAuth = ({ isLogin }) => {
                   value={formData.phone}
                   onChange={handleChange}
                   disabled={loading}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      transition: 'all 0.2s',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' },
+                      '&.Mui-focused': { bgcolor: 'white' }
+                    }
+                  }}
                 />
                 <TextField
                   margin="normal"
@@ -201,6 +307,14 @@ const DonorAuth = ({ isLogin }) => {
                   multiline
                   rows={2}
                   disabled={loading}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      transition: 'all 0.2s',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' },
+                      '&.Mui-focused': { bgcolor: 'white' }
+                    }
+                  }}
                 />
               </>
             )}
@@ -210,23 +324,47 @@ const DonorAuth = ({ isLogin }) => {
               variant="contained"
               color="secondary"
               size="large"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ 
+                mt: 4, 
+                mb: 3, 
+                py: 1.8,
+                borderRadius: '12px',
+                fontSize: '1.1rem',
+                fontWeight: 700,
+                textTransform: 'none',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 12px 20px rgba(0,0,0,0.15)',
+                },
+                '&:active': {
+                  transform: 'translateY(0)',
+                }
+              }}
               disabled={loading}
               startIcon={loading && <CircularProgress size={20} color="inherit" />}
             >
-              {loading ? 'Processing...' : (isLogin ? 'Log In' : 'Create Account')}
+              {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
             </Button>
             <Box sx={{ textAlign: 'center' }}>
-              <Link
-                component={RouterLink}
-                to={isLogin ? '/donor/register' : '/donor/login'}
-                variant="body2"
-                sx={{ textDecoration: 'none' }}
-              >
-                {isLogin
-                  ? "Don't have an account? Sign Up"
-                  : 'Already have an account? Sign In'}
-              </Link>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                <Link
+                  component={RouterLink}
+                  to={isLogin ? '/donor/register' : '/donor/login'}
+                  sx={{ 
+                    textDecoration: 'none',
+                    color: theme.palette.secondary.main,
+                    fontWeight: 700,
+                    '&:hover': {
+                      textDecoration: 'underline'
+                    }
+                  }}
+                >
+                  {isLogin ? "Sign Up" : "Sign In"}
+                </Link>
+              </Typography>
             </Box>
           </Box>
         </Paper>

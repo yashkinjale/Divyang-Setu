@@ -65,9 +65,9 @@ const DonorNavbar = () => {
 
   const navigationItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/donor/dashboard" },
-    { 
-      text: "Messages", 
-      icon: <ChatIcon />, 
+    {
+      text: "Messages",
+      icon: <ChatIcon />,
       path: "/donor/messages",
       badge: unreadMessages // Add badge count
     },
@@ -170,7 +170,12 @@ const DonorNavbar = () => {
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
           {/* Left Side - Logo and Navigation */}
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{
+            display: "flex",
+            alignItems: "center",
+            maxWidth: { xs: 'calc(100% - 120px)', md: 'auto' },
+            overflow: 'hidden'
+          }}>
             {isMobile && (
               <IconButton
                 color="inherit"

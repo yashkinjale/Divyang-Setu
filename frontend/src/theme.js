@@ -3,7 +3,7 @@ import { createTheme, alpha } from '@mui/material';
 
 const theme = createTheme({
   palette: {
-    primary: { main: '#2563eb', light: '#60a5fa', dark: '#1d4ed8' },
+    primary: { main: '#3b82f6', light: '#93c5fd', dark: '#2563eb' },
     secondary: { main: '#10b981', light: '#34d399', dark: '#059669' },
     background: { default: '#f8fafc', paper: '#ffffff' },
     text: { primary: '#1e293b', secondary: '#64748b' },
@@ -11,10 +11,25 @@ const theme = createTheme({
 
   typography: {
     fontFamily: '"Inter", "Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: { fontWeight: 700, letterSpacing: '-0.02em' },
-    h2: { fontWeight: 700, letterSpacing: '-0.01em' },
-    h3: { fontWeight: 600, letterSpacing: '-0.01em' },
-    h4: { fontWeight: 600 },
+    h1: {
+      fontWeight: 700,
+      letterSpacing: '-0.02em',
+      '@media (max-width:600px)': { fontSize: '2.5rem' }
+    },
+    h2: {
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+      '@media (max-width:600px)': { fontSize: '2rem' }
+    },
+    h3: {
+      fontWeight: 600,
+      letterSpacing: '-0.01em',
+      '@media (max-width:600px)': { fontSize: '1.75rem' }
+    },
+    h4: {
+      fontWeight: 600,
+      '@media (max-width:600px)': { fontSize: '1.5rem' }
+    },
     button: { textTransform: 'none', fontWeight: 500, letterSpacing: '0.01em' },
   },
 
@@ -23,8 +38,18 @@ const theme = createTheme({
   components: {
     MuiCssBaseline: {
       styleOverrides: {
-        '*': { boxSizing: 'border-box', transition: 'background-color 0.2s ease, color 0.2s ease' },
-        body: { margin: 0, padding: 0 },
+        html: {
+          overflowX: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+        },
+        body: {
+          margin: 0,
+          padding: 0,
+          overflowX: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+        },
       },
     },
 
@@ -43,6 +68,9 @@ const theme = createTheme({
         root: {
           minHeight: '64px',
           padding: '0 16px',
+          '@media (max-width:600px)': {
+            padding: '0 12px',
+          },
           display: 'flex',
           alignItems: 'center',
         },
@@ -100,9 +128,9 @@ const theme = createTheme({
           fontSize: '0.95rem',
         },
         contained: {
-          background: 'linear-gradient(45deg, #2563eb 30%, #60a5fa 90%)',
+          background: 'linear-gradient(45deg, #3b82f6 30%, #93c5fd 90%)',
           '&:hover': {
-            background: 'linear-gradient(45deg, #1d4ed8 30%, #3b82f6 90%)',
+            background: 'linear-gradient(45deg, #2563eb 30%, #60a5fa 90%)',
           },
         },
       },

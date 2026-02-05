@@ -6,7 +6,7 @@ const auth = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
 
 // Upload profile image
-router.post('/profile/image', [auth, upload.single('profileImage')], async (req, res) => {
+router.post('/profile/image', [auth, upload.single('image')], async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No image file provided' });
 
@@ -15,7 +15,7 @@ router.post('/profile/image', [auth, upload.single('profileImage')], async (req,
 
     disabled.profileImage = { url: req.file.path, publicId: req.file.filename };
     await disabled.save();
-    await disabled.addActivity('Updated Profile Picture', 'Profile picture was changed');
+    await Disabled.addActivitySafely(disabled._id, 'Updated Profile Picture', 'Profile picture was changed');
 
     res.json({ message: 'Profile image uploaded successfully', imageUrl: disabled.profileImage.url });
   } catch (error) {
@@ -47,7 +47,7 @@ router.post('/documents', [
 
     disabled.documents.push(newDocument);
     await disabled.save();
-    await disabled.addActivity('Uploaded Document', `Uploaded ${req.body.name}`);
+    await Disabled.addActivitySafely(disabled._id, 'Uploaded Document', `Uploaded ${req.body.name}`);
 
     res.json({
       message: 'Document uploaded successfully',

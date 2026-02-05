@@ -15,6 +15,7 @@ import GovernmentSchemesPage from './components/GovernmentSchemesPage';
 import WishlistSection from './components/WishlistSection';
 import SuccessStoriesPage from './components/SuccessStoriesPage';
 import ProfilePage from './components/ProfilePage';
+import SettingsPage from './components/SettingsPage';
 import SchemeSlider from './components/SchemeSlider';
 import JobRecommendations from './components/JobRecommendations';
 import JobPostings from './components/JobPostings';
@@ -210,6 +211,7 @@ const App = () => {
                     <Route path="community" element={<SuccessStoriesPage />} />
                     <Route path="profile" element={<ProfilePage />} />
                     <Route path="messages" element={<MessagesPage />} />
+                    <Route path="settings" element={<SettingsPage />} />
                   </Route>
                 </Routes>
               </VoiceNavProvider>

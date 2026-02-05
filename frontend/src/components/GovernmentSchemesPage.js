@@ -176,6 +176,8 @@ const SchemeCard = ({ scheme, onViewDetails }) => (
 );
 
 const FilterPanel = ({ filters, tempFilters, setTempFilters, onClearFilters, onApplyFilters, hasActiveFilters, resultCount }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const disabilityTypes = ["All Disabilities", "Physical Disabilities", "Visual Impairment", "Hearing Impairment", "Intellectual Disabilities", "Mental Health Conditions"];
   const locations = ["All India", "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune"];
   const ageGroups = ["All Ages", "0-5 years", "6-17 years", "18-25 years", "26-45 years", "46-60 years", "60+ years"];
@@ -183,14 +185,19 @@ const FilterPanel = ({ filters, tempFilters, setTempFilters, onClearFilters, onA
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
-      <Paper sx={{ p: 3, mb: 4 }}>
+      <Paper sx={{
+        p: { xs: 2, sm: 3 },
+        mb: 4,
+        borderRadius: '12px',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.05)'
+      }}>
         <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>Filters</Typography>
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           {[
-            { label: "Select Disability Type", value: tempFilters.disabilityType, key: 'disabilityType', options: disabilityTypes },
-            { label: "Select Location", value: tempFilters.location, key: 'location', options: locations },
-            { label: "Select Age Group", value: tempFilters.ageGroup, key: 'ageGroup', options: ageGroups },
-            { label: "Select Eligibility Criteria", value: tempFilters.eligibilityCriteria, key: 'eligibilityCriteria', options: eligibilityCriteria }
+            { label: "Disability Type", value: tempFilters.disabilityType, key: 'disabilityType', options: disabilityTypes },
+            { label: "Location", value: tempFilters.location, key: 'location', options: locations },
+            { label: "Age Group", value: tempFilters.ageGroup, key: 'ageGroup', options: ageGroups },
+            { label: "Eligibility Criteria", value: tempFilters.eligibilityCriteria, key: 'eligibilityCriteria', options: eligibilityCriteria }
           ].map(({ label, value, key, options }) => (
             <Grid item xs={12} sm={6} md={3} key={key}>
               <FormControl fullWidth size="small">
@@ -206,12 +213,41 @@ const FilterPanel = ({ filters, tempFilters, setTempFilters, onClearFilters, onA
             </Grid>
           ))}
         </Grid>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 3 }}>
-          <Button variant="contained" startIcon={<FilterIcon />} onClick={onApplyFilters}>Apply Filters</Button>
-          {hasActiveFilters && (
-            <Button variant="outlined" onClick={onClearFilters}>Clear All</Button>
-          )}
-          <Typography variant="body2" color="text.secondary">{resultCount} scheme{resultCount !== 1 ? 's' : ''} available</Typography>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 2,
+          mt: 3
+        }}>
+          <Box sx={{
+            display: 'flex',
+            gap: 2,
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: 'center'
+          }}>
+            <Button
+              variant="contained"
+              startIcon={<FilterIcon />}
+              onClick={onApplyFilters}
+              fullWidth={isMobile}
+            >
+              Apply Filters
+            </Button>
+            {hasActiveFilters && (
+              <Button
+                variant="outlined"
+                onClick={onClearFilters}
+                fullWidth={isMobile}
+              >
+                Clear
+              </Button>
+            )}
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+            {resultCount} scheme{resultCount !== 1 ? 's' : ''} available
+          </Typography>
         </Box>
       </Paper>
     </motion.div>
@@ -377,7 +413,7 @@ const GovernmentSchemesPage = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6, delay: 0.6 + i * 0.1 }}
-                      style={{ height: '520px' }}
+                      style={{ minHeight: '520px', height: 'auto' }}
                     >
                       <SchemeCard scheme={scheme} onViewDetails={handleViewDetails} />
                     </motion.div>
@@ -414,7 +450,7 @@ const GovernmentSchemesPage = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ duration: 0.4, delay: i * 0.1 }}
-                        style={{ height: '520px' }}
+                        style={{ minHeight: '520px', height: 'auto' }}
                       >
                         <SchemeCard scheme={scheme} onViewDetails={handleViewDetails} />
                       </motion.div>

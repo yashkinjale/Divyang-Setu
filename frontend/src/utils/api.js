@@ -6,12 +6,12 @@ const getApiUrl = () => {
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
-  
+
   // Production fallback: use the same domain as the app
   if (process.env.NODE_ENV === 'production') {
     return `${window.location.protocol}//${window.location.host}/api`;
   }
-  
+
   // Development fallback
   return 'http://localhost:5000/api';
 };
@@ -34,7 +34,7 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     // Only log in development
     if (process.env.NODE_ENV === 'development') {
       console.log('API Request:', {
@@ -45,7 +45,7 @@ api.interceptors.request.use(
         baseURL: config.baseURL,
       });
     }
-    
+
     return config;
   },
   (error) => {
@@ -109,6 +109,7 @@ export const disabledApi = {
     api.post('/disabled/profile/image', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  changePassword: (data) => api.put('/disabled/profile/change-password', data),
   deleteProfileImage: () => api.delete('/disabled/profile/image'),
   uploadDocument: (formData) =>
     api.post('/disabled/profile/documents', formData, {
@@ -176,22 +177,22 @@ export const donationApi = {
 export const messageApi = {
   // Send a new message
   sendMessage: (data) => api.post('/messages/send', data),
-  
+
   // Get chat history between two users
   getMessages: (userId, chatWithId) => api.get(`/messages/${userId}/${chatWithId}`),
-  
+
   // Get all conversations for a user (inbox)
   getConversations: (userId) => api.get(`/messages/conversations/${userId}`),
-  
+
   // Mark message as read
   markAsRead: (messageId) => api.patch(`/messages/read/${messageId}`),
-  
+
   // NEW: Search for donors (for PWDs to find donors to chat with)
   searchDonors: (query = '') => {
     const encodedQuery = encodeURIComponent(query);
     return api.get(`/messages/search/donors?query=${encodedQuery}`);
   },
-  
+
   // NEW: Search for PWDs (for donors to find PWDs to chat with)
   searchPWD: (query = '') => {
     const encodedQuery = encodeURIComponent(query);

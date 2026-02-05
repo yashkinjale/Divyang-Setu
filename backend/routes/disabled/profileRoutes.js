@@ -124,14 +124,13 @@ router.get("/public", async (req, res) => {
       }
 
       // Use bio if available, otherwise generate a generic story
-      const story = user.bio && user.bio.trim() 
-        ? user.bio 
-        : `I am a person with ${
-            user.disabilityType || "disability"
-          } seeking support for essential items and services.`;
+      const story = user.bio && user.bio.trim()
+        ? user.bio
+        : `I am a person with ${user.disabilityType || "disability"
+        } seeking support for essential items and services.`;
 
       // Build image URL
-      const imageUrl = user.profileImage?.url || 
+      const imageUrl = user.profileImage?.url ||
         user.profileImage?.path ||
         (typeof user.profileImage === 'string' ? user.profileImage : null) ||
         `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -178,14 +177,14 @@ router.get("/public", async (req, res) => {
 
     // PRIORITY SORTING: Sort by urgency first (high > medium > low), then by creation date (earliest first)
     const urgencyOrder = { high: 1, medium: 2, low: 3 };
-    
+
     filteredProfiles.sort((a, b) => {
       // First compare urgency
       const urgencyDiff = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
       if (urgencyDiff !== 0) {
         return urgencyDiff; // Lower number = higher priority
       }
-      
+
       // If urgency is the same, sort by creation date (earliest first)
       return new Date(a.createdAt) - new Date(b.createdAt);
     });
@@ -299,31 +298,31 @@ router.get("/", auth, async (req, res) => {
       bio: disabled.bio || "",
       profileImage: disabled.profileImage
         ? {
-            url: disabled.profileImage.url,
-            publicId: disabled.profileImage.publicId,
-          }
+          url: disabled.profileImage.url,
+          publicId: disabled.profileImage.publicId,
+        }
         : null,
       isVerified: disabled.isVerified || false,
       verificationStatus: disabled.verificationStatus || "pending",
       profileCompletionPercentage: disabled.profileCompletionPercentage || 0,
       documents: disabled.documents
         ? disabled.documents.map((doc) => ({
-            _id: doc._id,
-            name: doc.name,
-            fileName: doc.fileName,
-            fileUrl: doc.fileUrl,
-            status: doc.status,
-            uploadDate: doc.uploadDate,
-            verifiedDate: doc.verifiedDate,
-            rejectionReason: doc.rejectionReason,
-            date: doc.uploadDate
-              ? doc.uploadDate.toLocaleDateString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })
-              : "",
-          }))
+          _id: doc._id,
+          name: doc.name,
+          fileName: doc.fileName,
+          fileUrl: doc.fileUrl,
+          status: doc.status,
+          uploadDate: doc.uploadDate,
+          verifiedDate: doc.verifiedDate,
+          rejectionReason: doc.rejectionReason,
+          date: doc.uploadDate
+            ? doc.uploadDate.toLocaleDateString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
+            : "",
+        }))
         : [],
       wishlist: wishlistItems.map((item) => ({
         _id: item._id,
@@ -351,17 +350,17 @@ router.get("/", auth, async (req, res) => {
       })),
       recentActivity: disabled.recentActivity
         ? disabled.recentActivity.slice(0, 10).map((activity) => ({
-            action: activity.action,
-            description: activity.description,
-            date: activity.date
-              ? activity.date.toLocaleDateString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })
-              : "",
-            timestamp: activity.date,
-          }))
+          action: activity.action,
+          description: activity.description,
+          date: activity.date
+            ? activity.date.toLocaleDateString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
+            : "",
+          timestamp: activity.date,
+        }))
         : [],
       statistics: {
         totalWishlistItems,
@@ -373,9 +372,9 @@ router.get("/", auth, async (req, res) => {
         totalDocuments: disabled.documents ? disabled.documents.length : 0,
         memberSince: disabled.createdAt
           ? disabled.createdAt.toLocaleDateString("en-IN", {
-              month: "long",
-              year: "numeric",
-            })
+            month: "long",
+            year: "numeric",
+          })
           : "",
       },
       createdAt: disabled.createdAt,
@@ -492,27 +491,27 @@ router.post("/documents", [
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
         message: "Validation failed",
-        errors: errors.array() 
+        errors: errors.array()
       });
     }
-    
+
     if (!req.file) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: "No document file provided" 
+        message: "No document file provided"
       });
     }
 
     const userId = req.user.userId || req.user.id;
     const disabled = await Disabled.findById(userId);
-    
+
     if (!disabled) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "User not found" 
+        message: "User not found"
       });
     }
 
@@ -525,7 +524,7 @@ router.post("/documents", [
 
     disabled.documents.push(newDocument);
     await disabled.save();
-    
+
     if (disabled.addActivity) {
       await disabled.addActivity("Uploaded Document", `Uploaded ${newDocument.name}`);
     }
@@ -537,20 +536,59 @@ router.post("/documents", [
         _id: disabled.documents[disabled.documents.length - 1]._id,
         name: newDocument.name,
         status: newDocument.status,
-        date: new Date().toLocaleDateString("en-IN", { 
-          day: "2-digit", 
-          month: "short", 
-          year: "numeric" 
+        date: new Date().toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric"
         })
       }
     });
   } catch (error) {
     console.error("Upload document error:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: "Server error",
       error: process.env.NODE_ENV === "development" ? error.message : "Internal server error"
     });
+  }
+});
+
+// Change password endpoint
+router.put("/change-password", auth, [
+  body("oldPassword").notEmpty().withMessage("Old password is required"),
+  body("newPassword").isLength({ min: 6 }).withMessage("New password must be at least 6 characters long")
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.userId || req.user.id;
+
+    const disabled = await Disabled.findById(userId);
+    if (!disabled) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Verify old password
+    const isMatch = await disabled.comparePassword(oldPassword);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Incorrect current password" });
+    }
+
+    // Update password
+    disabled.password = newPassword;
+    await disabled.save();
+
+    // Log activity
+    await Disabled.addActivitySafely(userId, "Changed Password", "Account password was updated");
+
+    res.json({ success: true, message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 

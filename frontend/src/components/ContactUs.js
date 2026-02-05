@@ -17,7 +17,10 @@ import {
   LinkedIn,
 } from '@mui/icons-material';
 
+import { useThemeToggle } from '../context/ThemeContext';
+
 const ContactPage = () => {
+  const { isHighContrast } = useThemeToggle();
   const contactInfo = [
     {
       icon: MailOutline,
@@ -64,13 +67,14 @@ const ContactPage = () => {
   ];
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: isHighContrast ? 'background.default' : '#fafafa' }}>
       {/* Header with Fade In */}
       <Fade in={true} timeout={1000}>
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #4285F4 0%, #1565C0 100%)',
-            color: 'white',
+            background: isHighContrast ? 'background.paper' : 'linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%)',
+            borderBottom: isHighContrast ? '2px solid #ffff00' : 'none',
+            color: isHighContrast ? 'primary.main' : 'white',
             py: 12,
             textAlign: 'center',
           }}
@@ -96,16 +100,16 @@ const ContactPage = () => {
       {/* Contact Info Cards with Staggered Animation */}
       <Container maxWidth="lg" sx={{ py: 8 }}>
         <Fade in={true} timeout={1200}>
-          <Typography variant="h4" align="center" sx={{ fontWeight: 700, mb: 6, color: '#263238' }}>
+          <Typography variant="h4" align="center" sx={{ fontWeight: 700, mb: 6, color: isHighContrast ? 'primary.main' : '#263238' }}>
             Get In Touch
           </Typography>
         </Fade>
-        
+
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'center' }}>
           {contactInfo.map((info, index) => (
-            <Zoom 
+            <Zoom
               key={index}
-              in={true} 
+              in={true}
               timeout={800}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
@@ -123,15 +127,16 @@ const ContactPage = () => {
                   flexDirection: 'column',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  background: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  background: isHighContrast ? 'background.paper' : 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)',
+                  border: isHighContrast ? '2px solid #ffff00' : 'none',
+                  boxShadow: isHighContrast ? 'none' : '0 4px 12px rgba(0,0,0,0.1)',
                   transition: 'all 0.3s ease',
                   textDecoration: 'none',
                   cursor: 'pointer',
                   '&:hover': {
                     transform: 'translateY(-8px)',
-                    boxShadow: '0 8px 20px rgba(66, 133, 244, 0.3)',
-                    background: 'linear-gradient(135deg, #BBDEFB 0%, #90CAF9 100%)',
+                    boxShadow: isHighContrast ? '0 0 15px #ffff00' : '0 8px 20px rgba(66, 133, 244, 0.3)',
+                    background: isHighContrast ? 'background.paper' : 'linear-gradient(135deg, #BBDEFB 0%, #90CAF9 100%)',
                   },
                 }}
               >
@@ -150,7 +155,7 @@ const ContactPage = () => {
                 >
                   <info.icon sx={{ fontSize: 32, color: 'white' }} />
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: '#263238' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: isHighContrast ? 'primary.main' : '#263238' }}>
                   {info.title}
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
@@ -167,8 +172,9 @@ const ContactPage = () => {
         <Box
           component="footer"
           sx={{
-            background: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 100%)',
-            color: 'white',
+            background: isHighContrast ? 'background.paper' : 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)',
+            borderTop: isHighContrast ? '2px solid #ffff00' : 'none',
+            color: isHighContrast ? 'primary.main' : 'white',
             py: 6,
             mt: 8,
           }}

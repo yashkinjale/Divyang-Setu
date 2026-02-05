@@ -19,10 +19,33 @@ const highContrastTheme = createTheme({
   components: {
     MuiCssBaseline: {
       styleOverrides: {
+        '*': {
+          boxSizing: 'border-box',
+        },
         body: {
           backgroundColor: '#000000',
           color: '#ffff00',
+        },
+      },
+    },
+
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          borderBottom: '2px solid #ffff00', // Match theme.js 2px logic
           boxSizing: 'border-box',
+          backgroundImage: 'none',
+        },
+      },
+    },
+
+    MuiToolbar: {
+      styleOverrides: {
+        root: {
+          minHeight: '64px',
+          padding: '0 16px !important', // Match theme.js exactly
+          display: 'flex',
+          alignItems: 'center',
         },
       },
     },
@@ -56,6 +79,11 @@ const highContrastTheme = createTheme({
           boxShadow: '0 0 10px rgba(255,255,0,0.3)',
           border: '1px solid #ffff00',
           boxSizing: 'border-box',
+          // Prevent border on AppBar since it has MuiAppBar override
+          '&.MuiAppBar-root': {
+            border: 'none',
+            borderBottom: '2px solid #ffff00',
+          },
         },
       },
     },
@@ -188,6 +216,15 @@ const highContrastTheme = createTheme({
 
     MuiListItemText: {
       styleOverrides: { primary: { color: '#ffff00', fontWeight: 500 } },
+    },
+
+    // Force all containers and boxes that might have hardcoded backgrounds
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'transparent !important',
+        },
+      },
     },
 
     MuiSkeleton: {

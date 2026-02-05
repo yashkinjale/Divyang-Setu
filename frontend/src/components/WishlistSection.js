@@ -26,6 +26,8 @@ import {
   Zoom,
   Fade,
   Paper,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -58,6 +60,10 @@ const WishlistSection = () => {
     category: '',
     supportingDocuments: []
   });
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   // Fetch wishlist items with debugging
   const fetchWishlistItems = useCallback(async () => {
@@ -476,7 +482,7 @@ const WishlistSection = () => {
                                 sx={{
                                   fontWeight: 700,
                                   color: '#1976d2',
-                                  fontSize: '0.875rem'
+                                  fontSize: { xs: '0.75rem', sm: '0.875rem' }
                                 }}
                               >
                                 ₹{amountRaised.toLocaleString()} / ₹{item.amountRequired.toLocaleString()}
@@ -603,6 +609,7 @@ const WishlistSection = () => {
           onClose={() => !loading && setOpenForm(false)}
           maxWidth="sm"
           fullWidth
+          fullScreen={isMobile}
           TransitionComponent={Zoom}
           PaperProps={{
             sx: {

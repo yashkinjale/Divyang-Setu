@@ -19,6 +19,7 @@ import {
   useTheme,
   useMediaQuery
 } from '@mui/material';
+import { useThemeToggle } from '../context/ThemeContext';
 import {
   Close as CloseIcon,
   Search as SearchIcon,
@@ -111,6 +112,8 @@ const categories = [
 
 const SuccessStoryCard = ({ story, onReadMore }) => {
   const theme = useTheme();
+  const { isHighContrast } = useThemeToggle();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <motion.div
@@ -139,17 +142,17 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
         {/* Header Section with Avatar and Category */}
         <Box sx={{
           position: 'relative',
-          p: 3,
+          p: { xs: 2.5, sm: 3 },
           textAlign: 'center',
-          background: `linear-gradient(135deg, ${theme.palette.primary.light}15, ${theme.palette.secondary.light}15)`,
+          background: isHighContrast ? 'background.default' : `linear-gradient(135deg, ${theme.palette.primary.light}15, ${theme.palette.secondary.light}15)`,
           borderBottom: `1px solid ${theme.palette.divider}`
         }}>
           <Avatar
             src={story.image}
             alt={story.name}
             sx={{
-              width: 90,
-              height: 90,
+              width: { xs: 70, sm: 90 },
+              height: { xs: 70, sm: 90 },
               mx: 'auto',
               mb: 2,
               border: `4px solid ${theme.palette.background.paper}`,
@@ -181,8 +184,8 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          p: 3,
-          '&:last-child': { pb: 3 }
+          p: { xs: 2.5, sm: 3 },
+          '&:last-child': { pb: { xs: 2.5, sm: 3 } }
         }}>
           <Typography
             variant="h6"
@@ -200,7 +203,7 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
           </Typography>
           <Typography
             variant="subtitle1"
-            color="primary"
+            color={isHighContrast ? "primary.main" : "primary"}
             gutterBottom
             sx={{
               fontWeight: 600,
@@ -360,6 +363,8 @@ const SuccessStoryModal = ({ open, story, onClose }) => {
 
 const SuccessStoriesPage = () => {
   const theme = useTheme();
+  const { isHighContrast } = useThemeToggle();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [selectedStory, setSelectedStory] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -381,7 +386,7 @@ const SuccessStoriesPage = () => {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: 4, bgcolor: 'background.default' }}>
       {/* Page Header */}
       <Box sx={{
         textAlign: 'center',
@@ -403,10 +408,11 @@ const SuccessStoriesPage = () => {
             gutterBottom
             sx={{
               fontWeight: 700,
-              background: 'linear-gradient(45deg, #2563eb, #10b981)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              background: isHighContrast ? 'none' : 'linear-gradient(45deg, #2563eb, #10b981)',
+              backgroundClip: isHighContrast ? 'none' : 'text',
+              WebkitBackgroundClip: isHighContrast ? 'none' : 'text',
+              WebkitTextFillColor: isHighContrast ? 'primary.main' : 'transparent',
+              color: isHighContrast ? 'primary.main' : 'inherit',
               mb: 2,
               fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
             }}

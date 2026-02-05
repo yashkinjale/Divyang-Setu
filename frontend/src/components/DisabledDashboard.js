@@ -104,13 +104,17 @@ const Logo = () => {
       display: 'flex',
       alignItems: 'center',
       gap: 1,
-      mr: 2
+      mr: 2,
+      width: { xs: 'auto', sm: 220 }, // Fixed width to prevent pushing
+      flexShrink: 0
     }}>
-      <img
-        src={require('./Disabled.jpg')}
-        alt="DivyangSetu Logo"
-        style={{ height: 50, width: 50, objectFit: 'contain' }}
-      />
+      <Box sx={{ width: 50, height: 50, flexShrink: 0, position: 'relative' }}>
+        <img
+          src={require('./Disabled.jpg')}
+          alt="DivyangSetu Logo"
+          style={{ height: '100%', width: '100%', objectFit: 'contain' }}
+        />
+      </Box>
       <Typography
         variant="h5"
         sx={{
@@ -118,7 +122,9 @@ const Logo = () => {
           background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
-          display: { xs: 'none', sm: 'block' }
+          display: { xs: 'none', sm: 'block' },
+          fontSize: '1.5rem', // Fixed font size to prevent jitter
+          lineHeight: 1
         }}
       >
         DivyangSetu
@@ -131,7 +137,7 @@ const DisabledDashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { isHighContrast, toggleTheme } = useThemeToggle();
   const { enabled: screenReader, toggle: toggleScreenReader, announce } = useScreenReader();
   const { enabled: voiceNav, toggle: toggleVoiceNav } = useVoiceNav();
@@ -199,6 +205,7 @@ const DisabledDashboard = () => {
             active={activeSection === item.section}
             onClick={() => {
               navigate(item.route);
+              if (isMobile) handleDrawerToggle();
             }}
           />
         ))}
@@ -208,15 +215,13 @@ const DisabledDashboard = () => {
         <SidebarItem
           icon={SettingsIcon}
           text="Settings"
-          onClick={() => navigate('/disabled/dashboard/settings')}
+          onClick={() => {
+            navigate('/disabled/dashboard/settings');
+            if (isMobile) handleDrawerToggle();
+          }}
           active={activeSection === 'settings'}
         />
-        <SidebarItem
-          icon={HelpIcon}
-          text="Help & Support"
-          onClick={() => navigate('/disabled/dashboard/help')}
-          active={activeSection === 'help'}
-        />
+
       </List>
     </Box>
   );
@@ -244,7 +249,13 @@ const DisabledDashboard = () => {
           </IconButton>
           <Logo />
           <Box sx={{ flexGrow: 1 }} />
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: { xs: 0.25, sm: 1 },
+            maxWidth: { xs: 'calc(100% - 100px)', sm: 'auto' }, // Prevent icons from pushing too much
+            overflow: 'hidden' // Safety measure
+          }}>
             <Tooltip title="Screen Reader Mode">
               <IconButton
                 color={screenReader ? 'primary' : 'default'}
@@ -252,33 +263,52 @@ const DisabledDashboard = () => {
                   toggleScreenReader();
                   setTimeout(() => announce(screenReader ? 'Screen reader disabled' : 'Screen reader enabled'), 0);
                 }}
+                sx={{ width: 40, height: 40 }} // Fixed size
               >
-                <ScreenReaderIcon />
+                <ScreenReaderIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title={isHighContrast ? "Disable High Contrast Mode" : "Enable High Contrast Mode"}>
               <IconButton
                 color={isHighContrast ? 'primary' : 'default'}
                 onClick={toggleTheme}
+                sx={{ width: 40, height: 40 }} // Fixed size
               >
-                <ContrastIcon />
+                <ContrastIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Voice Navigation">
               <IconButton
                 color={voiceNav ? 'primary' : 'default'}
                 onClick={toggleVoiceNav}
+                sx={{
+                  width: 40,
+                  height: 40,
+                  display: { xs: 'none', sm: 'flex' } // Hide Mic on extra small to save space
+                }}
               >
-                {voiceNav ? <MicIcon /> : <MicOffIcon />}
+                {voiceNav ? <MicIcon fontSize="small" /> : <MicOffIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
             <Button
               variant="contained"
               color="error"
               startIcon={<WarningIcon />}
-              sx={{ ml: 2 }}
+              sx={{
+                ml: 1,
+                minWidth: { xs: '40px', sm: 180 },
+                width: { xs: '40px', sm: 'auto' },
+                height: { xs: '40px', sm: 'auto' },
+                whiteSpace: 'nowrap',
+                '& .MuiButton-startIcon': {
+                  margin: { xs: 0, sm: '0 8px 0 -4px' }
+                },
+                '& .MuiButton-label, & .MuiTypography-root, & text': {
+                  display: { xs: 'none', sm: 'inline-block' }
+                }
+              }}
             >
-              Emergency Help
+              <Typography component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Emergency Help</Typography>
             </Button>
             <IconButton
               edge="end"
@@ -339,7 +369,38 @@ const DisabledDashboard = () => {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleProfileMenuClose}
+        PaperProps={{
+          sx: {
+            minWidth: 200,
+            mt: 1.5,
+            border: isHighContrast ? '2px solid #FFFF00' : 'none',
+            '& .MuiAvatar-root': {
+              width: 32,
+              height: 32,
+              ml: -0.5,
+              mr: 1,
+            },
+          },
+        }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
+            <Avatar src={user?.profileImage || user?.avatar} sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
+              {user?.name?.charAt(0)}
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                {user?.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                {user?.email}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+        <Divider />
         <MenuItem onClick={() => {
           handleProfileMenuClose();
           navigate('/disabled/dashboard/profile');

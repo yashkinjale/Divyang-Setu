@@ -12,7 +12,12 @@ import {
   Link,
   IconButton,
   TextField,
-  InputAdornment
+  InputAdornment,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemText,
+  useMediaQuery
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
@@ -27,18 +32,30 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import SearchIcon from '@mui/icons-material/Search';
+import ContrastIcon from '@mui/icons-material/Contrast';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
 import MenuIcon from '@mui/icons-material/Menu';
+import { useThemeToggle } from '../context/ThemeContext';
+import { useVoiceNav } from '../context/VoiceNavContext';
+import { useScreenReader } from '../context/ScreenReaderContext';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import Tooltip from '@mui/material/Tooltip';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isHighContrast, toggleTheme } = useThemeToggle();
+  const { enabled: voiceNav, toggle: toggleVoiceNav } = useVoiceNav();
+  const { enabled: screenReader, toggle: toggleScreenReader, announce } = useScreenReader();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const navItems = [
+  const navLinks = [
     { label: 'Job Postings', path: '/job-postings' },
     { label: 'About Us', path: '/about' },
     { label: 'Contact Us', path: '/contact' }
@@ -64,11 +81,11 @@ const Navbar = () => {
       color="default"
       elevation={0}
       sx={{
-        bgcolor: scrolled ? 'rgba(255, 255, 255, 0.7)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(15px)' : 'none',
-        borderBottom: scrolled ? '1px solid rgba(0, 0, 0, 0.05)' : 'none',
+        bgcolor: isHighContrast ? 'background.default' : (scrolled ? 'rgba(255, 255, 255, 0.7)' : 'transparent'),
+        backdropFilter: scrolled && !isHighContrast ? 'blur(15px)' : 'none',
+        borderBottom: isHighContrast ? '2px solid #ffff00' : (scrolled ? '1px solid rgba(0, 0, 0, 0.05)' : 'none'),
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: scrolled ? '0 4px 20px rgba(0,0,0,0.05)' : 'none',
+        boxShadow: scrolled && !isHighContrast ? '0 4px 20px rgba(0,0,0,0.05)' : 'none',
         position: 'fixed',
         top: 0,
         zIndex: 1100,
@@ -87,19 +104,25 @@ const Navbar = () => {
                 transform: 'scale(1.02)',
               },
             }}
-            onClick={() => navigate('/')}
+            onClick={() => {
+              if (window.location.pathname !== '/') {
+                navigate('/');
+              }
+            }}
           >
-            <img
-              src={require('./Disabled.jpg')}
-              alt="DivyangSetu Logo"
-              style={{
-                height: 50,
-                width: 50,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                boxShadow: scrolled ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
-              }}
-            />
+            <Box sx={{ width: 50, height: 50, flexShrink: 0, position: 'relative' }}>
+              <img
+                src={require('./Disabled.jpg')}
+                alt="DivyangSetu Logo"
+                style={{
+                  height: '100%',
+                  width: '100%',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  boxShadow: scrolled ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+                }}
+              />
+            </Box>
             <Typography
               variant="h5"
               component="div"
@@ -109,70 +132,153 @@ const Navbar = () => {
                 WebkitTextFillColor: 'transparent',
                 fontWeight: 800,
                 letterSpacing: '-0.5px',
-                display: { xs: 'none', md: 'block' },
-                fontSize: scrolled ? '1.3rem' : '1.5rem',
+                display: { xs: 'none', sm: 'block' },
+                fontSize: '1.5rem',
+                lineHeight: 1
               }}
             >
               DivyangSetu
             </Typography>
           </Box>
 
-
-
-          {/* Mobile Menu Button */}
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ display: { md: 'none' }, color: scrolled ? '#1a1a1a' : '#1a1a1a' }} // Ensure visibility
-          >
-            <MenuIcon />
-          </IconButton>
-
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
-            {navItems.map((link) => (
-              <Button
-                key={link.label}
-                variant="text"
-                sx={{
-                  color: scrolled ? '#1a1a1a' : 'white',
-                  textTransform: 'none',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  px: 2,
-                  position: 'relative',
-                  '&:hover': {
-                    color: 'primary.main',
-                    backgroundColor: 'transparent',
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, mr: 1 }}>
+              {navLinks.map((link) => (
+                <Button
+                  key={link.label}
+                  variant="text"
+                  sx={{
+                    color: scrolled || isHighContrast ? 'inherit' : 'white',
+                    textTransform: 'none',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    px: 2,
+                    position: 'relative',
+                    '&:hover': {
+                      color: 'primary.main',
+                      backgroundColor: 'transparent',
+                      '&::after': {
+                        width: '70%',
+                      }
+                    },
                     '&::after': {
-                      width: '70%',
+                      content: '""',
+                      position: 'absolute',
+                      bottom: 6,
+                      left: '15%',
+                      width: '0%',
+                      height: '2px',
+                      bgcolor: 'primary.main',
+                      transition: 'width 0.3s ease',
                     }
-                  },
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    bottom: 6,
-                    left: '15%',
-                    width: '0%',
-                    height: '2px',
-                    bgcolor: 'primary.main',
-                    transition: 'width 0.3s ease',
-                  }
+                  }}
+                  onClick={() => navigate(link.path)}
+                >
+                  {link.label}
+                </Button>
+              ))}
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Tooltip title="Screen Reader Mode">
+                <IconButton
+                  onClick={() => {
+                    toggleScreenReader();
+                    setTimeout(() => announce(screenReader ? 'Screen reader disabled' : 'Screen reader enabled'), 0);
+                  }}
+                  sx={{
+                    color: screenReader ? 'primary.main' : (scrolled || isHighContrast ? 'inherit' : 'white'),
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  <RecordVoiceOverIcon />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title={isHighContrast ? "Disable High Contrast" : "Enable High Contrast"}>
+                <IconButton
+                  onClick={toggleTheme}
+                  sx={{
+                    color: isHighContrast ? 'primary.main' : (scrolled || isHighContrast ? 'inherit' : 'white'),
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  <ContrastIcon />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Voice Navigation">
+                <IconButton
+                  onClick={toggleVoiceNav}
+                  sx={{
+                    color: voiceNav ? 'primary.main' : (scrolled || isHighContrast ? 'inherit' : 'white'),
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  {voiceNav ? <MicIcon /> : <MicOffIcon />}
+                </IconButton>
+              </Tooltip>
+
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{
+                  display: { md: 'none' },
+                  color: scrolled || isHighContrast ? 'inherit' : 'white',
                 }}
-                onClick={() => navigate(link.path)}
               >
-                {link.label}
-              </Button>
-            ))}
+                <MenuIcon />
+              </IconButton>
+            </Box>
           </Box>
         </Toolbar>
       </Container>
-    </AppBar >
+      <Drawer
+        variant="temporary"
+        anchor="right"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 250 },
+        }}
+      >
+        <Box sx={{ p: 2, height: '100%', bgcolor: 'background.default' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <IconButton onClick={handleDrawerToggle}>
+              <ArrowForwardIosIcon />
+            </IconButton>
+          </Box>
+          <List>
+            {navLinks.map((link) => (
+              <ListItemButton
+                key={link.label}
+                onClick={() => {
+                  navigate(link.path);
+                  handleDrawerToggle();
+                }}
+                sx={{ borderRadius: 1, mb: 1 }}
+              >
+                <ListItemText
+                  primary={link.label}
+                  primaryTypographyProps={{ fontWeight: 600 }}
+                />
+              </ListItemButton>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
+    </AppBar>
   );
 };
 
 const TestimonialCard = ({ name, role, content, image, reverse = false }) => {
+  const { isHighContrast } = useThemeToggle();
   return (
     <Card
       sx={{
@@ -208,7 +314,7 @@ const TestimonialCard = ({ name, role, content, image, reverse = false }) => {
       >
         <Typography
           variant="h4"
-          sx={{ fontWeight: 800, mb: 1.5, color: '#1a1a1a', letterSpacing: '-0.8px' }}
+          sx={{ fontWeight: 800, mb: 1.5, color: isHighContrast ? 'primary.main' : '#1a1a1a', letterSpacing: '-0.8px' }}
         >
           {name}
         </Typography>
@@ -227,7 +333,7 @@ const TestimonialCard = ({ name, role, content, image, reverse = false }) => {
           variant="body1"
           sx={{
             lineHeight: 1.85,
-            color: '#444',
+            color: isHighContrast ? 'text.primary' : '#444',
             fontSize: '1rem',
           }}
         >
@@ -240,9 +346,16 @@ const TestimonialCard = ({ name, role, content, image, reverse = false }) => {
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { isHighContrast } = useThemeToggle();
+  const theme = useTheme();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [serviceSlide, setServiceSlide] = useState(0);
-  const [searchQuery, setSearchQuery] = useState(''); // ⭐ NEW: Added search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isXS = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const itemsPerSlide = isXS ? 1 : (isMobile ? 2 : 4);
+  const slideStep = 100 / itemsPerSlide;
 
   const backgroundImages = [
     'https://media.istockphoto.com/id/486895162/photo/composite-image-of-cute-disabled-pupil.jpg?s=612x612&w=0&k=20&c=Bst_86KHTmo7HY_-uo20jpnsMQ-wmaeCyISZidpXqG4=',
@@ -404,7 +517,7 @@ const LandingPage = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: isHighContrast ? 'background.default' : '#fafafa' }}>
       <Navbar />
 
       {/* Hero Section with Carousel */}
@@ -419,7 +532,7 @@ const LandingPage = () => {
         }}
       >
         {/* Background Images Carousel */}
-        {backgroundImages.map((image, index) => (
+        {!isHighContrast && backgroundImages.map((image, index) => (
           <Box
             key={index}
             sx={{
@@ -446,7 +559,7 @@ const LandingPage = () => {
             left: 0,
             width: '100%',
             height: '100%',
-            background: 'linear-gradient(135deg, rgba(25, 47, 89, 0.6) 0%, rgba(66, 133, 244, 0.5) 100%)',
+            background: isHighContrast ? '#000000' : 'linear-gradient(135deg, rgba(25, 47, 89, 0.6) 0%, rgba(66, 133, 244, 0.5) 100%)',
             zIndex: 1,
           }}
         />
@@ -461,7 +574,7 @@ const LandingPage = () => {
               variant="h2"
               component="h1"
               sx={{
-                color: 'white',
+                color: isHighContrast ? 'primary.main' : 'white',
                 fontWeight: 700,
                 mb: 2,
                 fontSize: { xs: '2.5rem', md: '4rem' },
@@ -490,7 +603,7 @@ const LandingPage = () => {
             <Typography
               variant="h5"
               sx={{
-                color: 'white',
+                color: isHighContrast ? 'text.primary' : 'white',
                 opacity: 0.95,
                 maxWidth: '600px',
                 mx: 'auto',
@@ -528,11 +641,14 @@ const LandingPage = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for services, schemes, jobs..."
                 sx={{
-                  bgcolor: 'rgba(255, 255, 255, 0.95)',
+                  bgcolor: isHighContrast ? 'background.paper' : 'rgba(255, 255, 255, 0.95)',
                   '& .MuiOutlinedInput-root': {
                     borderRadius: '50px 0 0 50px',
+                    borderColor: isHighContrast ? 'primary.main' : 'transparent',
+                    borderStyle: isHighContrast ? 'solid' : 'none',
+                    borderWidth: isHighContrast ? '1px' : '0',
                     '& fieldset': {
-                      border: 'none',
+                      border: isHighContrast ? '1px solid #ffff00' : 'none',
                     },
                     '& input': {
                       padding: '20px 30px',
@@ -667,16 +783,16 @@ const LandingPage = () => {
                     height: '100%',
                     transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
                     cursor: 'pointer',
-                    background: 'white',
-                    border: '1px solid rgba(0,0,0,0.03)',
+                    background: isHighContrast ? 'background.paper' : 'white',
+                    border: isHighContrast ? '2px solid #ffff00' : '1px solid rgba(0,0,0,0.03)',
                     position: 'relative',
                     overflow: 'hidden',
                     '&:hover': {
-                      boxShadow: '0 30px 60px rgba(0,0,0,0.12)',
+                      boxShadow: isHighContrast ? '0 0 20px #ffff00' : '0 30px 60px rgba(0,0,0,0.12)',
                       transform: 'scale(1.02)',
                       borderColor: 'primary.light',
                       '& .card-gradient': {
-                        opacity: 0.05,
+                        opacity: isHighContrast ? 0 : 0.05,
                       }
                     },
                   }}
@@ -725,7 +841,7 @@ const LandingPage = () => {
                       sx={{
                         fontWeight: 800,
                         mb: 3,
-                        color: '#1a1a1a',
+                        color: isHighContrast ? 'primary.main' : '#1a1a1a',
                         letterSpacing: '-1px'
                       }}
                     >
@@ -737,7 +853,7 @@ const LandingPage = () => {
                         fontSize: '15px',
                         mb: 3.5,
                         lineHeight: 1.5,
-                        color: 'text.secondary',
+                        color: isHighContrast ? 'text.primary' : 'text.secondary',
                         maxWidth: '100%',
                         mx: 'auto'
                       }}
@@ -803,12 +919,12 @@ const LandingPage = () => {
         sx={{
           width: '80px',
           height: '5px',
-          bgcolor: 'primary.main',
+          bgcolor: isHighContrast ? 'primary.main' : 'primary.main',
           borderRadius: '10px',
           mx: 'auto',
           mt: 4, // Reduced gap from top boxes
           mb: 6,
-          boxShadow: '0 2px 10px rgba(66, 133, 244, 0.3)',
+          boxShadow: isHighContrast ? 'none' : '0 2px 10px rgba(66, 133, 244, 0.3)',
         }}
       />
 
@@ -876,7 +992,7 @@ const LandingPage = () => {
             sx={{
               display: 'flex',
               transition: 'transform 0.5s ease-in-out',
-              transform: `translateX(-${(serviceSlide % services.length) * (100 / 4)}%)`,
+              transform: `translateX(-${(serviceSlide % services.length) * slideStep}%)`,
             }}
             onTransitionEnd={() => {
               // Reset position for infinite scroll
@@ -889,7 +1005,7 @@ const LandingPage = () => {
               <Box
                 key={index}
                 sx={{
-                  minWidth: { xs: '280px', md: '25%' },
+                  minWidth: `${slideStep}%`,
                   px: 1.5,
                 }}
               >
@@ -905,12 +1021,13 @@ const LandingPage = () => {
                     minHeight: '280px', // More compact height
                     transition: 'all 0.3s ease',
                     cursor: 'pointer',
-                    background: service.gradientBg, // Off-white color
-                    border: '1px solid rgba(0,0,0,0.08)', // Defined border
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)', // Soft shadow
+                    background: isHighContrast ? 'background.paper' : service.gradientBg, // Off-white color
+                    border: isHighContrast ? '2px solid #ffff00' : '1px solid rgba(0,0,0,0.08)', // Defined border
+                    p: 2.5, // Reduced padding
+                    boxShadow: isHighContrast ? 'none' : '0 4px 20px rgba(0,0,0,0.05)', // Soft shadow
                     '&:hover': {
                       transform: 'translateY(-8px) scale(1.02)',
-                      boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
+                      boxShadow: isHighContrast ? '0 0 15px #ffff00' : '0 20px 40px rgba(0,0,0,0.12)',
                       borderColor: service.iconColor,
                     },
                   }}
@@ -933,14 +1050,14 @@ const LandingPage = () => {
                         sx={{
                           fontWeight: 700,
                           mb: 2,
-                          color: '#333',
+                          color: isHighContrast ? 'primary.main' : '#333',
                         }}
                       >
                         {service.title}
                       </Typography>
                       <Typography
                         variant="body2"
-                        sx={{ mb: 3, opacity: 0.8, lineHeight: 1.6, color: '#555' }}
+                        sx={{ mb: 3, opacity: 0.8, lineHeight: 1.6, color: isHighContrast ? 'text.primary' : '#555' }}
                       >
                         {service.description}
                       </Typography>
@@ -956,6 +1073,7 @@ const LandingPage = () => {
                         fontWeight: 700,
                         px: 3,
                         transition: 'all 0.3s ease',
+                        backgroundColor: isHighContrast ? 'transparent' : 'transparent',
                         '&:hover': {
                           bgcolor: service.iconColor,
                           color: 'white',
@@ -1016,7 +1134,7 @@ const LandingPage = () => {
       />
 
       {/* Testimonials */}
-      <Box sx={{ bgcolor: 'white', py: 10 }}>
+      <Box sx={{ bgcolor: isHighContrast ? 'background.default' : 'white', py: 10 }}>
         <Container maxWidth="lg">
           <Typography variant="h3" align="center" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
             Success Stories
@@ -1073,9 +1191,10 @@ const LandingPage = () => {
       {/* Call to Action */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)',
+          background: isHighContrast ? 'background.paper' : 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)',
+          borderTop: isHighContrast ? '2px solid #ffff00' : 'none',
           py: 10,
-          color: 'white',
+          color: isHighContrast ? 'primary.main' : 'white',
         }}
       >
         <Container maxWidth="md">
@@ -1103,7 +1222,7 @@ const LandingPage = () => {
                 borderRadius: '6px',
                 px: 5,
                 py: 1.5,
-                background: 'linear-gradient(45deg, #42a5f5, #1e88e5)',
+                background: 'linear-gradient(45deg, #64b5f6, #42a5f5)',
                 color: 'white',
                 textTransform: 'none',
                 fontWeight: 600,
@@ -1111,7 +1230,7 @@ const LandingPage = () => {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                 transition: 'all 0.3s ease',
                 '&:hover': {
-                  background: 'linear-gradient(45deg, #1e88e5, #1565c0)',
+                  background: 'linear-gradient(45deg, #42a5f5, #2196f3)',
                   boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
                   transform: 'translateY(-2px)',
                 },
@@ -1127,7 +1246,7 @@ const LandingPage = () => {
                 borderRadius: '6px',
                 px: 5,
                 py: 1.5,
-                background: 'linear-gradient(45deg, #42a5f5, #1e88e5)',
+                background: 'linear-gradient(45deg, #64b5f6, #42a5f5)',
                 color: 'white',
                 textTransform: 'none',
                 fontWeight: 600,
@@ -1135,7 +1254,7 @@ const LandingPage = () => {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                 transition: 'all 0.3s ease',
                 '&:hover': {
-                  background: 'linear-gradient(45deg, #1e88e5, #1565c0)',
+                  background: 'linear-gradient(45deg, #42a5f5, #2196f3)',
                   boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
                   transform: 'translateY(-2px)',
                 },
@@ -1148,7 +1267,7 @@ const LandingPage = () => {
       </Box>
 
       {/* Footer */}
-      <Box component="footer" sx={{ bgcolor: 'white', py: 8, borderTop: '1px solid #e0e0e0' }}>
+      <Box component="footer" sx={{ bgcolor: isHighContrast ? 'background.paper' : 'white', py: 8, borderTop: isHighContrast ? '2px solid #ffff00' : '1px solid #e0e0e0' }}>
         <Container maxWidth="lg">
           <Grid container spacing={6}>
             <Grid item xs={12} md={4}>
@@ -1158,27 +1277,27 @@ const LandingPage = () => {
                   alt="DivyangSetu Logo"
                   style={{ height: 50, width: 50, objectFit: 'contain' }}
                 />
-                <Typography variant="h6" sx={{ fontWeight: 700, color: '#4285F4' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: isHighContrast ? 'primary.main' : '#4285F4' }}>
                   DivyangSetu
                 </Typography>
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '14px', lineHeight: 1.7 }}>
+              <Typography variant="body2" color={isHighContrast ? 'text.primary' : 'text.secondary'} sx={{ fontSize: '14px', lineHeight: 1.7 }}>
                 Bridging the gap between donors and differently-abled individuals through technology and compassion.
               </Typography>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, mb: 2, color: isHighContrast ? 'primary.main' : 'inherit' }}>
                 Quick Links
               </Typography>
-              <Link href="/donor/register" color="text.secondary" display="block" sx={{ mb: 1.5, textDecoration: 'none', fontSize: '14px', '&:hover': { color: 'primary.main' } }}>
+              <Link href="/donor/register" color={isHighContrast ? 'text.primary' : 'text.secondary'} display="block" sx={{ mb: 1.5, textDecoration: 'none', fontSize: '14px', '&:hover': { color: 'primary.main' } }}>
                 Donate
               </Link>
-              <Link href="/disabled/register" color="text.secondary" display="block" sx={{ mb: 1.5, textDecoration: 'none', fontSize: '14px', '&:hover': { color: 'primary.main' } }}>
+              <Link href="/disabled/register" color={isHighContrast ? 'text.primary' : 'text.secondary'} display="block" sx={{ mb: 1.5, textDecoration: 'none', fontSize: '14px', '&:hover': { color: 'primary.main' } }}>
                 Get Help
               </Link>
               <Link
                 onClick={() => navigate('/about')}
-                color="text.secondary"
+                color={isHighContrast ? 'text.primary' : 'text.secondary'}
                 display="block"
                 sx={{
                   mb: 1.5,
@@ -1192,7 +1311,7 @@ const LandingPage = () => {
               </Link>
               <Link
                 onClick={() => navigate('/contact')}
-                color="text.secondary"
+                color={isHighContrast ? 'text.primary' : 'text.secondary'}
                 display="block"
                 sx={{
                   mb: 1.5,
@@ -1206,26 +1325,26 @@ const LandingPage = () => {
               </Link>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, mb: 2, color: isHighContrast ? 'primary.main' : 'inherit' }}>
                 Connect With Us
               </Typography>
               <Box>
-                <IconButton color="default" href="#" sx={{ '&:hover': { color: 'primary.main' } }}>
+                <IconButton color={isHighContrast ? "primary" : "default"} href="#" sx={{ '&:hover': { color: 'primary.main' } }}>
                   <LinkedInIcon />
                 </IconButton>
-                <IconButton color="default" href="#" sx={{ '&:hover': { color: 'primary.main' } }}>
+                <IconButton color={isHighContrast ? "primary" : "default"} href="#" sx={{ '&:hover': { color: 'primary.main' } }}>
                   <TwitterIcon />
                 </IconButton>
-                <IconButton color="default" href="#" sx={{ '&:hover': { color: 'primary.main' } }}>
+                <IconButton color={isHighContrast ? "primary" : "default"} href="#" sx={{ '&:hover': { color: 'primary.main' } }}>
                   <FacebookIcon />
                 </IconButton>
-                <IconButton color="default" href="#" sx={{ '&:hover': { color: 'primary.main' } }}>
+                <IconButton color={isHighContrast ? "primary" : "default"} href="#" sx={{ '&:hover': { color: 'primary.main' } }}>
                   <InstagramIcon />
                 </IconButton>
               </Box>
             </Grid>
           </Grid>
-          <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 6, fontSize: '13px' }}>
+          <Typography variant="body2" color={isHighContrast ? 'text.primary' : 'text.secondary'} align="center" sx={{ mt: 6, fontSize: '13px' }}>
             © {new Date().getFullYear()} DivyangSetu. All rights reserved.
           </Typography>
         </Container>

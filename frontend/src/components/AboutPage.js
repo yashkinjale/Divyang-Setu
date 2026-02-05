@@ -30,6 +30,7 @@ import {
   Instagram,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useThemeToggle } from '../context/ThemeContext';
 
 // Animation variants
 const fadeInUp = {
@@ -148,13 +149,15 @@ const AboutPage = () => {
     { title: 'Community', desc: 'Fostering connections that create lasting positive impact.' }
   ];
 
+  const { isHighContrast } = useThemeToggle();
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: isHighContrast ? 'background.default' : '#f8fafc' }}>
       {/* Hero Section */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #4285F4 0%, #1565C0 100%)',
-          color: 'white',
+          background: isHighContrast ? 'background.paper' : 'linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%)',
+          borderBottom: isHighContrast ? '2px solid #ffff00' : 'none',
+          color: isHighContrast ? 'primary.main' : 'white',
           py: 12,
           textAlign: 'center',
         }}
@@ -405,7 +408,7 @@ const AboutPage = () => {
 
       {/* Features Section */}
       <Box sx={{
-        background: 'linear-gradient(180deg, #ffffff 0%, #E3F2FD 50%, #ffffff 100%)',
+        background: isHighContrast ? 'background.default' : 'linear-gradient(180deg, #ffffff 0%, #E3F2FD 50%, #ffffff 100%)',
         py: 10
       }}>
         <Container maxWidth="lg">
@@ -533,7 +536,7 @@ const AboutPage = () => {
 
       {/* Team Section */}
       <Box sx={{
-        background: 'linear-gradient(180deg, #ffffff 0%, #E3F2FD 50%, #ffffff 100%)',
+        background: isHighContrast ? 'background.default' : 'linear-gradient(180deg, #ffffff 0%, #E3F2FD 50%, #ffffff 100%)',
         py: 10
       }}>
         <Container maxWidth="lg">
@@ -599,7 +602,8 @@ const AboutPage = () => {
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            transition: 'transform 0.4s ease'
+                            transition: 'transform 0.4s ease',
+                            filter: isHighContrast ? 'grayscale(100%) brightness(0.8)' : 'none'
                           }}
                         />
                       </Box>
@@ -661,8 +665,9 @@ const AboutPage = () => {
       >
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #4285F4 0%, #1565C0 100%)',
-            color: 'white',
+            background: isHighContrast ? 'background.paper' : 'linear-gradient(135deg, #4285F4 0%, #1565C0 100%)',
+            borderTop: isHighContrast ? '2px solid #ffff00' : 'none',
+            color: isHighContrast ? 'primary.main' : 'white',
             py: 10,
             textAlign: 'center',
           }}
