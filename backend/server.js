@@ -113,31 +113,65 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// MongoDB Connection with better error handling
-const mongoUri =
-  process.env.MONGODB_URI || "mongodb://localhost:27017/donation-app";
-console.log("Attempting to connect to MongoDB...");
+// MongoDB Connection with optimized caching for Vercel/Serverless
+const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/donation-app";
 
-mongoose
-  .connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("✅ Connected to MongoDB successfully");
-    console.log(
-      `💳 Razorpay: ${
-        process.env.RAZORPAY_KEY_ID
-          ? "✅ Configured (Test Mode)"
-          : "❌ Not Configured"
-      }`
-    );
-    console.log("Database name:", mongoose.connection.name);
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err.message);
-    console.log("⚠️  Continuing without database connection...");
-  });
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectDB() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false, // Fail fast if not connected
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+    };
+
+    console.log("Attempting to connect to MongoDB...");
+    cached.promise = mongoose.connect(mongoUri, opts).then((mongoose) => {
+      console.log("✅ New MongoDB connection established");
+      return mongoose;
+    });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+    console.log(`Card Razorpay: ${process.env.RAZORPAY_KEY_ID ? "✅ Configured" : "❌ Not Configured"}`);
+    return cached.conn;
+  } catch (e) {
+    cached.promise = null;
+    console.error("❌ MongoDB connection error:", e.message);
+    throw e;
+  }
+}
+
+// Initial connection attempt (non-blocking)
+connectDB().catch(console.error);
+
+// Middleware to ensure DB connection on every request
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState === 1) {
+    return next();
+  }
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("DB Connection Middleware Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Database connection failed",
+      error: error.message
+    });
+  }
+});
 
 // MongoDB connection event handlers
 mongoose.connection.on("error", (err) => {
