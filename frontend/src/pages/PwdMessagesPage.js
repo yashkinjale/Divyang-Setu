@@ -330,9 +330,7 @@ const PWDMessagesPage = () => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+
 
 
 
