@@ -60,7 +60,7 @@ const WishlistSection = () => {
   });
 
   // Fetch wishlist items with debugging
-  const fetchWishlistItems = async () => {
+  const fetchWishlistItems = useCallback(async () => {
     try {
       if (!user) {
         return;
@@ -84,7 +84,7 @@ const WishlistSection = () => {
         setFetchLoading(false);
       }
     }
-  };
+  }, [user, fetchLoading]);
 
   // Set up auto-refresh
   useEffect(() => {
