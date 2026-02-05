@@ -83,9 +83,13 @@ const DonorDashboard = () => {
     }
   }, [searchTerm, filterType, filterLocation]);
 
-  // Fetch profiles from backend
+  // Debounced fetch profiles when dependencies change
   useEffect(() => {
-    fetchProfiles();
+    const timeoutId = setTimeout(() => {
+      fetchProfiles();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
   }, [fetchProfiles]);
 
   const handleMessageClick = (profile) => {
@@ -106,17 +110,6 @@ const DonorDashboard = () => {
     setDonateDialogOpen(false);
     setSelectedProfile(null);
   };
-
-  // Refetch when filters change
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (!loading) {
-        fetchProfiles();
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [fetchProfiles, loading]);
 
   const filteredProfiles = profiles.filter((profile) => {
     const matchesSearch =
