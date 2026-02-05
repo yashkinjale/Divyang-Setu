@@ -7,7 +7,7 @@ import {
   ListItemIcon,
   Divider,
   useTheme,
-  useMediaQuery,
+
   Drawer,
   AppBar,
   Toolbar,

@@ -36,8 +36,7 @@ const JobRecommendations = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('India');
 
-  // Track if initial fetch has happened
-  const hasFetchedRef = useRef(false);
+
 
   // Filters state
   const [filters, setFilters] = useState({

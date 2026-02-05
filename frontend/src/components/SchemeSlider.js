@@ -28,7 +28,7 @@ const FALLBACK_IMG =
 
 const SchemeSlider = ({ schemes }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const theme = useTheme();
+
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % schemes.length);
