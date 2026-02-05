@@ -32,7 +32,6 @@ import {
   Delete as DeleteIcon,
   AttachFile as AttachFileIcon,
   CalendarToday as CalendarIcon,
-  LocalOffer as LocalOfferIcon,
   Favorite as FavoriteIcon,
   CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
@@ -48,7 +47,7 @@ const WishlistSection = () => {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const refreshIntervalRef = useRef(null);
-  
+
   const [formData, setFormData] = useState({
     itemName: '',
     description: '',
@@ -69,7 +68,7 @@ const WishlistSection = () => {
 
       console.log('🔄 Fetching wishlist items...');
       const response = await wishlistApi.getAll();
-      
+
       console.log('📦 Wishlist data received:');
       response.data.data.forEach((item, idx) => {
         console.log(`  [${idx}] ${item.itemName}: ₹${item.amountRaised || 0}/${item.amountRequired} (${item.progress || 0}%)`);
@@ -226,15 +225,15 @@ const WishlistSection = () => {
 
   const getProgress = (item) => {
     if (!item.amountRequired) return 0;
-    
+
     if (item.progress !== undefined && item.progress !== null) {
       return Math.min(Math.max(item.progress, 0), 100);
     }
-    
+
     if (item.amountRaised !== undefined) {
       return Math.min(Math.round((item.amountRaised / item.amountRequired) * 100), 100);
     }
-    
+
     return 0;
   };
 
@@ -244,10 +243,10 @@ const WishlistSection = () => {
 
   if (fetchLoading) {
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '60vh',
         bgcolor: 'background.default'
       }}>
@@ -257,8 +256,8 @@ const WishlistSection = () => {
   }
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
+    <Box sx={{
+      minHeight: '100vh',
       bgcolor: '#fafbfc',
       py: { xs: 3, md: 5 },
       px: { xs: 2, sm: 3, md: 4 }
@@ -266,18 +265,18 @@ const WishlistSection = () => {
       <Container maxWidth="xl">
         <Fade in timeout={600}>
           <Box sx={{ mb: 4 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
               alignItems: 'center',
               mb: 2,
               flexWrap: 'wrap',
               gap: 2
             }}>
               <Box>
-                <Typography 
-                  variant="h4" 
-                  sx={{ 
+                <Typography
+                  variant="h4"
+                  sx={{
                     fontWeight: 700,
                     color: '#1a1a1a',
                     letterSpacing: '-0.02em',
@@ -287,9 +286,9 @@ const WishlistSection = () => {
                 >
                   My Wishlist
                 </Typography>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
+                <Typography
+                  variant="body2"
+                  sx={{
                     color: '#64748b',
                     fontSize: '0.938rem'
                   }}
@@ -326,10 +325,10 @@ const WishlistSection = () => {
 
         {wishlistItems.length === 0 ? (
           <Zoom in timeout={600}>
-            <Paper 
+            <Paper
               elevation={0}
-              sx={{ 
-                textAlign: 'center', 
+              sx={{
+                textAlign: 'center',
                 py: 10,
                 bgcolor: 'white',
                 borderRadius: '20px',
@@ -371,7 +370,7 @@ const WishlistSection = () => {
             {wishlistItems.map((item, index) => {
               const progress = getProgress(item);
               const amountRaised = getAmountRaised(item);
-              
+
               return (
                 <Grid item xs={12} sm={6} lg={4} key={item._id}>
                   <Zoom in timeout={400} style={{ transitionDelay: `${index * 80}ms` }}>
@@ -394,16 +393,16 @@ const WishlistSection = () => {
                       }}
                     >
                       <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
+                        <Box sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
                           alignItems: 'flex-start',
                           mb: 2
                         }}>
                           <Box sx={{ flex: 1, pr: 1 }}>
-                            <Typography 
-                              variant="h6" 
-                              sx={{ 
+                            <Typography
+                              variant="h6"
+                              sx={{
                                 fontWeight: 700,
                                 color: '#1e293b',
                                 mb: 0.5,
@@ -416,7 +415,7 @@ const WishlistSection = () => {
                             <Chip
                               label={item.category}
                               size="small"
-                              sx={{ 
+                              sx={{
                                 bgcolor: '#eff6ff',
                                 color: '#1976d2',
                                 fontWeight: 600,
@@ -425,12 +424,12 @@ const WishlistSection = () => {
                               }}
                             />
                           </Box>
-                          <IconButton 
+                          <IconButton
                             onClick={() => handleDeleteClick(item._id)}
                             size="small"
-                            sx={{ 
+                            sx={{
                               color: '#94a3b8',
-                              '&:hover': { 
+                              '&:hover': {
                                 bgcolor: '#fee2e2',
                                 color: '#ef4444'
                               }
@@ -440,9 +439,9 @@ const WishlistSection = () => {
                           </IconButton>
                         </Box>
 
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
+                        <Typography
+                          variant="body2"
+                          sx={{
                             color: '#64748b',
                             mb: 3,
                             display: '-webkit-box',
@@ -456,15 +455,15 @@ const WishlistSection = () => {
 
                         {item.amountRequired && (
                           <Box sx={{ mb: 3 }}>
-                            <Box sx={{ 
-                              display: 'flex', 
-                              justifyContent: 'space-between', 
+                            <Box sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
                               alignItems: 'center',
                               mb: 1.5
                             }}>
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
+                              <Typography
+                                variant="body2"
+                                sx={{
                                   fontWeight: 600,
                                   color: '#475569',
                                   fontSize: '0.813rem'
@@ -472,9 +471,9 @@ const WishlistSection = () => {
                               >
                                 Progress
                               </Typography>
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
+                              <Typography
+                                variant="body2"
+                                sx={{
                                   fontWeight: 700,
                                   color: '#1976d2',
                                   fontSize: '0.875rem'
@@ -487,22 +486,22 @@ const WishlistSection = () => {
                               <LinearProgress
                                 variant="determinate"
                                 value={progress}
-                                sx={{ 
-                                  height: 10, 
+                                sx={{
+                                  height: 10,
                                   borderRadius: '10px',
                                   bgcolor: '#f1f5f9',
                                   '& .MuiLinearProgress-bar': {
                                     borderRadius: '10px',
                                     bgcolor: progress === 100 ? '#10b981' : '#1976d2',
-                                    boxShadow: progress === 100 
+                                    boxShadow: progress === 100
                                       ? '0 0 10px rgba(16, 185, 129, 0.4)'
                                       : '0 0 10px rgba(25, 118, 210, 0.4)'
                                   }
                                 }}
                               />
                               {progress === 100 && (
-                                <CheckCircleIcon 
-                                  sx={{ 
+                                <CheckCircleIcon
+                                  sx={{
                                     position: 'absolute',
                                     right: -4,
                                     top: '50%',
@@ -511,13 +510,13 @@ const WishlistSection = () => {
                                     fontSize: '1.25rem',
                                     bgcolor: 'white',
                                     borderRadius: '50%'
-                                  }} 
+                                  }}
                                 />
                               )}
                             </Box>
-                            <Typography 
-                              variant="caption" 
-                              sx={{ 
+                            <Typography
+                              variant="caption"
+                              sx={{
                                 color: progress === 100 ? '#10b981' : '#64748b',
                                 fontWeight: 600,
                                 fontSize: '0.75rem',
@@ -534,7 +533,7 @@ const WishlistSection = () => {
                           <Chip
                             label={`₹${item.amountRequired.toLocaleString()}`}
                             size="small"
-                            sx={{ 
+                            sx={{
                               bgcolor: '#f0fdf4',
                               color: '#15803d',
                               fontWeight: 700,
@@ -545,7 +544,7 @@ const WishlistSection = () => {
                           <Chip
                             label={`Qty: ${item.quantity}`}
                             size="small"
-                            sx={{ 
+                            sx={{
                               bgcolor: '#fef3c7',
                               color: '#b45309',
                               fontWeight: 600,
@@ -557,7 +556,7 @@ const WishlistSection = () => {
                             label={item.urgencyLevel}
                             color={getUrgencyColor(item.urgencyLevel)}
                             size="small"
-                            sx={{ 
+                            sx={{
                               fontWeight: 600,
                               fontSize: '0.813rem',
                               height: '28px'
@@ -566,17 +565,17 @@ const WishlistSection = () => {
                         </Box>
 
                         {item.deadline && (
-                          <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 1,
                             pt: 2,
                             borderTop: '1px solid #f1f5f9'
                           }}>
                             <CalendarIcon sx={{ fontSize: '1rem', color: '#94a3b8' }} />
-                            <Typography 
-                              variant="caption" 
-                              sx={{ 
+                            <Typography
+                              variant="caption"
+                              sx={{
                                 color: '#64748b',
                                 fontWeight: 500,
                                 fontSize: '0.813rem'
@@ -599,10 +598,10 @@ const WishlistSection = () => {
           </Grid>
         )}
 
-        <Dialog 
-          open={openForm} 
-          onClose={() => !loading && setOpenForm(false)} 
-          maxWidth="sm" 
+        <Dialog
+          open={openForm}
+          onClose={() => !loading && setOpenForm(false)}
+          maxWidth="sm"
           fullWidth
           TransitionComponent={Zoom}
           PaperProps={{
@@ -612,8 +611,8 @@ const WishlistSection = () => {
             }
           }}
         >
-          <DialogTitle sx={{ 
-            fontWeight: 700, 
+          <DialogTitle sx={{
+            fontWeight: 700,
             fontSize: '1.5rem',
             color: '#1e293b',
             borderBottom: '1px solid #f1f5f9',
@@ -804,7 +803,7 @@ const WishlistSection = () => {
                           label={file.name}
                           onDelete={() => removeFile(index)}
                           size="small"
-                          sx={{ 
+                          sx={{
                             maxWidth: '200px',
                             bgcolor: '#f1f5f9',
                             '&:hover': {
@@ -819,7 +818,7 @@ const WishlistSection = () => {
               </Grid>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5 }}>
-              <Button 
+              <Button
                 onClick={() => setOpenForm(false)}
                 disabled={loading}
                 sx={{
@@ -881,10 +880,10 @@ const WishlistSection = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-            <Button 
+            <Button
               onClick={() => setDeleteDialog({ open: false, id: null })}
-              sx={{ 
-                textTransform: 'none', 
+              sx={{
+                textTransform: 'none',
                 borderRadius: '10px',
                 fontWeight: 600,
                 color: '#64748b'
@@ -892,11 +891,11 @@ const WishlistSection = () => {
             >
               Cancel
             </Button>
-            <Button 
-              onClick={handleDeleteConfirm} 
+            <Button
+              onClick={handleDeleteConfirm}
               variant="contained"
-              sx={{ 
-                textTransform: 'none', 
+              sx={{
+                textTransform: 'none',
                 borderRadius: '10px',
                 fontWeight: 600,
                 bgcolor: '#ef4444',
@@ -922,7 +921,7 @@ const WishlistSection = () => {
             severity={snackbar.severity}
             variant="filled"
             icon={snackbar.severity === 'success' ? <CheckCircleIcon /> : undefined}
-            sx={{ 
+            sx={{
               width: '100%',
               borderRadius: '12px',
               boxShadow: '0 8px 32px rgba(0,0,0,0.12)',

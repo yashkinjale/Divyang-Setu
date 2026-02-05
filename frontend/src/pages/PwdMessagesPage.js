@@ -143,7 +143,8 @@ const PWDMessagesPage = () => {
     navigate('/disabled/login');
   };
 
-  // Fetch conversations on mount
+  // 1. Define all callbacks FIRST (to avoid use-before-define)
+
   const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
@@ -151,8 +152,6 @@ const PWDMessagesPage = () => {
 
       console.log("Fetching conversations for user:", currentUser.id);
       const response = await messageApi.getConversations(currentUser.id);
-
-      // console.log("Conversations response:", response.data);
 
       if (response.data.success) {
         const convData = response.data.conversations || response.data.data || [];
@@ -164,7 +163,6 @@ const PWDMessagesPage = () => {
         }
 
         const transformedConversations = convData.map((conv) => {
-          // Backend returns 'id' at root level as the other user's ID
           const otherUserId = conv.id || conv._id || conv.otherUser?._id || conv.otherUser?.id;
 
           return {
@@ -183,9 +181,6 @@ const PWDMessagesPage = () => {
       }
     } catch (err) {
       console.error("Error fetching conversations:", err);
-      // console.error("Error response:", err.response?.data);
-
-      // Check for authentication/session errors
       if (err.response?.status === 400 && err.response?.data?.message === "Invalid user IDs") {
         setSessionError(true);
         setError('Your session is invalid. Please log in again.');
@@ -199,45 +194,10 @@ const PWDMessagesPage = () => {
     }
   }, [currentUser]);
 
-  // Auto-select first conversation
-  useEffect(() => {
-    if (!selectedChat && conversations.length > 0) {
-      handleConversationSelect(conversations[0]);
-    }
-  }, [conversations.length]);
-
-  // Search for donors with debouncing
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    if (!searchTerm.trim()) {
-      setShowSearchResults(false);
-      setSearchResults([]);
-      return;
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      searchDonors(searchTerm);
-    }, 500);
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchTerm, searchDonors]);
-
   const searchDonors = useCallback(async (query) => {
     try {
       setSearchLoading(true);
-      console.log("Searching for donors with query:", query);
-
       const response = await messageApi.searchDonors(query);
-
-      console.log("Search donors response:", response.data);
-
       if (response.data.success) {
         const results = response.data.data || [];
         setSearchResults(results);
@@ -252,48 +212,19 @@ const PWDMessagesPage = () => {
     }
   }, []);
 
-  const handleSearchResultClick = (donor) => {
-    const newConversation = {
-      id: donor._id,
-      userId: donor._id,
-      name: donor.name,
-      message: "Start a new conversation",
-      avatar: donor.profileImage || donor.avatar,
-      status: 'Offline',
-      time: "Now",
-      unread: 0,
-      isDonor: true,
-      email: donor.email,
-    };
-
-    setSelectedChat(newConversation);
-    setMessages([]);
-    setSearchTerm("");
-    setShowSearchResults(false);
-  };
-
   const fetchMessages = useCallback(async (conversation) => {
     try {
       setError(null);
-
       if (!conversation || !conversation.userId) {
-        console.error("Invalid conversation object");
         return;
       }
-
-      console.log("Fetching messages between:", currentUser.id, "and", conversation.userId);
       const response = await messageApi.getMessages(currentUser.id, conversation.userId);
-
-      // console.log("Messages response:", response.data);
-
       if (response.data.success) {
         const messageData = response.data.data || [];
-
         if (messageData.length === 0) {
           setMessages([]);
           return;
         }
-
         const transformedMessages = messageData.map((msg) => ({
           id: msg._id,
           sender: (msg.senderId === currentUser.id) ? 'You' : conversation.name,
@@ -307,7 +238,6 @@ const PWDMessagesPage = () => {
         }));
         setMessages(transformedMessages);
 
-        // Mark unread messages as read
         const unreadMessages = messageData.filter(
           (msg) => !msg.read && msg.senderId !== currentUser.id
         );
@@ -317,7 +247,6 @@ const PWDMessagesPage = () => {
       }
     } catch (err) {
       console.error("Error fetching messages:", err);
-
       if (err.response?.status === 404) {
         setMessages([]);
       } else if (err.response?.status !== 404) {
@@ -326,28 +255,11 @@ const PWDMessagesPage = () => {
     }
   }, [currentUser]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
-
-
-
-
-
-  // ... skip handleKeyPress ...
-
   const handleConversationSelect = useCallback((conversation) => {
     setSelectedChat(conversation);
     fetchMessages(conversation);
     setShowSearchResults(false);
   }, [fetchMessages]);
-
-  // Auto-select first conversation
-  useEffect(() => {
-    if (!selectedChat && conversations.length > 0) {
-      handleConversationSelect(conversations[0]);
-    }
-  }, [conversations, selectedChat, handleConversationSelect]);
 
   const handleSendMessage = useCallback(async () => {
     if (messageInput.trim() && selectedChat) {
@@ -356,15 +268,11 @@ const PWDMessagesPage = () => {
       setSending(true);
 
       try {
-        console.log("Sending message from:", currentUser.id, "to:", selectedChat.userId);
-
         const response = await messageApi.sendMessage({
           senderId: currentUser.id,
           receiverId: selectedChat.userId,
           message: messageText,
         });
-
-        console.log("Send message response:", response.data);
 
         if (response.data.success) {
           const msgData = response.data.data;
@@ -395,7 +303,93 @@ const PWDMessagesPage = () => {
     }
   };
 
+  const handleSearchResultClick = (donor) => {
+    const newConversation = {
+      id: donor._id,
+      userId: donor._id,
+      name: donor.name,
+      message: "Start a new conversation",
+      avatar: donor.profileImage || donor.avatar,
+      status: 'Offline',
+      time: "Now",
+      unread: 0,
+      isDonor: true,
+      email: donor.email,
+    };
 
+    setSelectedChat(newConversation);
+    setMessages([]);
+    setSearchTerm("");
+    setShowSearchResults(false);
+  };
+
+
+  // 2. useEffects using those callbacks
+
+  // Search effect
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (!searchTerm.trim()) {
+      setShowSearchResults(false);
+      setSearchResults([]);
+      return;
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      searchDonors(searchTerm);
+    }, 500);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm, searchDonors]);
+
+  // Session validation effect
+  useEffect(() => {
+    const validateSession = () => {
+      if (!currentUser || !currentUser.id) {
+        console.error('No user found in session');
+        setSessionError(true);
+        setError('Please log in to access messages');
+        setLoading(false);
+        return false;
+      }
+
+      // Validate MongoDB ObjectId format (exactly 24 hex characters)
+      const isValidObjectId = /^[a-f\d]{24}$/i.test(currentUser.id);
+
+      if (!isValidObjectId) {
+        console.error('Invalid user ID format. Expected 24 hex characters, got:', currentUser.id);
+        setSessionError(true);
+        setError('Your session is corrupted. Please log in again.');
+        setLoading(false);
+        return false;
+      }
+
+      return true;
+    };
+
+    if (validateSession()) {
+      fetchConversations();
+    }
+  }, [currentUser, fetchConversations]);
+
+  // Auto-select first conversation
+  useEffect(() => {
+    if (!selectedChat && conversations.length > 0) {
+      handleConversationSelect(conversations[0]);
+    }
+  }, [conversations, selectedChat, handleConversationSelect]);
+
+  // Scroll effect
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   const filteredConversations = conversations.filter((conv) =>
     conv.name.toLowerCase().includes(searchTerm.toLowerCase())

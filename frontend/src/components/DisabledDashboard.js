@@ -16,7 +16,6 @@ import {
   IconButton,
   Button,
   Tooltip,
-  Avatar,
   Typography
 } from '@mui/material';
 import {
@@ -30,11 +29,7 @@ import {
   Help as HelpIcon,
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
-  Description as DocumentIcon,
-  Favorite as WishlistIcon,
-  TrendingUp as ProgressIcon,
   Business as JobIcon,
-  Business as BusinessIcon,
   Policy as SchemeIcon,
   People as CommunityIcon,
   Message as MessageIcon,
@@ -50,7 +45,7 @@ import { useThemeToggle } from '../context/ThemeContext';
 const SidebarItem = ({ icon: Icon, text, onClick, active }) => {
   const theme = useTheme();
   const { isHighContrast } = useThemeToggle();
-  
+
   return (
     <ListItemButton
       onClick={onClick}
@@ -61,22 +56,22 @@ const SidebarItem = ({ icon: Icon, text, onClick, active }) => {
         px: 2,
         py: 1,
         minHeight: '48px',
-        backgroundColor: active 
-          ? (isHighContrast ? '#FFFFFF' : theme.palette.primary.light) 
+        backgroundColor: active
+          ? (isHighContrast ? '#FFFFFF' : theme.palette.primary.light)
           : 'transparent',
-        color: active 
-          ? (isHighContrast ? '#FFFF00' : theme.palette.primary.main) 
+        color: active
+          ? (isHighContrast ? '#FFFF00' : theme.palette.primary.main)
           : 'inherit',
         '&:hover': {
           backgroundColor: isHighContrast ? '#1a1a1a' : theme.palette.primary.light,
           color: isHighContrast ? '#FFFFFF' : theme.palette.primary.main,
         },
         '&.Mui-selected': {
-          backgroundColor: active 
-            ? (isHighContrast ? '#FFFFFF' : theme.palette.primary.light) 
+          backgroundColor: active
+            ? (isHighContrast ? '#FFFFFF' : theme.palette.primary.light)
             : 'transparent',
-          color: active 
-            ? (isHighContrast ? '#FFFF00' : theme.palette.primary.main) 
+          color: active
+            ? (isHighContrast ? '#FFFF00' : theme.palette.primary.main)
             : 'inherit',
           '&:hover': {
             backgroundColor: isHighContrast ? '#DDDDDD' : theme.palette.primary.light,
@@ -84,8 +79,8 @@ const SidebarItem = ({ icon: Icon, text, onClick, active }) => {
         },
         // Ensure the icon also changes color
         '& .MuiListItemIcon-root': {
-          color: active 
-            ? (isHighContrast ? '#FFFF00' : 'inherit') 
+          color: active
+            ? (isHighContrast ? '#FFFF00' : 'inherit')
             : 'inherit',
           minWidth: '40px',
         },
@@ -105,8 +100,8 @@ const SidebarItem = ({ icon: Icon, text, onClick, active }) => {
 const Logo = () => {
   const theme = useTheme();
   return (
-    <Box sx={{ 
-      display: 'flex', 
+    <Box sx={{
+      display: 'flex',
       alignItems: 'center',
       gap: 1,
       mr: 2
@@ -116,9 +111,9 @@ const Logo = () => {
         alt="DivyangSetu Logo"
         style={{ height: 50, width: 50, objectFit: 'contain' }}
       />
-      <Typography 
-        variant="h5" 
-        sx={{ 
+      <Typography
+        variant="h5"
+        sx={{
           fontWeight: 'bold',
           background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
           WebkitBackgroundClip: 'text',
@@ -314,8 +309,8 @@ const DisabledDashboard = () => {
         variant="permanent"
         sx={{
           display: { xs: 'none', sm: 'block' },
-          '& .MuiDrawer-paper': { 
-            boxSizing: 'border-box', 
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
             width: 250,
             position: 'fixed',
             height: '100%',

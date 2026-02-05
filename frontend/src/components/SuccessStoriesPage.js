@@ -25,15 +25,12 @@ import {
 import {
   Close as CloseIcon,
   Search as SearchIcon,
-  FilterList as FilterIcon,
   ReadMore as ReadMoreIcon,
   Star as StarIcon,
-  Accessible as AccessibleIcon,
   SportsEsports as SportsIcon,
   Business as BusinessIcon,
   School as EducationIcon,
-  Work as WorkIcon,
-  Favorite as FavoriteIcon
+  Work as WorkIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -127,10 +124,10 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
       whileHover={{ y: -8 }}
       style={{ height: '100%' }}
     >
-      <Card 
-        sx={{ 
-          height: '100%', 
-          display: 'flex', 
+      <Card
+        sx={{
+          height: '100%',
+          display: 'flex',
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
@@ -144,9 +141,9 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
         }}
       >
         {/* Header Section with Avatar and Category */}
-        <Box sx={{ 
-          position: 'relative', 
-          p: 3, 
+        <Box sx={{
+          position: 'relative',
+          p: 3,
           textAlign: 'center',
           background: `linear-gradient(135deg, ${theme.palette.primary.light}15, ${theme.palette.secondary.light}15)`,
           borderBottom: `1px solid ${theme.palette.divider}`
@@ -154,10 +151,10 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
           <Avatar
             src={story.image}
             alt={story.name}
-            sx={{ 
-              width: 90, 
-              height: 90, 
-              mx: 'auto', 
+            sx={{
+              width: 90,
+              height: 90,
+              mx: 'auto',
               mb: 2,
               border: `4px solid ${theme.palette.background.paper}`,
               boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
@@ -167,11 +164,11 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
               }
             }}
           />
-          <Chip 
-            label={story.category} 
-            color="primary" 
-            size="small" 
-            sx={{ 
+          <Chip
+            label={story.category}
+            color="primary"
+            size="small"
+            sx={{
               mb: 1,
               fontWeight: 600,
               px: 1.5,
@@ -182,20 +179,20 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
             }}
           />
         </Box>
-        
+
         {/* Content Section */}
-        <CardContent sx={{ 
-          flexGrow: 1, 
-          display: 'flex', 
+        <CardContent sx={{
+          flexGrow: 1,
+          display: 'flex',
           flexDirection: 'column',
           p: 3,
           '&:last-child': { pb: 3 }
         }}>
-          <Typography 
-            variant="h6" 
-            component="h3" 
-            gutterBottom 
-            sx={{ 
+          <Typography
+            variant="h6"
+            component="h3"
+            gutterBottom
+            sx={{
               fontWeight: 700,
               fontSize: '1.1rem',
               lineHeight: 1.3,
@@ -205,12 +202,12 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
           >
             {story.name}
           </Typography>
-          <Typography 
-            variant="subtitle1" 
-            color="primary" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 600, 
+          <Typography
+            variant="subtitle1"
+            color="primary"
+            gutterBottom
+            sx={{
+              fontWeight: 600,
               mb: 2,
               fontSize: '0.95rem',
               lineHeight: 1.4
@@ -218,11 +215,11 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
           >
             {story.title}
           </Typography>
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            sx={{ 
-              flexGrow: 1, 
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              flexGrow: 1,
               mb: 3,
               lineHeight: 1.6,
               fontSize: '0.875rem',
@@ -235,7 +232,7 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
           >
             {story.summary}
           </Typography>
-          
+
           {/* Action Button */}
           <Box sx={{ mt: 'auto' }}>
             <Button
@@ -244,7 +241,7 @@ const SuccessStoryCard = ({ story, onReadMore }) => {
               endIcon={<ReadMoreIcon />}
               onClick={() => onReadMore(story)}
               fullWidth
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 py: 1.5,
                 px: 3,
@@ -374,8 +371,8 @@ const SuccessStoriesPage = () => {
 
   const filteredStories = successStories.filter(story => {
     const matchesSearch = story.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         story.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         story.summary.toLowerCase().includes(searchTerm.toLowerCase());
+      story.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      story.summary.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || story.category.toLowerCase() === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -391,8 +388,8 @@ const SuccessStoriesPage = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Page Header */}
-      <Box sx={{ 
-        textAlign: 'center', 
+      <Box sx={{
+        textAlign: 'center',
         mb: 6,
         p: 4,
         backgroundColor: 'background.paper',
@@ -405,11 +402,11 @@ const SuccessStoriesPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <Typography 
-            variant="h3" 
-            component="h1" 
-            gutterBottom 
-            sx={{ 
+          <Typography
+            variant="h3"
+            component="h1"
+            gutterBottom
+            sx={{
               fontWeight: 700,
               background: 'linear-gradient(45deg, #2563eb, #10b981)',
               backgroundClip: 'text',
@@ -421,12 +418,12 @@ const SuccessStoriesPage = () => {
           >
             Community Success Stories
           </Typography>
-          <Typography 
-            variant="h6" 
-            color="text.secondary" 
-            sx={{ 
-              maxWidth: 600, 
-              mx: 'auto', 
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            sx={{
+              maxWidth: 600,
+              mx: 'auto',
               lineHeight: 1.6,
               fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' }
             }}
@@ -437,7 +434,7 @@ const SuccessStoriesPage = () => {
       </Box>
 
       {/* Search and Filter Section */}
-      <Box sx={{ 
+      <Box sx={{
         mb: 5,
         p: 3,
         backgroundColor: 'background.paper',
@@ -483,7 +480,7 @@ const SuccessStoriesPage = () => {
                   onClick={() => setSelectedCategory(category.value)}
                   color={selectedCategory === category.value ? 'primary' : 'default'}
                   variant={selectedCategory === category.value ? 'filled' : 'outlined'}
-                  sx={{ 
+                  sx={{
                     cursor: 'pointer',
                     fontWeight: 500,
                     transition: 'all 0.2s ease-in-out',
@@ -514,12 +511,12 @@ const SuccessStoriesPage = () => {
       }}>
         <AnimatePresence>
           {filteredStories.map((story, index) => (
-            <Box key={story.id} sx={{ 
+            <Box key={story.id} sx={{
               display: 'flex',
               minHeight: { xs: 'auto', sm: '500px', md: '520px', lg: '540px' }
             }}>
-              <SuccessStoryCard 
-                story={story} 
+              <SuccessStoryCard
+                story={story}
                 onReadMore={handleReadMore}
               />
             </Box>

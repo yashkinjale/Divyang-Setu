@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Container,
@@ -46,18 +46,16 @@ const DonorDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
+  // eslint-disable-next-line no-unused-vars
   const [activeTab, setActiveTab] = useState("home");
   const [donateDialogOpen, setDonateDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
-  const [chatDialogOpen, setChatDialogOpen] = useState(false);
-  const [selectedChatProfile, setSelectedChatProfile] = useState(null);
 
-  // Fetch profiles from backend
-  useEffect(() => {
-    fetchProfiles();
-  }, []);
+  // Removed unused chat dialog state variables as they were causing build errors
+  // const [chatDialogOpen, setChatDialogOpen] = useState(false);
+  // const [selectedChatProfile, setSelectedChatProfile] = useState(null);
 
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -83,7 +81,12 @@ const DonorDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, filterType, filterLocation]);
+
+  // Fetch profiles from backend
+  useEffect(() => {
+    fetchProfiles();
+  }, [fetchProfiles]);
 
   const handleMessageClick = (profile) => {
     navigate('/donor/messages', { state: { profile } });
@@ -113,7 +116,7 @@ const DonorDashboard = () => {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, filterType, filterLocation]);
+  }, [fetchProfiles, loading]);
 
   const filteredProfiles = profiles.filter((profile) => {
     const matchesSearch =

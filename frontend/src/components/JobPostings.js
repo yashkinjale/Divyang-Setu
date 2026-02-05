@@ -28,12 +28,10 @@ import {
 import {
   Business as BusinessIcon,
   Work as WorkIcon,
-  AttachMoney as MoneyIcon,
   Code as SkillsIcon,
   Accessibility as AccessibilityIcon,
   CheckCircle as CheckIcon
 } from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,8 +39,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Animation variants
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: { duration: 0.5, ease: "easeOut" }
   }
@@ -50,7 +48,7 @@ const fadeInUp = {
 
 const fadeIn = {
   hidden: { opacity: 0 },
-  visible: { 
+  visible: {
     opacity: 1,
     transition: { duration: 0.6, ease: "easeOut" }
   }
@@ -58,8 +56,8 @@ const fadeIn = {
 
 const scaleIn = {
   hidden: { opacity: 0, scale: 0.9 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     scale: 1,
     transition: { duration: 0.4, ease: "easeOut" }
   }
@@ -77,15 +75,14 @@ const staggerContainer = {
 
 const slideIn = {
   hidden: { opacity: 0, x: -20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     x: 0,
     transition: { duration: 0.4, ease: "easeOut" }
   }
 };
 
 const JobPostings = () => {
-  const theme = useTheme();
   const { user, isAuthenticated } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -117,14 +114,14 @@ const JobPostings = () => {
   // Stepper steps
   const steps = [
     'Job Information',
-    'Skills & Requirements', 
+    'Skills & Requirements',
     'Accessibility & Features',
     'Review & Submit'
   ];
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     if (name.startsWith('accessibility.')) {
       const accessibilityKey = name.split('.')[1];
       setFormData(prev => ({
@@ -174,12 +171,12 @@ const JobPostings = () => {
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      
+
       // Prepare data for API
       const jobData = {
         ...formData,
-        salary: formData.salaryMin && formData.salaryMax 
-          ? `₹${formData.salaryMin} - ₹${formData.salaryMax}` 
+        salary: formData.salaryMin && formData.salaryMax
+          ? `₹${formData.salaryMin} - ₹${formData.salaryMax}`
           : formData.salaryMin || formData.salaryMax,
         accessibility: Object.keys(formData.accessibility)
           .filter(key => formData.accessibility[key])
@@ -195,14 +192,14 @@ const JobPostings = () => {
       };
 
       const response = await api.post('/job-postings', jobData);
-      
+
       if (response.data.success) {
-        setSnackbar({ 
-          open: true, 
-          message: 'Job posting created successfully!', 
-          severity: 'success' 
+        setSnackbar({
+          open: true,
+          message: 'Job posting created successfully!',
+          severity: 'success'
         });
-        
+
         // Reset form
         setFormData({
           title: '',
@@ -403,8 +400,8 @@ const JobPostings = () => {
                     <Button
                       variant="contained"
                       onClick={handleAddSkill}
-                      sx={{ 
-                        bgcolor: '#007BFF', 
+                      sx={{
+                        bgcolor: '#007BFF',
                         '&:hover': { bgcolor: '#0056b3' },
                         minWidth: '120px'
                       }}
@@ -588,18 +585,18 @@ const JobPostings = () => {
                     <Typography><strong>Accessibility Features:</strong> {
                       Object.keys(formData.accessibility)
                         .filter(key => formData.accessibility[key])
-                        .length > 0 
+                        .length > 0
                         ? Object.keys(formData.accessibility)
-                            .filter(key => formData.accessibility[key])
-                            .map(key => {
-                              const mapping = {
-                                remoteJob: 'Remote Work',
-                                wheelchairAccessible: 'Wheelchair Accessible',
-                                signLanguageSupport: 'Sign Language Support',
-                                colorBlindFriendly: 'Color-Blind Friendly'
-                              };
-                              return mapping[key];
-                            }).join(', ')
+                          .filter(key => formData.accessibility[key])
+                          .map(key => {
+                            const mapping = {
+                              remoteJob: 'Remote Work',
+                              wheelchairAccessible: 'Wheelchair Accessible',
+                              signLanguageSupport: 'Sign Language Support',
+                              colorBlindFriendly: 'Color-Blind Friendly'
+                            };
+                            return mapping[key];
+                          }).join(', ')
                         : 'None selected'
                     }</Typography>
                   </Paper>
@@ -633,8 +630,8 @@ const JobPostings = () => {
             <Button
               variant="contained"
               size="large"
-              sx={{ 
-                bgcolor: '#007BFF', 
+              sx={{
+                bgcolor: '#007BFF',
                 '&:hover': { bgcolor: '#0056b3' },
                 mt: 2
               }}
@@ -720,8 +717,8 @@ const JobPostings = () => {
                 variant="contained"
                 onClick={handleSubmit}
                 disabled={!isStepValid(activeStep) || loading}
-                sx={{ 
-                  bgcolor: '#007BFF', 
+                sx={{
+                  bgcolor: '#007BFF',
                   '&:hover': { bgcolor: '#0056b3' },
                   minWidth: '120px'
                 }}
@@ -733,8 +730,8 @@ const JobPostings = () => {
                 variant="contained"
                 onClick={handleNext}
                 disabled={!isStepValid(activeStep)}
-                sx={{ 
-                  bgcolor: '#007BFF', 
+                sx={{
+                  bgcolor: '#007BFF',
                   '&:hover': { bgcolor: '#0056b3' },
                   minWidth: '120px'
                 }}

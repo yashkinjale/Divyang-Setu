@@ -18,8 +18,6 @@ import {
   InputAdornment,
   IconButton,
   Pagination,
-  useTheme,
-  useMediaQuery,
   Paper,
   CircularProgress,
   Alert
@@ -55,16 +53,16 @@ const SchemeCard = ({ scheme, onViewDetails }) => (
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.6 }}
-    style={{ 
-      height: '100%', 
+    style={{
+      height: '100%',
       display: 'flex',
       width: '100%'
     }}
   >
-    <Card sx={{ 
-      height: '100%', 
-      display: 'flex', 
-      flexDirection: 'column', 
+    <Card sx={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
       position: 'relative',
       width: '100%',
       // Make the card responsive: fixed height on larger screens only
@@ -82,33 +80,33 @@ const SchemeCard = ({ scheme, onViewDetails }) => (
           sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
         />
       )}
-      <CardMedia 
-        component="img" 
-        height={{ xs: 180, md: 200 }} 
-        image={scheme.image || FALLBACK_IMG} 
-        alt={scheme.name} 
+      <CardMedia
+        component="img"
+        height={{ xs: 180, md: 200 }}
+        image={scheme.image || FALLBACK_IMG}
+        alt={scheme.name}
         loading="lazy"
         decoding="async"
         referrerPolicy="no-referrer"
         onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }}
-        sx={{ 
-          objectFit: 'cover', 
-          width: '100%', 
+        sx={{
+          objectFit: 'cover',
+          width: '100%',
           display: 'block',
           backgroundColor: '#f5f6f8'
-        }} 
+        }}
       />
-      <CardContent sx={{ 
-        flexGrow: 1, 
-        display: 'flex', 
+      <CardContent sx={{
+        flexGrow: 1,
+        display: 'flex',
         flexDirection: 'column',
         p: 2,
         '&:last-child': { pb: 2 },
         overflow: 'hidden'
       }}>
-        <Typography variant="h6" sx={{ 
-          fontWeight: 'bold', 
-          mb: 1, 
+        <Typography variant="h6" sx={{
+          fontWeight: 'bold',
+          mb: 1,
           lineHeight: 1.2,
           fontSize: { xs: '1rem', md: '1.05rem' },
           minHeight: { md: '2.4rem' },
@@ -121,10 +119,10 @@ const SchemeCard = ({ scheme, onViewDetails }) => (
         }}>
           {scheme.name}
         </Typography>
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          sx={{ 
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
             flexGrow: 1,
             display: '-webkit-box',
             WebkitLineClamp: { xs: 3, md: 4 },
@@ -139,10 +137,10 @@ const SchemeCard = ({ scheme, onViewDetails }) => (
         >
           {scheme.description}
         </Typography>
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 0.5, 
-          mb: 2, 
+        <Box sx={{
+          display: 'flex',
+          gap: 0.5,
+          mb: 2,
           flexWrap: 'wrap',
           minHeight: '32px'
         }}>
@@ -164,10 +162,10 @@ const SchemeCard = ({ scheme, onViewDetails }) => (
         </Typography>
       </CardContent>
       <CardActions sx={{ p: 2, pt: 0 }}>
-        <Button 
-          variant="contained" 
-          fullWidth 
-          endIcon={<ArrowForwardIcon />} 
+        <Button
+          variant="contained"
+          fullWidth
+          endIcon={<ArrowForwardIcon />}
           onClick={() => onViewDetails(scheme)}
           sx={{ py: 1 }}
         >
@@ -222,9 +220,6 @@ const FilterPanel = ({ filters, tempFilters, setTempFilters, onClearFilters, onA
 };
 
 const GovernmentSchemesPage = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSearchTerm, setTempSearchTerm] = useState('');
   const [filters, setFilters] = useState({ disabilityType: 'All Disabilities', location: 'All India', ageGroup: 'All Ages', eligibilityCriteria: 'All Criteria' });
@@ -378,10 +373,10 @@ const GovernmentSchemesPage = () => {
                   width: '100%'
                 }}>
                   {recommendedSchemes.slice(0, 3).map((scheme, i) => (
-                    <motion.div 
+                    <motion.div
                       key={scheme.id}
-                      initial={{ opacity: 0, y: 20 }} 
-                      animate={{ opacity: 1, y: 0 }} 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6, delay: 0.6 + i * 0.1 }}
                       style={{ height: '520px' }}
                     >
@@ -414,11 +409,11 @@ const GovernmentSchemesPage = () => {
                 }}>
                   <AnimatePresence>
                     {currentSchemes.map((scheme, i) => (
-                      <motion.div 
+                      <motion.div
                         key={scheme.id}
-                        initial={{ opacity: 0, scale: 0.9 }} 
-                        animate={{ opacity: 1, scale: 1 }} 
-                        exit={{ opacity: 0, scale: 0.9 }} 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ duration: 0.4, delay: i * 0.1 }}
                         style={{ height: '520px' }}
                       >

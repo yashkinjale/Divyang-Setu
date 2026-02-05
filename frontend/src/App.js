@@ -1,8 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import { Container, Box, Grid, Typography, IconButton, Tooltip } from '@mui/material';
-import { Brightness4, Brightness7 } from '@mui/icons-material';
+import { Container, Box, Typography } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeContext } from './context/ThemeContext';
 import DonorAuth from './components/auth/DonorAuth';
@@ -17,7 +16,6 @@ import WishlistSection from './components/WishlistSection';
 import SuccessStoriesPage from './components/SuccessStoriesPage';
 import ProfilePage from './components/ProfilePage';
 import SchemeSlider from './components/SchemeSlider';
-import FundStatusCard from './components/FundStatusCard';
 import JobRecommendations from './components/JobRecommendations';
 import JobPostings from './components/JobPostings';
 import DonorDashboard from './components/DonorDashboard';
@@ -71,30 +69,6 @@ const DisabledDashboardHome = () => {
     }
   ];
 
-  const funds = [
-    {
-      title: "Education Fund",
-      current: 75000,
-      target: 100000,
-      icon: "AccessibilityIcon",
-      color: "primary"
-    },
-    {
-      title: "Medical Support",
-      current: 45000,
-      target: 80000,
-      icon: "WishlistIcon",
-      color: "secondary"
-    },
-    {
-      title: "Technology Grant",
-      current: 30000,
-      target: 50000,
-      icon: "ProgressIcon",
-      color: "success"
-    }
-  ];
-
   return (
     <Container maxWidth="xl">
       <Box sx={{ mb: 4 }}>
@@ -114,7 +88,7 @@ const App = () => {
     // Check localStorage or system preference
     const saved = localStorage.getItem('highContrast');
     if (saved !== null) return JSON.parse(saved);
-    
+
     // Check system preference
     if (window.matchMedia) {
       return window.matchMedia('(prefers-contrast: more)').matches;
@@ -160,7 +134,7 @@ const App = () => {
                 <Routes>
                   {/* Landing Page */}
                   <Route path="/" element={<LandingPage />} />
-                  
+
                   {/* Job Postings - Public Route */}
                   <Route path="/job-postings" element={<JobPostings />} />
 
@@ -210,7 +184,7 @@ const App = () => {
                   {/* Disabled Person Routes with Nested Dashboard */}
                   <Route path="/disabled/login" element={<DisabledAuth isLogin={true} />} />
                   <Route path="/disabled/register" element={<DisabledAuth isLogin={false} />} />
-                  
+
                   <Route
                     path="/disabled/verification"
                     element={
@@ -219,7 +193,7 @@ const App = () => {
                       </PrivateRoute>
                     }
                   />
-                  
+
                   <Route
                     path="/disabled/dashboard"
                     element={
@@ -252,6 +226,7 @@ export default App;
 // Announces route changes to the screen reader
 const RouteChangeAnnouncer = () => {
   const { announce, enabled } = useScreenReader();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const location = React.useMemo(() => window.location.pathname + window.location.search, [window.location.pathname, window.location.search]);
   React.useEffect(() => {
     if (!enabled) return;

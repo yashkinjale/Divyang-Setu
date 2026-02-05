@@ -7,21 +7,14 @@ import {
   Grid,
   Card,
   CardContent,
-  useTheme,
-  Avatar,
   AppBar,
   Toolbar,
   Link,
   IconButton,
   TextField,
-  InputAdornment,
-  Drawer,
-  List,
-  ListItem,
-  ListItemText
+  InputAdornment
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
 import WorkIcon from '@mui/icons-material/Work';
@@ -914,7 +907,6 @@ const LandingPage = () => {
                     cursor: 'pointer',
                     background: service.gradientBg, // Off-white color
                     border: '1px solid rgba(0,0,0,0.08)', // Defined border
-                    p: 2.5, // Reduced padding
                     boxShadow: '0 4px 20px rgba(0,0,0,0.05)', // Soft shadow
                     '&:hover': {
                       transform: 'translateY(-8px) scale(1.02)',
