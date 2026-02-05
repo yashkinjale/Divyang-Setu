@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const VoiceNavContext = createContext(null);
@@ -14,33 +14,19 @@ export const VoiceNavProvider = ({ children }) => {
   const [enabled, setEnabled] = useState(false);
   const recRef = useRef(null);
   const restartTimer = useRef(null);
+  const enabledRef = useRef(enabled);
 
-  const stop = () => {
+  // Keep ref in sync with state for callbacks
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
+
+  const stop = useCallback(() => {
     setEnabled(false);
-    try { recRef.current && recRef.current.stop(); } catch {}
-  };
+    try { recRef.current && recRef.current.stop(); } catch { }
+  }, []);
 
-  const start = () => {
-    const rec = getRecognition();
-    if (!rec) return;
-    rec.lang = 'en-US';
-    rec.continuous = true;
-    rec.interimResults = false;
-    rec.onresult = (e) => {
-      const transcript = Array.from(e.results).slice(-1)[0][0].transcript.trim().toLowerCase();
-      handleCommand(transcript);
-    };
-    rec.onend = () => {
-      if (enabled) restartTimer.current = setTimeout(() => { try { rec.start(); } catch {} }, 300);
-    };
-    try { rec.start(); } catch {}
-    recRef.current = rec;
-    setEnabled(true);
-  };
-
-  useEffect(() => () => { clearTimeout(restartTimer.current); stop(); }, []);
-
-  const handleCommand = (cmd) => {
+  const handleCommand = useCallback((cmd) => {
     // Navigation
     const navMap = {
       'home': '/',
@@ -123,9 +109,35 @@ export const VoiceNavProvider = ({ children }) => {
       if (btn) btn.click();
       return;
     }
-  };
+  }, [navigate]);
 
-  const value = useMemo(() => ({ enabled, start, stop, toggle: () => (enabled ? stop() : start()) }), [enabled]);
+  const start = useCallback(() => {
+    const rec = getRecognition();
+    if (!rec) return;
+    rec.lang = 'en-US';
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      const transcript = Array.from(e.results).slice(-1)[0][0].transcript.trim().toLowerCase();
+      handleCommand(transcript);
+    };
+    rec.onend = () => {
+      // Use ref to check current enabled state
+      if (enabledRef.current) restartTimer.current = setTimeout(() => { try { rec.start(); } catch { } }, 300);
+    };
+    try { rec.start(); } catch { }
+    recRef.current = rec;
+    setEnabled(true);
+  }, [handleCommand]);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(restartTimer.current);
+      stop();
+    };
+  }, [stop]);
+
+  const value = useMemo(() => ({ enabled, start, stop, toggle: () => (enabled ? stop() : start()) }), [enabled, start, stop]);
   return (
     <VoiceNavContext.Provider value={value}>{children}</VoiceNavContext.Provider>
   );

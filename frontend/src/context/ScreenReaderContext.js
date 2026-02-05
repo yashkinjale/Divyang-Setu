@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useRef, useState, useEffect } from 'react';
+import React, { createContext, useContext, useMemo, useRef, useState, useEffect, useCallback } from 'react';
 
 const ScreenReaderContext = createContext(null);
 
@@ -6,7 +6,7 @@ export const ScreenReaderProvider = ({ children }) => {
   const [enabled, setEnabled] = useState(false);
   const liveRef = useRef(null);
 
-  const speak = (text, options = {}) => {
+  const speak = useCallback((text, options = {}) => {
     if (!enabled || !text) return;
     try {
       window.speechSynthesis.cancel();
@@ -15,10 +15,10 @@ export const ScreenReaderProvider = ({ children }) => {
       utter.pitch = options.pitch ?? 1;
       utter.lang = options.lang ?? 'en-US';
       window.speechSynthesis.speak(utter);
-    } catch {}
-  };
+    } catch { }
+  }, [enabled]);
 
-  const announce = (message) => {
+  const announce = useCallback((message) => {
     if (!enabled || !liveRef.current) return;
     liveRef.current.textContent = '';
     // Allow DOM to flush so screen readers re-announce
@@ -26,7 +26,7 @@ export const ScreenReaderProvider = ({ children }) => {
       if (liveRef.current) liveRef.current.textContent = message;
       speak(message);
     }, 50);
-  };
+  }, [enabled, speak]);
 
   // NOTE: We intentionally only announce focus/route changes to avoid overwhelming users
 
@@ -42,9 +42,9 @@ export const ScreenReaderProvider = ({ children }) => {
     };
     document.addEventListener('focusin', onFocus);
     return () => document.removeEventListener('focusin', onFocus);
-  }, [enabled]);
+  }, [enabled, speak]);
 
-  const value = useMemo(() => ({ enabled, setEnabled, toggle: () => setEnabled(v => !v), speak, announce }), [enabled]);
+  const value = useMemo(() => ({ enabled, setEnabled, toggle: () => setEnabled(v => !v), speak, announce }), [enabled, speak, announce]);
 
   return (
     <ScreenReaderContext.Provider value={value}>

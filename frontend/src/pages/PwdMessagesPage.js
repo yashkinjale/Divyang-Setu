@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -47,6 +47,30 @@ const pageTransition = {
   type: 'tween',
   ease: 'anticipate',
   duration: 0.8
+};
+
+const formatTime = (date) => {
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const formatTimeAgo = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString();
 };
 
 const PWDMessagesPage = () => {
@@ -108,6 +132,11 @@ const PWDMessagesPage = () => {
     }
   }, []);
 
+  // Stable helper for scrolling
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
   // Handle session error - force logout
   const handleForceLogout = () => {
     localStorage.clear();
@@ -115,7 +144,7 @@ const PWDMessagesPage = () => {
   };
 
   // Fetch conversations on mount
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -123,7 +152,7 @@ const PWDMessagesPage = () => {
       console.log("Fetching conversations for user:", currentUser.id);
       const response = await messageApi.getConversations(currentUser.id);
 
-      console.log("Conversations response:", response.data);
+      // console.log("Conversations response:", response.data);
 
       if (response.data.success) {
         const convData = response.data.conversations || response.data.data || [];
@@ -154,7 +183,7 @@ const PWDMessagesPage = () => {
       }
     } catch (err) {
       console.error("Error fetching conversations:", err);
-      console.error("Error response:", err.response?.data);
+      // console.error("Error response:", err.response?.data);
 
       // Check for authentication/session errors
       if (err.response?.status === 400 && err.response?.data?.message === "Invalid user IDs") {
@@ -168,7 +197,7 @@ const PWDMessagesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser]);
 
   // Auto-select first conversation
   useEffect(() => {
@@ -198,9 +227,9 @@ const PWDMessagesPage = () => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchTerm]);
+  }, [searchTerm, searchDonors]);
 
-  const searchDonors = async (query) => {
+  const searchDonors = useCallback(async (query) => {
     try {
       setSearchLoading(true);
       console.log("Searching for donors with query:", query);
@@ -221,7 +250,7 @@ const PWDMessagesPage = () => {
     } finally {
       setSearchLoading(false);
     }
-  };
+  }, []);
 
   const handleSearchResultClick = (donor) => {
     const newConversation = {
@@ -243,7 +272,7 @@ const PWDMessagesPage = () => {
     setShowSearchResults(false);
   };
 
-  const fetchMessages = async (conversation) => {
+  const fetchMessages = useCallback(async (conversation) => {
     try {
       setError(null);
 
@@ -255,7 +284,7 @@ const PWDMessagesPage = () => {
       console.log("Fetching messages between:", currentUser.id, "and", conversation.userId);
       const response = await messageApi.getMessages(currentUser.id, conversation.userId);
 
-      console.log("Messages response:", response.data);
+      // console.log("Messages response:", response.data);
 
       if (response.data.success) {
         const messageData = response.data.data || [];
@@ -295,17 +324,34 @@ const PWDMessagesPage = () => {
         setError(err.response?.data?.message || "Failed to load messages");
       }
     }
-  };
+  }, [currentUser]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
-  const handleSendMessage = async () => {
+
+
+  // ... skip handleKeyPress ...
+
+  const handleConversationSelect = useCallback((conversation) => {
+    setSelectedChat(conversation);
+    fetchMessages(conversation);
+    setShowSearchResults(false);
+  }, [fetchMessages]);
+
+  // Auto-select first conversation
+  useEffect(() => {
+    if (!selectedChat && conversations.length > 0) {
+      handleConversationSelect(conversations[0]);
+    }
+  }, [conversations, selectedChat, handleConversationSelect]);
+
+  const handleSendMessage = useCallback(async () => {
     if (messageInput.trim() && selectedChat) {
       const messageText = messageInput.trim();
       setMessageInput('');
@@ -342,7 +388,7 @@ const PWDMessagesPage = () => {
         setSending(false);
       }
     }
-  };
+  }, [messageInput, selectedChat, currentUser]);
 
   const handleKeyPress = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -351,35 +397,7 @@ const PWDMessagesPage = () => {
     }
   };
 
-  const handleConversationSelect = (conversation) => {
-    setSelectedChat(conversation);
-    fetchMessages(conversation);
-    setShowSearchResults(false);
-  };
 
-  const formatTime = (date) => {
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatTimeAgo = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString();
-  };
 
   const filteredConversations = conversations.filter((conv) =>
     conv.name.toLowerCase().includes(searchTerm.toLowerCase())
