@@ -16,7 +16,8 @@ import {
   TextField,
   InputAdornment,
   Chip,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Close as CloseIcon,
