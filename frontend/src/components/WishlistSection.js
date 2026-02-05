@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -103,7 +103,7 @@ const WishlistSection = () => {
         console.log('🛑 Refresh interval cleared');
       }
     };
-  }, [user]);
+  }, [fetchWishlistItems]);
 
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });

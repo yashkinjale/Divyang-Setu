@@ -6,7 +6,6 @@ import {
   Grid,
   Card,
   CardContent,
-  CardMedia,
   Avatar,
   Button,
   Dialog,
@@ -17,10 +16,7 @@ import {
   TextField,
   InputAdornment,
   Chip,
-  useTheme,
-  useMediaQuery,
-  Fade,
-  Grow
+  useTheme
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -114,7 +110,6 @@ const categories = [
 
 const SuccessStoryCard = ({ story, onReadMore }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <motion.div
@@ -364,7 +359,6 @@ const SuccessStoryModal = ({ open, story, onClose }) => {
 
 const SuccessStoriesPage = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [selectedStory, setSelectedStory] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');

@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
-  CardContent,
   CardMedia,
   Typography,
   Button,
   IconButton,
   Chip,
-  useTheme,
-  useMediaQuery
+  useTheme
 } from '@mui/material';
 import {
   ArrowForward as ArrowForwardIcon,
@@ -31,11 +29,10 @@ const FALLBACK_IMG =
 const SchemeSlider = ({ schemes }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % schemes.length);
-  };
+  }, [schemes.length]);
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev - 1 + schemes.length) % schemes.length);
@@ -49,7 +46,7 @@ const SchemeSlider = ({ schemes }) => {
 
     // Cleanup interval on component unmount
     return () => clearInterval(interval);
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, [nextSlide]); // Empty dependency array means this effect runs once on mount
 
   // Pause auto-sliding when user hovers over the slider
   const [isPaused, setIsPaused] = useState(false);
@@ -62,14 +59,14 @@ const SchemeSlider = ({ schemes }) => {
       }, 5000);
     }
     return () => clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, nextSlide]);
 
   return (
-    <Box 
-      sx={{ 
-        position: 'relative', 
+    <Box
+      sx={{
+        position: 'relative',
         height: { xs: 'auto', sm: 500 },
-        overflow: 'hidden', 
+        overflow: 'hidden',
         borderRadius: 2,
         bgcolor: 'background.paper',
         boxShadow: 1
@@ -86,8 +83,8 @@ const SchemeSlider = ({ schemes }) => {
           transition={{ duration: 0.5 }}
           style={{ height: '100%' }}
         >
-          <Card sx={{ 
-            height: '100%', 
+          <Card sx={{
+            height: '100%',
             position: 'relative',
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' }
@@ -106,7 +103,7 @@ const SchemeSlider = ({ schemes }) => {
               referrerPolicy="no-referrer"
               onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }}
             />
-            <Box sx={{ 
+            <Box sx={{
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
@@ -115,9 +112,9 @@ const SchemeSlider = ({ schemes }) => {
               <Typography variant="h5" gutterBottom>
                 {schemes[currentIndex].title}
               </Typography>
-              <Typography 
-                variant="body1" 
-                color="text.secondary" 
+              <Typography
+                variant="body1"
+                color="text.secondary"
                 paragraph
                 sx={{
                   flex: 1,
@@ -128,19 +125,19 @@ const SchemeSlider = ({ schemes }) => {
                 {schemes[currentIndex].description}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                <Chip 
-                  label={schemes[currentIndex].type} 
-                  color="primary" 
-                  size="small" 
+                <Chip
+                  label={schemes[currentIndex].type}
+                  color="primary"
+                  size="small"
                 />
-                <Chip 
-                  label={schemes[currentIndex].deadline} 
-                  color="secondary" 
-                  size="small" 
+                <Chip
+                  label={schemes[currentIndex].deadline}
+                  color="secondary"
+                  size="small"
                 />
               </Box>
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 endIcon={<ArrowForwardIcon />}
                 fullWidth
                 size="large"
@@ -152,7 +149,7 @@ const SchemeSlider = ({ schemes }) => {
           </Card>
         </motion.div>
       </AnimatePresence>
-      
+
       <IconButton
         onClick={prevSlide}
         sx={{
@@ -167,7 +164,7 @@ const SchemeSlider = ({ schemes }) => {
       >
         <ArrowBackIcon />
       </IconButton>
-      
+
       <IconButton
         onClick={nextSlide}
         sx={{
@@ -184,7 +181,7 @@ const SchemeSlider = ({ schemes }) => {
       </IconButton>
 
       {/* Mobile Navigation Dots */}
-      <Box sx={{ 
+      <Box sx={{
         display: { xs: 'flex', sm: 'none' },
         justifyContent: 'center',
         gap: 1,

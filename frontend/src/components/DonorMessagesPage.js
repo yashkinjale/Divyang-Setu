@@ -33,12 +33,11 @@ import {
   PersonAdd as PersonAddIcon,
   VolunteerActivism as VolunteerActivismIcon, // Added for donation messages
 } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+
 import { messageApi, authHelpers } from "../utils/api";
 import DonorNavbar from "./DonorNavbar";
 
 const DonorMessagesPage = ({ profile }) => {
-  const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");

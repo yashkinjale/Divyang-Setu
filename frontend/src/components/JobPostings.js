@@ -22,8 +22,7 @@ import {
   StepLabel,
   Alert,
   Snackbar,
-  CircularProgress,
-  Divider
+  CircularProgress
 } from '@mui/material';
 import {
   Business as BusinessIcon,

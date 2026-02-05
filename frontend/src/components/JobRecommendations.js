@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'; 
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -35,11 +35,11 @@ const JobRecommendations = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('India');
-  
+
   // Track if initial fetch has happened
   const hasFetchedRef = useRef(false);
-  
-  // Accessibility filter state
+
+  // Filters state
   const [filters, setFilters] = useState({
     wheelchair_accessible: false,
     remote_friendly: false,
@@ -48,34 +48,15 @@ const JobRecommendations = () => {
     colorblind_friendly_ui: false,
   });
 
-  // FIXED: Single useEffect that only runs once on mount
-  useEffect(() => {
-    if (!hasFetchedRef.current) {
-      hasFetchedRef.current = true;
-      fetchJobs();
-    }
-  }, []); // Empty dependency array = runs once on mount
-
-  const fetchJobs = async () => {
+  const fetchJobs = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('[FRONTEND] Fetching jobs with params:', { 
-        location, 
+
+      console.log('[FRONTEND] Fetching jobs with params:', {
+        location,
         filters: Object.entries(filters).filter(([k, v]) => v)
       });
-
-      // Build query parameters
-      const params = {
-        location: location || 'India',
-        // Only include filters that are true
-        ...Object.fromEntries(
-          Object.entries(filters).filter(([key, value]) => value === true)
-        )
-      };
-
-      console.log('[FRONTEND] API params:', params);
 
       const response = await api.get('/jobs', {
         params: {
@@ -86,37 +67,36 @@ const JobRecommendations = () => {
         },
         timeout: 20000
       });
-      
+
       if (response.data.success && response.data.jobs) {
         setJobs(response.data.jobs);
         console.log(`[FRONTEND] Successfully loaded ${response.data.jobs.length} jobs`);
       } else {
         throw new Error('Invalid response structure');
       }
-      
+
       if (response.data.note) {
         console.log('[FRONTEND] API Note:', response.data.note);
       }
-      
-    } catch (error) {
-      console.error('[FRONTEND] Error fetching jobs:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      
-      setError(`Failed to fetch jobs: ${error.message}`);
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+      setError(err.message || 'Failed to fetch jobs');
       setJobs([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [location, filters]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
 
   const handleSearch = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log('[FRONTEND] Searching with query:', searchQuery);
 
       const params = {
@@ -143,13 +123,13 @@ const JobRecommendations = () => {
         count: response.data.count,
         jobsLength: response.data.jobs?.length
       });
-      
+
       if (response.data.success && response.data.jobs) {
         setJobs(response.data.jobs);
       } else {
         throw new Error('Invalid search response');
       }
-      
+
     } catch (error) {
       console.error('[FRONTEND] Search error:', error);
       setError(`Search failed: ${error.message}`);
@@ -288,7 +268,7 @@ const JobRecommendations = () => {
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
               {Object.entries(filters)
                 .filter(([, value]) => value)
-                .map(([key, ]) => (
+                .map(([key,]) => (
                   <Chip
                     key={key}
                     label={key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -341,8 +321,8 @@ const JobRecommendations = () => {
             <Button variant="contained" onClick={fetchJobs}>
               Reload Jobs
             </Button>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               onClick={() => {
                 setFilters({
                   wheelchair_accessible: false,
@@ -371,14 +351,14 @@ const JobRecommendations = () => {
               Refresh
             </Button>
           </Box>
-          
+
           <Grid container spacing={3}>
             {jobs.map((job) => (
               <Grid key={job.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                <Card 
-                  sx={{ 
-                    height: '100%', 
-                    display: 'flex', 
+                <Card
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
                     flexDirection: 'column',
                     transition: 'all 0.3s ease-in-out',
                     '&:hover': {
@@ -393,10 +373,10 @@ const JobRecommendations = () => {
                     {/* High Score Badge */}
                     {job.inclusivityScore > 15 && (
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-                        <Chip 
-                          label="Highly Inclusive" 
-                          color="primary" 
-                          size="small" 
+                        <Chip
+                          label="Highly Inclusive"
+                          color="primary"
+                          size="small"
                           variant="filled"
                         />
                       </Box>

@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { 
-  TextField, 
-  Button, 
-  Box, 
-  Typography, 
-  Container, 
-  Paper, 
-  Link, 
-  Grid, 
-  FormControl, 
-  Select, 
-  MenuItem, 
+import {
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Container,
+  Paper,
+  Link,
+  FormControl,
+  Select,
+  MenuItem,
   IconButton,
   InputAdornment
 } from '@mui/material';
@@ -32,7 +31,6 @@ const DisabledAuth = ({ isLogin }) => {
   });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [profileImageFile, setProfileImageFile] = useState(null);
   const { login: setAuth } = useAuth();
@@ -54,7 +52,7 @@ const DisabledAuth = ({ isLogin }) => {
         const res = await disabledApi.login({ email: formData.email, password: formData.password });
         const userData = { ...(res.data.user || res.data.disabled), type: 'disabled' };
         setAuth(userData, res.data.token);
-        
+
         // Redirect to verification page if not verified
         if (!userData.isVerified) {
           navigate('/disabled/verification', { replace: true });
@@ -82,10 +80,10 @@ const DisabledAuth = ({ isLogin }) => {
               reader.readAsDataURL(profileImageFile);
             });
             userData = { ...userData, profileImage: dataUrl };
-          } catch {}
+          } catch { }
         }
         setAuth(userData, res.data.token);
-        
+
         // Redirect to verification page after registration
         navigate('/disabled/verification', { replace: true });
       }
@@ -109,21 +107,21 @@ const DisabledAuth = ({ isLogin }) => {
         }}
       >
         <Container maxWidth="md">
-          <Paper 
+          <Paper
             elevation={3}
-            sx={{ 
-              p: { xs: 3, sm: 4, md: 5 }, 
-              borderRadius: 2, 
+            sx={{
+              p: { xs: 3, sm: 4, md: 5 },
+              borderRadius: 2,
               bgcolor: 'white',
               border: '1px solid #e0e0e0'
             }}
           >
             <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Typography 
-                variant="h4" 
-                sx={{ 
-                  fontWeight: '700', 
-                  mb: 1, 
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: '700',
+                  mb: 1,
                   color: '#1976d2',
                   fontSize: { xs: '1.75rem', md: '2.125rem' }
                 }}
@@ -136,13 +134,13 @@ const DisabledAuth = ({ isLogin }) => {
             </Box>
 
             {error && (
-              <Typography 
-                color="error" 
-                align="center" 
-                sx={{ 
-                  mb: 3, 
-                  p: 1.5, 
-                  bgcolor: '#ffebee', 
+              <Typography
+                color="error"
+                align="center"
+                sx={{
+                  mb: 3,
+                  p: 1.5,
+                  bgcolor: '#ffebee',
                   borderRadius: 1,
                   fontSize: '0.9rem'
                 }}
@@ -155,22 +153,22 @@ const DisabledAuth = ({ isLogin }) => {
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
                 {/* Row 1: Full Name | Email */}
                 <Box>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      mb: 1, 
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 1,
                       fontWeight: 600,
                       color: '#333'
                     }}
                   >
                     Full Name
                   </Typography>
-                  <TextField 
-                    name="name" 
-                    value={formData.name} 
-                    onChange={handleChange} 
-                    fullWidth 
-                    required 
+                  <TextField
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    fullWidth
+                    required
                     placeholder="Enter your full name"
                     variant="outlined"
                     sx={{
@@ -192,23 +190,23 @@ const DisabledAuth = ({ isLogin }) => {
                 </Box>
 
                 <Box>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      mb: 1, 
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 1,
                       fontWeight: 600,
                       color: '#333'
                     }}
                   >
                     Email Address
                   </Typography>
-                  <TextField 
-                    name="email" 
-                    type="email" 
-                    value={formData.email} 
-                    onChange={handleChange} 
-                    fullWidth 
-                    required 
+                  <TextField
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    fullWidth
+                    required
                     placeholder="Enter your email"
                     sx={{
                       '& .MuiOutlinedInput-root': {
@@ -230,22 +228,22 @@ const DisabledAuth = ({ isLogin }) => {
 
                 {/* Row 2: Phone | Password */}
                 <Box>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      mb: 1, 
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 1,
                       fontWeight: 600,
                       color: '#333'
                     }}
                   >
                     Phone Number
                   </Typography>
-                  <TextField 
-                    name="phone" 
-                    value={formData.phone} 
-                    onChange={handleChange} 
-                    fullWidth 
-                    required 
+                  <TextField
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    fullWidth
+                    required
                     placeholder="Enter your phone number"
                     sx={{
                       '& .MuiOutlinedInput-root': {
@@ -266,23 +264,23 @@ const DisabledAuth = ({ isLogin }) => {
                 </Box>
 
                 <Box>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      mb: 1, 
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 1,
                       fontWeight: 600,
                       color: '#333'
                     }}
                   >
                     Create Password
                   </Typography>
-                  <TextField 
-                    name="password" 
+                  <TextField
+                    name="password"
                     type={showPassword ? 'text' : 'password'}
-                    value={formData.password} 
-                    onChange={handleChange} 
-                    fullWidth 
-                    required 
+                    value={formData.password}
+                    onChange={handleChange}
+                    fullWidth
+                    required
                     placeholder="Enter a secure password"
                     InputProps={{
                       endAdornment: (
@@ -317,22 +315,22 @@ const DisabledAuth = ({ isLogin }) => {
 
                 {/* Row 3: Location | Type of Disability */}
                 <Box>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      mb: 1, 
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 1,
                       fontWeight: 600,
                       color: '#333'
                     }}
                   >
                     Location
                   </Typography>
-                  <TextField 
-                    name="address" 
-                    value={formData.address} 
-                    onChange={handleChange} 
-                    fullWidth 
-                    required 
+                  <TextField
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    fullWidth
+                    required
                     placeholder="City, Country"
                     sx={{
                       '& .MuiOutlinedInput-root': {
@@ -353,10 +351,10 @@ const DisabledAuth = ({ isLogin }) => {
                 </Box>
 
                 <Box>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      mb: 1, 
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 1,
                       fontWeight: 600,
                       color: '#333'
                     }}
@@ -364,9 +362,9 @@ const DisabledAuth = ({ isLogin }) => {
                     Type of Disability
                   </Typography>
                   <FormControl fullWidth required>
-                    <Select 
-                      name="disabilityType" 
-                      value={formData.disabilityType} 
+                    <Select
+                      name="disabilityType"
+                      value={formData.disabilityType}
                       onChange={handleChange}
                       displayEmpty
                       sx={{
@@ -396,8 +394,8 @@ const DisabledAuth = ({ isLogin }) => {
 
                 {/* Row 3b: Profile Photo (Upload) */}
                 <Box>
-                  <Typography 
-                    variant="body2" 
+                  <Typography
+                    variant="body2"
                     sx={{ mb: 1, fontWeight: 600, color: '#333' }}
                   >
                     Profile Photo (Optional)
@@ -418,22 +416,22 @@ const DisabledAuth = ({ isLogin }) => {
 
                 {/* Row 4: Description (Full Row spanning two columns) */}
                 <Box sx={{ gridColumn: { md: '1 / span 2' } }}>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      mb: 1, 
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 1,
                       fontWeight: 600,
                       color: '#333'
                     }}
                   >
                     Disability Description <span style={{ color: '#999', fontWeight: 400 }}>(Optional)</span>
                   </Typography>
-                  <TextField 
-                    name="needs" 
-                    value={formData.needs} 
-                    onChange={handleChange} 
-                    fullWidth 
-                    multiline 
+                  <TextField
+                    name="needs"
+                    value={formData.needs}
+                    onChange={handleChange}
+                    fullWidth
+                    multiline
                     rows={6}
                     placeholder="Provide a brief description if you wish"
                     sx={{
@@ -456,22 +454,22 @@ const DisabledAuth = ({ isLogin }) => {
 
                 {/* Submit Button */}
                 <Box sx={{ gridColumn: { md: '1 / span 2' } }}>
-                  <Button 
-                    type="submit" 
-                    fullWidth 
-                    size="large" 
-                    variant="contained" 
-                    sx={{ 
-                      bgcolor: '#1976d2', 
-                      color: 'white', 
-                      py: 1.8, 
-                      borderRadius: 1, 
+                  <Button
+                    type="submit"
+                    fullWidth
+                    size="large"
+                    variant="contained"
+                    sx={{
+                      bgcolor: '#1976d2',
+                      color: 'white',
+                      py: 1.8,
+                      borderRadius: 1,
                       fontWeight: 600,
                       fontSize: '1rem',
                       textTransform: 'none',
-                      '&:hover': { 
-                        bgcolor: '#1565c0', 
-                      } 
+                      '&:hover': {
+                        bgcolor: '#1565c0',
+                      }
                     }}
                     disabled={submitting}
                   >
@@ -484,12 +482,12 @@ const DisabledAuth = ({ isLogin }) => {
             <Box sx={{ textAlign: 'center', mt: 3 }}>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
                 Already have an account?{' '}
-                <Link 
+                <Link
                   href="#"
-                  underline="hover" 
-                  sx={{ 
+                  underline="hover"
+                  sx={{
                     color: '#1976d2',
-                    fontWeight: 600 
+                    fontWeight: 600
                   }}
                 >
                   Log In
@@ -504,62 +502,62 @@ const DisabledAuth = ({ isLogin }) => {
 
   // Login Page
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
         bgcolor: '#ffffff',
-        py: 4 
+        py: 4
       }}
     >
       <Container component="main" maxWidth="xs">
-        <Paper 
+        <Paper
           elevation={3}
-          sx={{ 
-            p: 4, 
-            display: 'flex', 
-            flexDirection: 'column', 
+          sx={{
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             borderRadius: 2,
             bgcolor: 'white',
             border: '1px solid #e0e0e0'
           }}
         >
-          <AccessibilityNewIcon 
-            sx={{ 
-              fontSize: 48, 
-              color: '#1976d2', 
-              mb: 2 
-            }} 
+          <AccessibilityNewIcon
+            sx={{
+              fontSize: 48,
+              color: '#1976d2',
+              mb: 2
+            }}
           />
-          <Typography 
-            component="h1" 
-            variant="h4" 
-            align="center" 
+          <Typography
+            component="h1"
+            variant="h4"
+            align="center"
             gutterBottom
-            sx={{ 
+            sx={{
               fontWeight: 700,
               color: '#1976d2'
             }}
           >
             Welcome Back!
           </Typography>
-          <Typography 
-            variant="body1" 
-            color="text.secondary" 
-            align="center" 
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            align="center"
             sx={{ mb: 3 }}
           >
             Sign in to access support and connect with donors
           </Typography>
 
           {error && (
-            <Typography 
-              color="error" 
-              align="center" 
-              sx={{ 
+            <Typography
+              color="error"
+              align="center"
+              sx={{
                 mb: 2,
                 p: 1.5,
                 bgcolor: '#ffebee',
@@ -573,10 +571,10 @@ const DisabledAuth = ({ isLogin }) => {
           )}
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mb: 1, 
+            <Typography
+              variant="body2"
+              sx={{
+                mb: 1,
                 mt: 2,
                 fontWeight: 600,
                 color: '#333'
@@ -584,14 +582,14 @@ const DisabledAuth = ({ isLogin }) => {
             >
               Email Address
             </Typography>
-            <TextField 
-              required 
-              fullWidth 
-              name="email" 
-              type="email" 
-              value={formData.email} 
-              onChange={handleChange} 
-              autoFocus 
+            <TextField
+              required
+              fullWidth
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              autoFocus
               placeholder="Enter your email"
               sx={{
                 mb: 2,
@@ -611,23 +609,23 @@ const DisabledAuth = ({ isLogin }) => {
               }}
             />
 
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mb: 1, 
+            <Typography
+              variant="body2"
+              sx={{
+                mb: 1,
                 fontWeight: 600,
                 color: '#333'
               }}
             >
               Password
             </Typography>
-            <TextField 
-              required 
-              fullWidth 
-              name="password" 
+            <TextField
+              required
+              fullWidth
+              name="password"
               type={showPassword ? 'text' : 'password'}
-              value={formData.password} 
-              onChange={handleChange} 
+              value={formData.password}
+              onChange={handleChange}
               placeholder="Enter your password"
               InputProps={{
                 endAdornment: (
@@ -659,13 +657,13 @@ const DisabledAuth = ({ isLogin }) => {
               }}
             />
 
-            <Button 
-              type="submit" 
-              fullWidth 
-              variant="contained" 
-              size="large" 
-              sx={{ 
-                mt: 3, 
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              size="large"
+              sx={{
+                mt: 3,
                 mb: 2,
                 bgcolor: '#1976d2',
                 py: 1.8,
@@ -685,10 +683,10 @@ const DisabledAuth = ({ isLogin }) => {
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
                 Don't have an account?{' '}
-                <Link 
+                <Link
                   component={RouterLink}
                   to="/disabled/register"
-                  sx={{ 
+                  sx={{
                     textDecoration: 'none',
                     color: '#1976d2',
                     fontWeight: 600
