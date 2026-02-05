@@ -178,19 +178,25 @@ const DonorMessagesPage = ({ profile }) => {
           return;
         }
 
-        const transformedConversations = convData.map((conv) => ({
-          id: conv.otherUser?.id || conv.otherUser?._id || conv.id || conv._id,
-          userId: conv.otherUser?.id || conv.otherUser?._id || conv.id || conv._id,
-          name: conv.otherUser?.name || conv.name,
-          avatar: conv.otherUser?.profileImage || conv.profileImage || conv.avatar,
-          lastMessage: conv.lastMessage?.content || conv.lastMessage || "No messages yet",
-          time: formatTimeAgo(conv.lastMessage?.createdAt || conv.lastMessageTime),
-          unread: conv.unreadCount || 0,
-          online: conv.otherUser?.online || false,
-          disability: conv.otherUser?.disability || conv.disability || "",
-          location: conv.otherUser?.location || conv.location || "",
-          age: conv.otherUser?.age || conv.age || 0,
-        }));
+        const transformedConversations = convData.map((conv) => {
+          // Backend returns 'id' at root level as the other user's ID
+          const otherUserId = conv.id || conv._id || conv.otherUser?.id || conv.otherUser?._id;
+
+          return {
+            id: otherUserId,
+            userId: otherUserId,
+            name: conv.otherUser?.name || conv.name || "Unknown User",
+            avatar: conv.otherUser?.profileImage || conv.profileImage || conv.avatar,
+            lastMessage: conv.lastMessage?.content || conv.lastMessage || "No messages yet",
+            time: formatTimeAgo(conv.lastMessage?.createdAt || conv.lastMessageTime),
+            unread: conv.unreadCount || 0,
+            online: conv.otherUser?.online || false,
+            disability: conv.otherUser?.disability || conv.disability || "",
+            location: conv.otherUser?.location || conv.location || "",
+            age: conv.otherUser?.age || conv.age || 0,
+          };
+        });
+
         setConversations(transformedConversations);
       }
     } catch (err) {

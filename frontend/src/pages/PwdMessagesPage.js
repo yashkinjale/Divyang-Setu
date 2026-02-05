@@ -134,17 +134,22 @@ const PWDMessagesPage = () => {
           return;
         }
 
-        const transformedConversations = convData.map((conv) => ({
-          id: conv.otherUser._id || conv.otherUser.id,
-          userId: conv.otherUser._id || conv.otherUser.id,
-          name: conv.otherUser.name,
-          message: conv.lastMessage?.content || conv.lastMessage || "No messages yet",
-          avatar: conv.otherUser.profileImage || conv.otherUser.avatar,
-          status: conv.otherUser.online ? 'Online' : 'Offline',
-          time: formatTimeAgo(conv.lastMessage?.createdAt || conv.lastMessageTime),
-          unread: conv.unreadCount || 0,
-          isDonor: conv.otherUser.type === 'donor' || conv.otherUser.role === 'donor',
-        }));
+        const transformedConversations = convData.map((conv) => {
+          // Backend returns 'id' at root level as the other user's ID
+          const otherUserId = conv.id || conv._id || conv.otherUser?._id || conv.otherUser?.id;
+
+          return {
+            id: otherUserId,
+            userId: otherUserId,
+            name: conv.otherUser?.name || conv.name || "Unknown User",
+            message: conv.lastMessage?.content || conv.lastMessage || "No messages yet",
+            avatar: conv.otherUser?.profileImage || conv.otherUser?.avatar || conv.avatar,
+            status: conv.otherUser?.online ? 'Online' : 'Offline',
+            time: formatTimeAgo(conv.lastMessage?.createdAt || conv.lastMessageTime),
+            unread: conv.unreadCount || 0,
+            isDonor: conv.otherUser?.type === 'donor' || conv.otherUser?.role === 'donor',
+          };
+        });
         setConversations(transformedConversations);
       }
     } catch (err) {
