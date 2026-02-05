@@ -246,6 +246,48 @@ const DonorMessagesPage = ({ profile }) => {
     }
   };
 
+  // Auto-refresh messages every 3 seconds (Polling)
+  useEffect(() => {
+    let intervalId;
+    if (selectedConversation) {
+      intervalId = setInterval(() => {
+        // Silent fetch to keep chat live
+        messageApi.getMessages(currentUser.id, selectedConversation.userId)
+          .then(response => {
+            if (response.data.success) {
+              const msgData = response.data.messages || response.data.data || [];
+              const transformedMessages = msgData.map((msg) => ({
+                id: msg._id || msg.id,
+                sender: (msg.senderId === currentUser.id || msg.sender === currentUser.id) ? "donor" : "pwd",
+                text: msg.content || msg.message || msg.text,
+                timestamp: new Date(msg.createdAt || msg.timestamp),
+                read: msg.read,
+                type: msg.type || 'text',
+              }));
+
+              // Only update if there are new messages to avoid unnecessary re-renders/scroll jumps
+              setMessages(prev => {
+                if (prev.length !== transformedMessages.length) return transformedMessages;
+                return prev;
+              });
+
+              // Mark messages as read silently
+              const unreadMessages = msgData.filter(
+                (msg) => !msg.read && (msg.senderId !== currentUser.id && msg.sender !== currentUser.id)
+              );
+              unreadMessages.forEach((msg) => {
+                messageApi.markAsRead(msg._id || msg.id).catch(console.error);
+              });
+            }
+          })
+          .catch(err => console.log("Polling error (silent):", err));
+      }, 3000);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [selectedConversation, currentUser.id]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);

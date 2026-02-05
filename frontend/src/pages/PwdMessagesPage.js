@@ -350,6 +350,51 @@ const PWDMessagesPage = () => {
     }
   }, [conversations, selectedChat, handleConversationSelect]);
 
+  // Auto-refresh messages every 3 seconds (Polling)
+  useEffect(() => {
+    let intervalId;
+    if (selectedChat) {
+      intervalId = setInterval(() => {
+        messageApi.getMessages(currentUser.id, selectedChat.userId)
+          .then(response => {
+            if (response.data.success) {
+              const messageData = response.data.data || [];
+              if (messageData.length === 0) return;
+
+              const transformedMessages = messageData.map((msg) => ({
+                id: msg._id,
+                sender: (msg.senderId === currentUser.id) ? 'You' : selectedChat.name,
+                content: msg.message,
+                time: formatTime(new Date(msg.timestamp)),
+                isOwn: (msg.senderId === currentUser.id),
+                avatar: (msg.senderId === currentUser.id)
+                  ? currentUser.profileImage || 'https://mui.com/static/images/avatar/4.jpg'
+                  : selectedChat.avatar,
+                type: msg.type || 'text',
+              }));
+
+              setMessages(prev => {
+                if (prev.length !== transformedMessages.length) return transformedMessages;
+                return prev;
+              });
+
+              // Mark as read
+              const unreadMessages = messageData.filter(
+                (msg) => !msg.read && msg.senderId !== currentUser.id
+              );
+              unreadMessages.forEach((msg) => {
+                messageApi.markAsRead(msg._id).catch(console.error);
+              });
+            }
+          })
+          .catch(err => console.log("Polling error (silent):", err));
+      }, 3000);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [selectedChat, currentUser, selectedChat?.userId, selectedChat?.name, selectedChat?.avatar]);
+
   // Scroll effect
   useEffect(() => {
     scrollToBottom();
