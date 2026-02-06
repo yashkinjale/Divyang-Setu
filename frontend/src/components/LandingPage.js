@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -16,7 +16,12 @@ import {
   Drawer,
   List,
   ListItemButton,
+  ListItemIcon,
   ListItemText,
+  Paper,
+  Popper,
+  Fade,
+  ClickAwayListener,
   useMediaQuery,
   useTheme
 } from '@mui/material';
@@ -37,6 +42,10 @@ import ContrastIcon from '@mui/icons-material/Contrast';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import InfoIcon from '@mui/icons-material/Info';
+import ContactSupportIcon from '@mui/icons-material/ContactSupport';
+import HomeIcon from '@mui/icons-material/Home';
 import { useThemeToggle } from '../context/ThemeContext';
 import { useVoiceNav } from '../context/VoiceNavContext';
 import { useScreenReader } from '../context/ScreenReaderContext';
@@ -56,9 +65,10 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { label: 'Job Postings', path: '/job-postings' },
-    { label: 'About Us', path: '/about' },
-    { label: 'Contact Us', path: '/contact' }
+    { label: 'Home', path: '/', icon: <HomeIcon /> },
+    { label: 'Job Postings', path: '/job-postings', icon: <WorkIcon /> },
+    { label: 'About Us', path: '/about', icon: <InfoIcon /> },
+    { label: 'Contact Us', path: '/contact', icon: <ContactSupportIcon /> }
   ];
 
   useEffect(() => {
@@ -245,32 +255,84 @@ const Navbar = () => {
         }}
         sx={{
           display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 250 },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: 300,
+            background: isHighContrast ? 'background.default' : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+            borderLeft: isHighContrast ? '2px solid #ffff00' : 'none',
+          },
         }}
       >
-        <Box sx={{ p: 2, height: '100%', bgcolor: 'background.default' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <IconButton onClick={handleDrawerToggle}>
-              <ArrowForwardIosIcon />
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          {/* Drawer Header */}
+          <Box
+            sx={{
+              p: 3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: isHighContrast ? 'transparent' : 'linear-gradient(45deg, rgba(66, 133, 244, 0.05) 0%, rgba(52, 168, 83, 0.05) 100%)',
+              borderBottom: `1px solid ${isHighContrast ? '#ffff00' : 'rgba(0,0,0,0.06)'}`
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <img
+                src={require('./Disabled.jpg')}
+                alt="Logo"
+                style={{ width: 32, height: 32, borderRadius: '50%' }}
+              />
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main', fontSize: '1.1rem' }}>
+                DivyangSetu
+              </Typography>
+            </Box>
+            <IconButton onClick={handleDrawerToggle} size="small">
+              <CloseIcon sx={{ fontSize: 20 }} />
             </IconButton>
           </Box>
-          <List>
-            {navLinks.map((link) => (
-              <ListItemButton
-                key={link.label}
-                onClick={() => {
-                  navigate(link.path);
-                  handleDrawerToggle();
-                }}
-                sx={{ borderRadius: 1, mb: 1 }}
-              >
-                <ListItemText
-                  primary={link.label}
-                  primaryTypographyProps={{ fontWeight: 600 }}
-                />
-              </ListItemButton>
-            ))}
-          </List>
+
+          {/* Navigation items */}
+          <Box sx={{ p: 2, flexGrow: 1 }}>
+            <List>
+              {navLinks.map((link) => (
+                <ListItemButton
+                  key={link.label}
+                  onClick={() => {
+                    navigate(link.path);
+                    handleDrawerToggle();
+                  }}
+                  sx={{
+                    borderRadius: '12px',
+                    mb: 1,
+                    py: 1.5,
+                    '&:hover': {
+                      backgroundColor: 'rgba(66, 133, 244, 0.08)',
+                      '& .MuiListItemIcon-root': { color: 'primary.main' },
+                      '& .MuiListItemText-primary': { color: 'primary.main' }
+                    }
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 40, color: 'text.secondary', transition: 'color 0.3s' }}>
+                    {link.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={link.label}
+                    primaryTypographyProps={{
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                      transition: 'color 0.3s'
+                    }}
+                  />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
+
+          {/* Drawer Footer */}
+          <Box sx={{ p: 3, borderTop: `1px solid ${isHighContrast ? '#ffff00' : 'rgba(0,0,0,0.06)'}`, bgcolor: isHighContrast ? 'transparent' : 'rgba(248, 250, 252, 0.5)' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', fontWeight: 500 }}>
+              © 2026 DivyangSetu. Together we bridge the gap.
+            </Typography>
+          </Box>
         </Box>
       </Drawer>
     </AppBar>
@@ -353,7 +415,19 @@ const LandingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isXS = useMediaQuery(theme.breakpoints.down('sm'));
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
 
+  const searchSuggestions = [
+    { label: 'Job Recommendation', path: '/disabled/login', keywords: ['job', 'recommendation', 'work'] },
+    { label: 'Job Postings', path: '/job-postings', keywords: ['job', 'postings', 'work', 'employment'] },
+    { label: 'Government Schemes', path: '/disabled/login', keywords: ['scheme', 'government', 'benefits', 'policy'] },
+    { label: 'Community Forum', path: '/disabled/login', keywords: ['community', 'forum', 'chat', 'peers'] },
+    { label: 'Donate Now', path: '/donor/register', keywords: ['donate', 'donation', 'contribute', 'charity'] },
+    { label: 'About Us', path: '/about', keywords: ['about', 'team', 'mission'] },
+    { label: 'Contact Us', path: '/contact', keywords: ['contact', 'support', 'help', 'email'] },
+  ];
   const itemsPerSlide = isXS ? 1 : (isMobile ? 2 : 4);
   const slideStep = 100 / itemsPerSlide;
 
@@ -444,6 +518,12 @@ const LandingPage = () => {
     return infiniteServices;
   };
 
+  const handleSuggestionClick = (path) => {
+    navigate(path);
+    setSearchQuery('');
+    setShowSuggestions(false);
+  };
+
   // ⭐ NEW: Search handler function
   const handleSearch = (e) => {
     e.preventDefault();
@@ -524,11 +604,12 @@ const LandingPage = () => {
       <Box
         sx={{
           position: 'relative',
-          minHeight: '100vh',
+          minHeight: { xs: '90vh', md: '100vh' },
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
+          py: { xs: 8, md: 0 },
         }}
       >
         {/* Background Images Carousel */}
@@ -618,72 +699,156 @@ const LandingPage = () => {
             </Typography>
 
             {/* ⭐ UPDATED: Professional Search Bar */}
-            <Box
-              component="form"
-              onSubmit={handleSearch}
-              sx={{
-                display: 'flex',
-                maxWidth: '750px',
-                mx: 'auto',
-                gap: 0,
-                boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
-                borderRadius: '50px', // Rounder for modern look
-                overflow: 'hidden',
-                animation: 'fadeInUp 1s ease-out 0.6s both',
-                backdropFilter: 'blur(10px)',
-                background: 'rgba(255, 255, 255, 0.15)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-              }}
-            >
-              <TextField
-                fullWidth
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for services, schemes, jobs..."
-                sx={{
-                  bgcolor: isHighContrast ? 'background.paper' : 'rgba(255, 255, 255, 0.95)',
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '50px 0 0 50px',
-                    borderColor: isHighContrast ? 'primary.main' : 'transparent',
-                    borderStyle: isHighContrast ? 'solid' : 'none',
-                    borderWidth: isHighContrast ? '1px' : '0',
-                    '& fieldset': {
-                      border: isHighContrast ? '1px solid #ffff00' : 'none',
-                    },
-                    '& input': {
-                      padding: '20px 30px',
-                      fontSize: '17px',
-                    },
-                  },
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: '#4285F4', fontSize: 26, ml: 2 }} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                sx={{
-                  minWidth: 160,
-                  borderRadius: '0 50px 50px 0',
-                  bgcolor: '#4285F4',
-                  color: 'white',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: '18px',
-                  px: 5,
-                  '&:hover': {
-                    bgcolor: '#3367d6',
-                  },
-                }}
-              >
-                Search
-              </Button>
-            </Box>
+            <ClickAwayListener onClickAway={() => setShowSuggestions(false)}>
+              <Box sx={{ width: '100%', maxWidth: '750px', mx: 'auto', position: 'relative' }}>
+                <Box
+                  ref={searchRef}
+                  component="form"
+                  onSubmit={handleSearch}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    width: '100%',
+                    gap: { xs: 2, sm: 0 },
+                    boxShadow: { xs: 'none', sm: '0 15px 35px rgba(0,0,0,0.2)' },
+                    borderRadius: { xs: '16px', sm: '50px' },
+                    overflow: 'hidden',
+                    animation: 'fadeInUp 1s ease-out 0.6s both',
+                    backdropFilter: 'blur(10px)',
+                    background: { xs: 'transparent', sm: 'rgba(255, 255, 255, 0.15)' },
+                    border: { xs: 'none', sm: '1px solid rgba(255, 255, 255, 0.3)' },
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      const val = e.target.value.toLowerCase().trim();
+                      if (val.length >= 2) {
+                        const filtered = searchSuggestions.filter(item =>
+                          item.label.toLowerCase().includes(val) ||
+                          item.keywords.some(k => k.toLowerCase().includes(val))
+                        );
+                        setSuggestions(filtered);
+                        setShowSuggestions(filtered.length > 0);
+                      } else {
+                        setShowSuggestions(false);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (searchQuery.trim().length >= 2 && suggestions.length > 0) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    placeholder="Search for services, schemes, jobs..."
+                    sx={{
+                      bgcolor: isHighContrast ? 'background.paper' : 'rgba(255, 255, 255, 0.95)',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: { xs: '16px', sm: '50px 0 0 50px' },
+                        borderColor: isHighContrast ? 'primary.main' : 'transparent',
+                        borderStyle: isHighContrast ? 'solid' : 'none',
+                        borderWidth: isHighContrast ? '1px' : '0',
+                        '& fieldset': {
+                          border: isHighContrast ? '1px solid #ffff00' : 'none',
+                        },
+                        '& input': {
+                          padding: { xs: '15px 20px', sm: '20px 30px' },
+                          fontSize: { xs: '15px', sm: '17px' },
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon sx={{ color: '#4285F4', fontSize: { xs: 22, sm: 26 }, ml: { xs: 1, sm: 2 } }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    sx={{
+                      minWidth: { xs: '100%', sm: 160 },
+                      borderRadius: { xs: '12px', sm: '0 50px 50px 0' },
+                      bgcolor: '#4285F4',
+                      color: 'white',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      fontSize: { xs: '16px', sm: '18px' },
+                      px: 5,
+                      py: { xs: 1.5, sm: 0 },
+                      '&:hover': {
+                        bgcolor: '#3367d6',
+                      },
+                    }}
+                  >
+                    Search
+                  </Button>
+                </Box>
+
+                {/* Autocomplete Dropdown */}
+                <Popper
+                  open={showSuggestions}
+                  anchorEl={searchRef.current}
+                  placement="bottom-start"
+                  transition
+                  sx={{
+                    zIndex: 2000,
+                    width: searchRef.current ? searchRef.current.clientWidth : 'auto',
+                    pt: 1
+                  }}
+                >
+                  {({ TransitionProps }) => (
+                    <Fade {...TransitionProps} timeout={350}>
+                      <Paper
+                        elevation={8}
+                        sx={{
+                          mt: 1,
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          background: isHighContrast ? 'background.paper' : 'rgba(255, 255, 255, 0.98)',
+                          backdropFilter: 'blur(10px)',
+                          border: `1px solid ${isHighContrast ? '#ffff00' : 'rgba(0,0,0,0.1)'}`,
+                          boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                        }}
+                      >
+                        <List sx={{ p: 0 }}>
+                          {suggestions.map((item, index) => (
+                            <ListItemButton
+                              key={index}
+                              onClick={() => handleSuggestionClick(item.path)}
+                              sx={{
+                                py: 1.5,
+                                px: 3,
+                                borderBottom: index < suggestions.length - 1 ? `1px solid ${isHighContrast ? '#ffff00' : 'rgba(0,0,0,0.05)'}` : 'none',
+                                '&:hover': {
+                                  bgcolor: 'rgba(66, 133, 244, 0.08)',
+                                  '& .MuiTypography-root': { color: 'primary.main' }
+                                }
+                              }}
+                            >
+                              <ListItemIcon sx={{ minWidth: 36, color: 'primary.main' }}>
+                                <SearchIcon fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={item.label}
+                                primaryTypographyProps={{
+                                  fontWeight: 500,
+                                  fontSize: '0.95rem',
+                                  color: 'text.primary'
+                                }}
+                              />
+                            </ListItemButton>
+                          ))}
+                        </List>
+                      </Paper>
+                    </Fade>
+                  )}
+                </Popper>
+              </Box>
+            </ClickAwayListener>
           </Box>
         </Container>
 
