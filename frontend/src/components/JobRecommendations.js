@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -35,9 +35,6 @@ const JobRecommendations = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('India');
-
-  // Track if initial fetch has happened
-  const hasFetchedRef = useRef(false);
 
   // Accessibility filter state
   const [filters, setFilters] = useState({

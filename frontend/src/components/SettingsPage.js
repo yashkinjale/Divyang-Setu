@@ -9,7 +9,6 @@ import {
     Divider,
     Avatar,
     Button,
-    useTheme,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -36,7 +35,6 @@ import { useThemeToggle } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 
 const SettingsPage = () => {
-    const theme = useTheme();
     const navigate = useNavigate();
     const { logout } = useAuth();
     const { isHighContrast } = useThemeToggle();

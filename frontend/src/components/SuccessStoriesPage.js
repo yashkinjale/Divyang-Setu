@@ -113,7 +113,6 @@ const categories = [
 const SuccessStoryCard = ({ story, onReadMore }) => {
   const theme = useTheme();
   const { isHighContrast } = useThemeToggle();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <motion.div
@@ -364,7 +363,6 @@ const SuccessStoryModal = ({ open, story, onClose }) => {
 const SuccessStoriesPage = () => {
   const theme = useTheme();
   const { isHighContrast } = useThemeToggle();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [selectedStory, setSelectedStory] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');

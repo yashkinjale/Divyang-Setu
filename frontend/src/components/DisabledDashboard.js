@@ -7,7 +7,8 @@ import {
   ListItemIcon,
   Divider,
   useTheme,
-
+  useMediaQuery,
+  Avatar,
   Drawer,
   AppBar,
   Toolbar,
@@ -26,7 +27,6 @@ import {
   MicOff as MicOffIcon,
   Warning as WarningIcon,
   Settings as SettingsIcon,
-  Help as HelpIcon,
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   Business as JobIcon,
@@ -135,6 +135,7 @@ const Logo = () => {
 
 const DisabledDashboard = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();

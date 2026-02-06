@@ -19,7 +19,9 @@ import {
   Pagination,
   Paper,
   CircularProgress,
-  Alert
+  Alert,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Search as SearchIcon,

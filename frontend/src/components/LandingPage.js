@@ -17,7 +17,8 @@ import {
   List,
   ListItemButton,
   ListItemText,
-  useMediaQuery
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
@@ -44,7 +45,6 @@ import Tooltip from '@mui/material/Tooltip';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isHighContrast, toggleTheme } = useThemeToggle();
@@ -1023,7 +1023,6 @@ const LandingPage = () => {
                     cursor: 'pointer',
                     background: isHighContrast ? 'background.paper' : service.gradientBg, // Off-white color
                     border: isHighContrast ? '2px solid #ffff00' : '1px solid rgba(0,0,0,0.08)', // Defined border
-                    p: 2.5, // Reduced padding
                     boxShadow: isHighContrast ? 'none' : '0 4px 20px rgba(0,0,0,0.05)', // Soft shadow
                     '&:hover': {
                       transform: 'translateY(-8px) scale(1.02)',
